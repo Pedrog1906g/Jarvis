@@ -72,3 +72,8 @@ def log_session(summary: str) -> bool:
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     block = f"- **{ts}**: {summary}"
     return _append(f"{VAULT}/12 - Registro de Sessoes.md", block)
+
+
+def read_note(path: str) -> str:
+    r = github_fs.gh_read(path)
+    return r[0] if r else ""

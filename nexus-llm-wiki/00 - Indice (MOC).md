@@ -36,6 +36,7 @@ Vault em formato **skill LLM Wiki** para o [[NEXUS AI]]. Cada nota tem *frontmat
 - [[Conexão com Obsidian]] — como o NEXUS lê e escreve neste vault (ligação viva)
 - [[Registro de Sessões]] — log automático das sessões/auto-melhorias
 - [[Aprendizados (Learnings)]] — o que o NEXUS aprende (e como aprende com o mentor)
+- [[Ver o Cérebro em Qualquer Lugar]] — como acompanhar o conhecimento pelo Obsidian
 - [[Guias e Troubleshooting]] — passos rápidos e consertos comuns
 
 > Mantido sincronizado com o repositório `Pedrog1906g/Jarvis` (branch `main`).
