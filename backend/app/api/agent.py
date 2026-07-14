@@ -163,20 +163,44 @@ def _path_allowed(path: str) -> bool:
 
 
 def get_github_token() -> str:
-    """Token do GitHub: prioriza variável de ambiente; senão, lê criptografado do banco."""
-    if GITHUB_TOKEN_ENV:
-        return GITHUB_TOKEN_ENV
+    """Token do GitHub: prioriza o token salvo pelo dono no banco (seguro, owner-only);
+    cai no GITHUB_TOKEN do ambiente como fallback (ex.: definido no Render).
+
+    Motivo: o token de ambiente no Render pode ser limitado (somente leitura). O dono
+    pode gravar um token com permissão de escrita via /api/agent/set_github_token e ele
+    passa a ser usado com prioridade, sem precisar mexer nas variáveis de ambiente.
+    """
     try:
         from app.db.database import SessionLocal
         from app.core.crypto import decrypt
         db = SessionLocal()
         try:
             row = db.query(models.Setting).filter_by(key="github_token").first()
-            return decrypt(row.value) if row and row.value else ""
+            tok = decrypt(row.value) if row and row.value else ""
+        finally:
+            db.close()
+        if tok:
+            return tok
+    except Exception:
+        pass
+    return GITHUB_TOKEN_ENV
+
+
+def _token_source() -> str:
+    """De onde vem efetivamente o token (banco tem prioridade sobre o ambiente)."""
+    try:
+        from app.db.database import SessionLocal
+        from app.core.crypto import decrypt
+        db = SessionLocal()
+        try:
+            row = db.query(models.Setting).filter_by(key="github_token").first()
+            if row and row.value and decrypt(row.value):
+                return "db"
         finally:
             db.close()
     except Exception:
-        return ""
+        pass
+    return "env" if GITHUB_TOKEN_ENV else "none"
 
 
 def _latest_build_run(commit_sha: str):
@@ -374,7 +398,7 @@ def self_improve_status(user: models.User = Depends(get_current_user)):
     except Exception:
         pass
     data["token_configured"] = bool(get_github_token())
-    data["token_source"] = "env" if GITHUB_TOKEN_ENV else ("db" if get_github_token() else "none")
+    data["token_source"] = _token_source()
     return data
 
 
@@ -408,4 +432,4 @@ def set_github_token(body: GithubTokenRequest, user: models.User = Depends(get_c
 @router.get("/github_token_status")
 def github_token_status(user: models.User = Depends(get_current_user)):
     tok = get_github_token()
-    return {"configured": bool(tok), "source": "env" if GITHUB_TOKEN_ENV else ("db" if tok else "none")}
+    return {"configured": bool(tok), "source": _token_source()}

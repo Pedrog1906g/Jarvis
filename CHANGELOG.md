@@ -6,6 +6,10 @@
   O Render negava `git push` com 403, mas a REST API com token Bearer funciona. Backup
   automático (tag + conteúdo original do arquivo alvo) e **rollback sozinho** se o build
   do APK no GitHub Actions falhar. Gatilho "auto melhore" no chat continua owner-only.
+- **Correção de permissão do token**: `get_github_token()` agora prioriza o token salvo
+  no banco pelo dono (via `/api/agent/set_github_token`) sobre o `GITHUB_TOKEN` de ambiente.
+  Isso contorna o token de ambiente do Render (que tem só leitura) e faz a escrita no repo
+  funcionar — a auto-melhoria passa a escrever de verdade.
 - (em andamento) **Super Base (Supabase)** + **agendamento de 20 dias** + **vault Obsidian
   no formato LLM Wiki** — ver GUIA_FACIL_NEXUS.md.
 
