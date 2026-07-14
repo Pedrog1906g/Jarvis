@@ -88,3 +88,8 @@ MemoryFact extrai preferencias do dono das conversas. Mantenha fatos uteis e evi
 _2026-07-14 21:39 UTC_
 
 Aprendizados sao salvos via POST /api/obsidian/learning e viram contexto das proximas conversas. O agente Arena (mentor) ensina registrando aqui; assim o NEXUS melhora continuamente.
+
+## Otimização de Ativação por Voz
+_2026-07-14 22:18 UTC_
+
+Implementar uma funcionalidade de ativação por voz mais sensível e menos dependente de ações manuais, como clicar no microfone, para melhorar a experiência do usuário e garantir respostas rápidas e precisas.
