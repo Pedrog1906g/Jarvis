@@ -63,3 +63,8 @@ Use o modelo scheduled_tasks + reminder_scheduler. Acao self_improve dispara a a
 _2026-07-14 21:38 UTC_
 
 O Postgres free do Render expira em ~90 dias. Migrar para Supabase (sem prazo) usando backend/migrate_to_supabase.py e trocando DATABASE_URL no Render.
+
+## Obsidian e o cerebro do NEXUS
+_2026-07-14 21:39 UTC_
+
+O vault nexus-llm-wiki e a memoria viva do projeto: o NEXUS le as notas como contexto e escreve aprendizados/sessoes. E o loop de aprendizado com o mentor (agente que o construiu).
