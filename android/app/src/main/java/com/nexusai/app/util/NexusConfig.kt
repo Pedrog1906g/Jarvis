@@ -8,5 +8,5 @@ package com.nexusai.app.util
  * / tela de Login dentro do app).
  */
 object NexusConfig {
-    const val API_BASE_URL = "https://nexus-api.onrender.com"
+    const val API_BASE_URL = "https://nexus-api-2o1y.onrender.com"
 }
