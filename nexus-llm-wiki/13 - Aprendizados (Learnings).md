@@ -58,3 +58,8 @@ A IA so pode tocar pastas permitidas (android/app/src/main, backend/app, backend
 _2026-07-14 21:38 UTC_
 
 Use o modelo scheduled_tasks + reminder_scheduler. Acao self_improve dispara a auto-melhoria; remind cria lembrete. Exemplo ja plantado: auto-melhoria agendada em 20 dias.
+
+## Super Base (Supabase)
+_2026-07-14 21:38 UTC_
+
+O Postgres free do Render expira em ~90 dias. Migrar para Supabase (sem prazo) usando backend/migrate_to_supabase.py e trocando DATABASE_URL no Render.
