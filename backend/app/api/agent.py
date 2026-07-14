@@ -85,6 +85,16 @@ def _run(cmd, cwd, timeout=150):
     return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
 
 
+def _git(args, cwd, token, timeout=150):
+    """Roda git injetando o token do GitHub como header HTTP (Bearer). Isso evita
+    problemas de credencial na URL remota em ambientes como o Render, onde o git
+    remove o token da URL após o clone."""
+    return _run(
+        ["git", "-c", f"http.extraHeader=Authorization: Bearer {token}"] + args,
+        cwd, timeout,
+    )
+
+
 def _configure_identity(cwd):
     """Define a identidade do git no repo clonado (necessário p/ commitar/reverter)."""
     _run(["git", "config", "user.email", "pedrogentil797@gmail.com"], cwd, timeout=30)
@@ -173,11 +183,10 @@ def _poll_and_rollback(commit_sha: str, backup_tag: str):
                 try:
                     tmp = tempfile.mkdtemp()
                     token = get_github_token()
-                    _run(["git", "clone", f"https://{token}@github.com/{REPO}.git", tmp], cwd="/tmp", timeout=150)
+                    _git(["clone", f"https://github.com/{REPO}.git", tmp], cwd="/tmp", token=token, timeout=150)
                     _configure_identity(tmp)
-                    _configure_remote(token, tmp)
                     _run(["git", "revert", "--no-edit", commit_sha], cwd=tmp, timeout=60)
-                    res = _run(["git", "push", "origin", "main"], cwd=tmp, timeout=60)
+                    res = _git(["push", "origin", "main"], cwd=tmp, token=token, timeout=60)
                     if res.returncode == 0:
                         _status("rolled_back", "reverted", f"build falhou; revertido automaticamente. {conclusion}", backup_tag, run_url)
                     else:
@@ -194,7 +203,7 @@ def _do_self_improve(request_text: str) -> dict:
         _status("error", "no_token", "GITHUB_TOKEN não configurado (nem no Render, nem salvo no app).")
         return {"status": "error", "message": "sem token"}
     tmp = tempfile.mkdtemp()
-    clone = _run(["git", "clone", f"https://{token}@github.com/{REPO}.git", tmp], cwd="/tmp", timeout=150)
+    clone = _git(["clone", f"https://github.com/{REPO}.git", tmp], cwd="/tmp", token=token, timeout=150)
     if clone.returncode != 0:
         _status("error", "clone_failed", "falha ao clonar o repo: " + clone.stderr[:200])
         return {"status": "error", "message": "falha ao clonar o repo: " + clone.stderr[:200]}
@@ -206,7 +215,7 @@ def _do_self_improve(request_text: str) -> dict:
     rev = _run(["git", "rev-parse", "HEAD"], cwd=tmp, timeout=30).stdout.strip()
     backup_tag = f"backup-{int(time.time())}"
     _run(["git", "tag", backup_tag, rev], cwd=tmp, timeout=30)
-    _run(["git", "push", "origin", backup_tag], cwd=tmp, timeout=60)
+    _git(["push", "origin", backup_tag], cwd=tmp, token=token, timeout=60)
 
     # 3) LLM propõe a mudança (1 arquivo, pasta permitida)
     system = (
@@ -244,7 +253,7 @@ def _do_self_improve(request_text: str) -> dict:
     if commit.returncode != 0:
         _status("error", "commit_failed", "nada para commitar ou erro: " + commit.stderr[:200])
         return {"status": "error", "message": "nada para commitar ou erro: " + commit.stderr[:200]}
-    push = _run(["git", "push", "origin", "main"], cwd=tmp, timeout=60)
+    push = _git(["push", "origin", "main"], cwd=tmp, token=token, timeout=60)
     if push.returncode != 0:
         _status("error", "push_failed", "falha ao empurrar: " + push.stderr[:200])
         return {"status": "error", "message": "falha ao empurrar: " + push.stderr[:200]}
