@@ -32,6 +32,10 @@ fun ChatScreen() {
     val listState = rememberLazyListState()
     val voice = remember { VoiceManager(ctx) }
 
+    val messages by vm.messages.collectAsState()
+    val isThinking by vm.isThinking.collectAsState()
+    val error by vm.error.collectAsState()
+
     var input by remember { mutableStateOf("") }
     var listening by remember { mutableStateOf(false) }
     var partial by remember { mutableStateOf("") }
@@ -47,8 +51,8 @@ fun ChatScreen() {
         onDispose { voice.shutdown() }
     }
 
-    LaunchedEffect(vm.messages.size, vm.isThinking.value) {
-        if (vm.messages.isNotEmpty()) listState.animateScrollToItem(vm.messages.lastIndex)
+    LaunchedEffect(messages.size, isThinking) {
+        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
     }
 
     Column(Modifier.fillMaxSize().background(NexusBackground)) {
@@ -57,10 +61,10 @@ fun ChatScreen() {
             modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 8.dp),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
-            items(vm.messages, key = { it.id }) { msg ->
+            items(messages, key = { it.id }) { msg ->
                 MessageBubble(msg, onSpeak = { voice.speak(it) })
             }
-            if (vm.isThinking.value) {
+            if (isThinking) {
                 item {
                     Text("NEXUS está pensando…", color = NexusTextDim,
                         modifier = Modifier.padding(12.dp))
@@ -68,8 +72,8 @@ fun ChatScreen() {
             }
         }
 
-        if (vm.error.value != null) {
-            Text(vm.error.value ?: "", color = NexusDanger, modifier = Modifier.padding(8.dp))
+        if (error != null) {
+            Text(error ?: "", color = NexusDanger, modifier = Modifier.padding(8.dp))
         }
 
         Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -84,7 +88,7 @@ fun ChatScreen() {
                             listening = false; partial = ""
                             if (text.isNotBlank()) { vm.send(text); input = "" }
                         },
-                        onError = { listening = false; vm.error.value = it }
+                        onError = { listening = false; vm.reportError(it) }
                     )
                 }
             }) {

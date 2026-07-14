@@ -1,14 +1,15 @@
 package com.nexusai.app.viewmodel
 
 import android.app.Application
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.nexusai.app.NexusApplication
 import com.nexusai.app.data.model.ChatMessage
 import com.nexusai.app.data.repository.NexusRepository
 import com.nexusai.app.util.NexusWebSocket
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -16,10 +17,19 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     private val repo: NexusRepository = (app as NexusApplication).repository
 
-    val messages = mutableStateListOf<ChatMessage>()
-    var conversationId = mutableStateOf<Int?>(null)
-    var isThinking = mutableStateOf(false)
-    var error = mutableStateOf<String?>(null)
+    // StateFlow é thread-safe: pode ser atualizado de qualquer thread
+    // (incluindo a thread de fundo do OkHttp que entrega o WebSocket).
+    private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
+
+    private val _conversationId = MutableStateFlow<Int?>(null)
+    val conversationId: StateFlow<Int?> = _conversationId.asStateFlow()
+
+    private val _isThinking = MutableStateFlow(false)
+    val isThinking: StateFlow<Boolean> = _isThinking.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
     private var ws: NexusWebSocket? = null
     private var streamingIndex: Int? = null
@@ -31,54 +41,70 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             ws = NexusWebSocket(
                 baseUrl = base,
                 token = token,
-                onDelta = { delta -> appendDelta(delta) },
-                onDone = { cid -> if (cid > 0) conversationId.value = cid; isThinking.value = false },
-                onError = { e -> error.value = e; isThinking.value = false }
+                onDelta = { appendDelta(it) },
+                onDone = { cid ->
+                    if (cid > 0) _conversationId.value = cid
+                    _isThinking.value = false
+                },
+                onError = { e ->
+                    _error.value = e
+                    _isThinking.value = false
+                }
             )
             ws?.connect()
         }
     }
 
     private fun appendDelta(delta: String) {
-        if (streamingIndex == null) {
-            messages.add(ChatMessage(id = UUID.randomUUID().toString(), role = "assistant", content = ""))
-            streamingIndex = messages.lastIndex
+        val idx = if (streamingIndex == null) {
+            val newMsg = ChatMessage(id = UUID.randomUUID().toString(), role = "assistant", content = "")
+            _messages.value = _messages.value + newMsg
+            streamingIndex = _messages.value.lastIndex
+            _messages.value.lastIndex
+        } else {
+            streamingIndex!!
         }
-        val idx = streamingIndex!!
-        val cur = messages[idx]
-        messages[idx] = cur.copy(content = cur.content + delta)
+        val cur = _messages.value[idx]
+        val updated = _messages.value.toMutableList().apply {
+            this[idx] = cur.copy(content = cur.content + delta)
+        }
+        _messages.value = updated
     }
 
     fun send(text: String) {
         val t = text.trim()
         if (t.isBlank()) return
         ensureConnected()
-        messages.add(ChatMessage(id = UUID.randomUUID().toString(), role = "user", content = t))
-        isThinking.value = true
-        error.value = null
+        _messages.value = _messages.value + ChatMessage(id = UUID.randomUUID().toString(), role = "user", content = t)
+        _isThinking.value = true
+        _error.value = null
         streamingIndex = null
-        ws?.send(t, conversationId.value)
+        ws?.send(t, _conversationId.value)
     }
 
     fun loadConversation(cid: Int) {
         viewModelScope.launch {
             try {
                 val msgs = repo.messages(cid)
-                messages.clear()
-                msgs.forEach {
-                    messages.add(ChatMessage(id = UUID.randomUUID().toString(), role = it.role, content = it.content))
+                _messages.value = msgs.map {
+                    ChatMessage(id = UUID.randomUUID().toString(), role = it.role, content = it.content)
                 }
-                conversationId.value = cid
+                _conversationId.value = cid
             } catch (e: Exception) {
-                error.value = e.localizedMessage
+                _error.value = e.localizedMessage
             }
         }
     }
 
     fun newConversation() {
-        messages.clear()
-        conversationId.value = null
+        _messages.value = emptyList()
+        _conversationId.value = null
         streamingIndex = null
+    }
+
+    fun reportError(msg: String?) {
+        _error.value = msg
+        _isThinking.value = false
     }
 
     override fun onCleared() {
