@@ -45,7 +45,7 @@ ALLOWED_PREFIXES = (
 
 REPO = os.getenv("GITHUB_REPO", "Pedrog1906g/Jarvis")
 GITHUB_TOKEN_ENV = os.getenv("GITHUB_TOKEN", "")
-STATUS_FILE = "/tmp/nexus_selfimprove_status.json"
+STATUS_KEY = "self_improve_status"
 
 # Frases que disparam a auto-melhoria direto no chat (só o dono).
 TRIGGER_PHRASES = (
@@ -57,12 +57,26 @@ TRIGGER_PHRASES = (
 
 
 def _status(stage: str, status: str, message: str = "", backup_tag: str = "", run_url: str = ""):
+    """Persiste o status da auto-melhoria no BANCO (e não em /tmp), para funcionar
+    de forma confiável mesmo com várias instâncias do Render."""
+    payload = json.dumps({
+        "stage": stage, "status": status, "message": message,
+        "backup_tag": backup_tag, "run_url": run_url, "ts": int(time.time()),
+    })
     try:
-        with open(STATUS_FILE, "w") as f:
-            json.dump({
-                "stage": stage, "status": status, "message": message,
-                "backup_tag": backup_tag, "run_url": run_url, "ts": int(time.time()),
-            }, f)
+        from app.db.database import SessionLocal
+        from app.db import models
+        db = SessionLocal()
+        try:
+            row = db.query(models.Setting).filter_by(key=STATUS_KEY).first()
+            if row:
+                row.value = payload
+            else:
+                row = models.Setting(key=STATUS_KEY, value=payload)
+                db.add(row)
+            db.commit()
+        finally:
+            db.close()
     except Exception:
         pass
 
@@ -275,11 +289,19 @@ def self_improve(body: ImproveRequest, user: models.User = Depends(get_current_u
 
 @router.get("/self_improve/status")
 def self_improve_status(user: models.User = Depends(get_current_user)):
+    data = {"status": "idle", "message": "nenhuma auto-melhoria iniciada ainda."}
     try:
-        with open(STATUS_FILE) as f:
-            data = json.load(f)
+        from app.db.database import SessionLocal
+        from app.db import models
+        db = SessionLocal()
+        try:
+            row = db.query(models.Setting).filter_by(key=STATUS_KEY).first()
+            if row and row.value:
+                data = json.loads(row.value)
+        finally:
+            db.close()
     except Exception:
-        data = {"status": "idle", "message": "nenhuma auto-melhoria iniciada ainda."}
+        pass
     data["token_configured"] = bool(get_github_token())
     data["token_source"] = "env" if GITHUB_TOKEN_ENV else ("db" if get_github_token() else "none")
     return data
