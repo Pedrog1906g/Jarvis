@@ -127,9 +127,12 @@ Pré-requisitos: **Android Studio** (Hedgehog+), SDK 34.
 
 ### Conectar o app ao backend
 - **Emulador**: o padrão `http://10.0.2.2:8000` já aponta para o `localhost` do PC. ✅
-- **Celular físico** (mesma Wi-Fi do PC): use o IP da máquina, ex.: `http://192.168.1.20:8000`
-  (tela **Ajustes** do app, ou `Login → Servidor`).
-- Libere a porta no firewall se necessário.
+- **Celular físico** (mesma Wi-Fi do PC):
+  - Toque em **"🔎 Buscar na rede"** na tela de Login — o app descobre o backend sozinho via
+    mDNS (o backend anuncia o serviço `_nexus._tcp`; precisa de `zeroconf` instalado).
+  - Ou digite o IP da máquina, ex.: `http://192.168.1.20:8000` (tela **Ajustes** ou `Login → Servidor`).
+  - Use **"Testar"** para validar a conexão antes de logar.
+- Libere a porta `8000` no firewall se necessário; celular e PC na mesma Wi-Fi.
 
 ### Tela de Chaves (onde você cola a Groq/Spotify)
 Em **Ajustes → Chaves**: cole sua **GROQ_API_KEY** (e, se for usar Spotify, o Client ID/Secret do

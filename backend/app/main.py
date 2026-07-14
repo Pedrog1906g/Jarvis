@@ -5,6 +5,7 @@ from app.db.database import engine, Base
 from app.db import models  # registra os modelos
 from app.api import auth, chat, voice, reminders, plugins, system
 from app.services.reminder_scheduler import start_scheduler
+from app.core.discovery import start_discovery
 from app.config import APP_NAME, APP_VERSION
 
 Base.metadata.create_all(bind=engine)
@@ -13,6 +14,7 @@ Base.metadata.create_all(bind=engine)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     start_scheduler()
+    start_discovery()  # anuncia o backend na LAN via mDNS (auto-descoberta no app)
     yield
 
 
