@@ -5,7 +5,7 @@ import com.nexusai.app.data.remote.NexusApi
 import com.nexusai.app.data.remote.RetrofitClient
 import com.nexusai.app.data.store.TokenStore
 
-class NexusRepository(private val tokenStore: TokenStore) {
+class NexusRepository(val tokenStore: TokenStore) {
 
     private val api: NexusApi get() = RetrofitClient.api
     private fun auth() = "Bearer ${tokenStore.getToken()}"

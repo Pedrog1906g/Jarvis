@@ -13,6 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nexusai.app.ui.component.MessageBubble
@@ -87,7 +89,7 @@ fun ChatScreen() {
                 }
             }) {
                 Icon(
-                    androidx.compose.material.icons.Icons.Filled.Mic,
+                    Icons.Filled.Mic,
                     contentDescription = "Falar",
                     tint = if (listening) NexusDanger else NexusPrimary
                 )
@@ -104,7 +106,7 @@ fun ChatScreen() {
             IconButton(onClick = {
                 if (input.isNotBlank()) { vm.send(input); input = "" }
             }) {
-                Icon(androidx.compose.material.icons.Icons.Filled.Send,
+                Icon(Icons.Filled.Send,
                     contentDescription = "Enviar", tint = NexusPrimary)
             }
         }

@@ -29,7 +29,7 @@ fun SettingsScreen(authVm: AuthViewModel) {
         if (vm.saved.value) Text("Servidor salvo. Reinicie o app para reconectar.", color = NexusPrimary)
 
         Spacer(Modifier.height(16.dp))
-        vm.info?.let { info ->
+        vm.info.value?.let { info ->
             Text("Versão: ${info.version}", color = NexusText)
             Text("LLM disponível: ${if (info.llmAvailable) "sim" else "não (modo demo)"}", color = NexusText)
             Text("Usuário: ${info.user.displayName}", color = NexusTextDim)
