@@ -43,3 +43,8 @@ O token do GitHub e salvo criptografado no banco (Fernet, chave derivada de JWT_
 _2026-07-14 21:38 UTC_
 
 Backend FastAPI no Render + app Android Kotlin/Compose + Postgres (migrando para Supabase). O LLM Groq gera respostas e propoe mudancas de codigo. O GitHub guarda o codigo e o CI gera o APK.
+
+## Controle do celular
+_2026-07-14 21:38 UTC_
+
+Wake word Nexus (NexusVoiceService). Controle do aparelho via AccessibilityService + NotificationListener (NexusController). Permissoes concedidas manualmente pelo dono nas configuracoes do Android.
