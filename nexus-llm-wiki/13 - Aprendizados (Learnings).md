@@ -83,3 +83,8 @@ Sempre responda em PT-BR, tom natural e sem jargao (dono nao e programador). Men
 _2026-07-14 21:39 UTC_
 
 MemoryFact extrai preferencias do dono das conversas. Mantenha fatos uteis e evite ruido; campo importance de 1 a 3. Nao repita o que ja esta claro.
+
+## Como o NEXUS aprende com o mentor
+_2026-07-14 21:39 UTC_
+
+Aprendizados sao salvos via POST /api/obsidian/learning e viram contexto das proximas conversas. O agente Arena (mentor) ensina registrando aqui; assim o NEXUS melhora continuamente.
