@@ -1,8 +1,11 @@
 <resources>
-    <style name="Theme.Nexus" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Nexus" parent="Theme.AppCompat.NoActionBar">
         <item name="android:statusBarColor">#05070D</item>
         <item name="android:navigationBarColor">#05070D</item>
         <item name="android:colorBackground">#05070D</item>
         <item name="android:windowBackground">#05070D</item>
+        <item name="colorPrimary">#00E5FF</item>
+        <item name="colorPrimaryDark">#05070D</item>
+        <item name="colorAccent">#7C4DFF</item>
     </style>
 </resources>
