@@ -71,6 +71,12 @@ def _run(cmd, cwd, timeout=150):
     return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
 
 
+def _configure_identity(cwd):
+    """Define a identidade do git no repo clonado (necessário p/ commitar/reverter)."""
+    _run(["git", "config", "user.email", "pedrogentil797@gmail.com"], cwd, timeout=30)
+    _run(["git", "config", "user.name", "Pedro Gentil Bastos"], cwd, timeout=30)
+
+
 def _extract_json(text: str) -> Optional[dict]:
     try:
         s = text.strip()
@@ -146,6 +152,7 @@ def _poll_and_rollback(commit_sha: str, backup_tag: str):
                     tmp = tempfile.mkdtemp()
                     token = get_github_token()
                     _run(["git", "clone", f"https://{token}@github.com/{REPO}.git", tmp], cwd="/tmp", timeout=150)
+                    _configure_identity(tmp)
                     _run(["git", "revert", "--no-edit", commit_sha], cwd=tmp, timeout=60)
                     res = _run(["git", "push", "origin", "main"], cwd=tmp, timeout=60)
                     if res.returncode == 0:
@@ -168,6 +175,7 @@ def _do_self_improve(request_text: str) -> dict:
     if clone.returncode != 0:
         _status("error", "clone_failed", "falha ao clonar o repo: " + clone.stderr[:200])
         return {"status": "error", "message": "falha ao clonar o repo: " + clone.stderr[:200]}
+    _configure_identity(tmp)
     _status("cloned", "running", "repo clonado", "")
 
     # 2) backup
