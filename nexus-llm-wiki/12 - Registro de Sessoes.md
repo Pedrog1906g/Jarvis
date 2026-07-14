@@ -15,3 +15,5 @@ tags: [nexus, log, sessoes, auto-melhoria]
 
 - **2026-07-14**: Integração com o Obsidian ativada — o NEXUS lê e escreve neste vault.
 - **2026-07-14**: Auto-melhoria conectada ao vault; sistema registra cada sessão aqui.
+
+- **2026-07-14 22:00 UTC**: Auto-melhoria: build falhou (failure); rollback automático acionado.
