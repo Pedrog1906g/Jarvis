@@ -108,7 +108,7 @@ class NexusVoiceService : Service() {
             stopSelf()
             return
         }
-        recognizer = SpeechRecognizer.createSpeechRecognizer(this)
+        recognizer = VoiceManager.createRecognizer(this, listener)
         recognizer.setRecognitionListener(listener)
         startWakeListening()
     }
@@ -122,6 +122,9 @@ class NexusVoiceService : Service() {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "pt-BR")
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            // Mantém o microfone aberto um pouco mais entre pausas (menos falhas).
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1500)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1000)
         }
         try {
             recognizer.startListening(intent)

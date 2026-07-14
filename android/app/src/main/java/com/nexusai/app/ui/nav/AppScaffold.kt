@@ -25,7 +25,7 @@ fun AppScaffold(authVm: AuthViewModel) {
         drawerContent = {
             ModalDrawerSheet(drawerContainerColor = NexusSurface) {
                 Spacer(Modifier.height(24.dp))
-                Text("NEXUS AI", modifier = Modifier.padding(16.dp),
+                Text("JARVIS", modifier = Modifier.padding(16.dp),
                     color = NexusPrimary, style = MaterialTheme.typography.titleLarge)
                 val items = listOf(
                     "chat" to "Chat",
@@ -50,7 +50,7 @@ fun AppScaffold(authVm: AuthViewModel) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("NEXUS AI", color = NexusText) },
+                    title = { Text("JARVIS", color = NexusText) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = NexusPrimary)

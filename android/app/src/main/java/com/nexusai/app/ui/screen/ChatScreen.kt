@@ -8,17 +8,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.nexusai.app.ui.component.JarvisReactor
 import com.nexusai.app.ui.component.MessageBubble
 import com.nexusai.app.ui.theme.*
 import com.nexusai.app.util.VoiceManager
+import com.nexusai.app.util.sttErrorMessage
 import com.nexusai.app.viewmodel.ChatViewModel
 import kotlinx.coroutines.launch
 
@@ -52,19 +54,35 @@ fun ChatScreen() {
         if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
     }
 
+    fun toggleMic() {
+        if (!micGranted) { permissionLauncher.launch(Manifest.permission.RECORD_AUDIO); return }
+        if (listening) { voice.stopListening(); listening = false; return }
+        listening = true
+        voice.startListening(
+            onPartial = { partial = it; input = it },
+            onResult = { text ->
+                listening = false; partial = ""
+                if (text.isNotBlank()) { vm.send(text); input = "" }
+            },
+            onError = { e ->
+                listening = false; partial = ""
+                vm.reportError(sttErrorMessage(e))
+            }
+        )
+    }
+
     Column(Modifier.fillMaxSize().background(NexusBackground)) {
+        JarvisReactor(listening = listening, partial = if (listening) partial else "", onClick = { toggleMic() })
+
         LazyColumn(
             state = listState,
             modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 8.dp),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
-            items(messages, key = { it.id }) { msg ->
-                MessageBubble(msg, onSpeak = { voice.speak(it) })
-            }
+            items(messages, key = { it.id }) { msg -> MessageBubble(msg, onSpeak = { voice.speak(it) }) }
             if (isThinking) {
                 item {
-                    Text("JARVIS está pensando…", color = NexusTextDim,
-                        modifier = Modifier.padding(12.dp))
+                    Text("JARVIS está processando…", color = NexusTextDim, modifier = Modifier.padding(12.dp))
                 }
             }
         }
@@ -74,41 +92,22 @@ fun ChatScreen() {
         }
 
         Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = {
-                if (!micGranted) { permissionLauncher.launch(Manifest.permission.RECORD_AUDIO); return@IconButton }
-                if (listening) { voice.stopListening(); listening = false }
-                else {
-                    listening = true
-                    voice.startListening(
-                        onPartial = { partial = it; input = it },
-                        onResult = { text ->
-                            listening = false; partial = ""
-                            if (text.isNotBlank()) { vm.send(text); input = "" }
-                        },
-                        onError = { listening = false; vm.reportError(it) }
-                    )
-                }
-            }) {
+            IconButton(onClick = { toggleMic() }) {
                 Icon(
                     Icons.Filled.Mic,
                     contentDescription = "Falar",
                     tint = if (listening) NexusDanger else NexusPrimary
                 )
             }
-
             OutlinedTextField(
                 value = if (listening) partial else input,
                 onValueChange = { input = it },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Fale ou escreva…") },
+                placeholder = { Text("Fale ou escreva com o JARVIS…") },
                 maxLines = 4
             )
-
-            IconButton(onClick = {
-                if (input.isNotBlank()) { vm.send(input); input = "" }
-            }) {
-                Icon(Icons.Filled.Send,
-                    contentDescription = "Enviar", tint = NexusPrimary)
+            IconButton(onClick = { if (input.isNotBlank()) { vm.send(input); input = "" } }) {
+                Icon(Icons.Filled.Send, contentDescription = "Enviar", tint = NexusPrimary)
             }
         }
     }

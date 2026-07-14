@@ -1,5 +1,6 @@
 package com.nexusai.app.util
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -11,10 +12,10 @@ import android.speech.tts.Voice
 import java.util.Locale
 
 /**
- * Gerencia STT (Reconhecedor de Fala do Android) e TTS (TextToSpeech nativo).
- * Aplica a "voz do JARVIS": seleciona uma voz masculina disponível e deixa o
- * tom mais grave/calmo (pitch mais baixo). Funciona offline/online conforme o
- * motor de voz do aparelho.
+ * Gerencia STT (Reconhecedor de Fala) e TTS (TextToSpeech nativo).
+ * Aplica a "voz do JARVIS": seleciona uma voz masculina e deixa o tom mais
+ * grave/calmo. O reconhecimento usa o serviço de voz correto do aparelho
+ * (ex.: Google) — essencial em Android 12+ onde o padrão pode falhar.
  */
 class VoiceManager(private val context: Context) {
 
@@ -59,8 +60,6 @@ class VoiceManager(private val context: Context) {
         t.setSpeechRate(rate)
         try {
             val voices = t.voices ?: return
-            // Prioridade: pt-BR masculina -> en-US masculina -> qualquer masculina
-            // -> pt-BR qualquer -> primeira disponível.
             val male = voices.filter {
                 it.name.contains("Male", true) || it.name.contains("Masculino", true)
                         || it.name.contains("Ricardo", true) || it.name.contains("Google", true)
@@ -84,14 +83,13 @@ class VoiceManager(private val context: Context) {
         }
     }
 
-    fun startListening(onPartial: (String) -> Unit = {}, onResult: (String) -> Unit, onError: (String) -> Unit) {
+    fun startListening(onPartial: (String) -> Unit = {}, onResult: (String) -> Unit, onError: (Int) -> Unit) {
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
-            onError("Reconhecimento de voz indisponível neste aparelho")
+            onError(ERROR_ENGINE)
             return
         }
         recognizer?.destroy()
-        recognizer = SpeechRecognizer.createSpeechRecognizer(context)
-        recognizer?.setRecognitionListener(object : RecognitionListener {
+        recognizer = createRecognizer(context, object : RecognitionListener {
             override fun onResults(b: Bundle) {
                 val matches = b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 onResult(matches?.firstOrNull() ?: "")
@@ -103,7 +101,7 @@ class VoiceManager(private val context: Context) {
             }
             override fun onError(e: Int) {
                 isListening = false
-                onError("Erro STT: $e")
+                onError(e)
             }
             override fun onReadyForSpeech(p: Bundle) {}
             override fun onBeginningOfSpeech() {}
@@ -132,4 +130,39 @@ class VoiceManager(private val context: Context) {
         tts?.shutdown()
         tts = null
     }
+
+    companion object {
+        const val ERROR_ENGINE = 99
+
+        /** Cria o reconhecedor apontando para o serviço de voz disponível (Google, etc.). */
+        fun createRecognizer(context: Context, listener: RecognitionListener): SpeechRecognizer {
+            return try {
+                val query = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                val infos = context.packageManager.queryIntentServices(query, 0)
+                val comp = if (infos.isNotEmpty()) {
+                    val ri = infos[0]
+                    ComponentName(ri.serviceInfo.packageName, ri.serviceInfo.name)
+                } else null
+                if (comp != null) SpeechRecognizer.createSpeechRecognizer(context, comp)
+                else SpeechRecognizer.createSpeechRecognizer(context)
+            } catch (_: Exception) {
+                SpeechRecognizer.createSpeechRecognizer(context)
+            }
+        }
+    }
+}
+
+/** Traduz o código de erro do STT para uma mensagem amigável (sem códigos crípticos). */
+fun sttErrorMessage(code: Int): String = when (code) {
+    1 -> "Sem internet para o reconhecimento de voz."
+    2 -> "Conexão lenta. Tente de novo."
+    3 -> "Erro de áudio do microfone."
+    4 -> "Serviço de voz indisponível agora. Tente depois."
+    5 -> "Erro no app de voz. Reinicie o app."
+    6 -> "Não ouvi nada. Fale mais perto do microfone."
+    7 -> "Não entendi. Fale de novo, mais claro."
+    8 -> "Reconhecedor ocupado. Aguarde um instante."
+    9 -> "Permissão de microfone negada. Habilite em Ajustes."
+    VoiceManager.Companion.ERROR_ENGINE -> "Reconhecimento de voz indisponível neste aparelho."
+    else -> "Não consegui entender o áudio."
 }

@@ -26,7 +26,7 @@ fun MessageBubble(message: ChatMessage, onSpeak: (String) -> Unit = {}) {
                 .padding(12.dp)
         ) {
             Text(
-                text = if (isUser) "Você" else "NEXUS",
+                text = if (isUser) "Você" else "JARVIS",
                 style = MaterialTheme.typography.labelSmall,
                 color = if (isUser) NexusPrimary else NexusAccent
             )
