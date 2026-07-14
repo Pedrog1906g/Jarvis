@@ -53,3 +53,8 @@ Wake word Nexus (NexusVoiceService). Controle do aparelho via AccessibilityServi
 _2026-07-14 21:38 UTC_
 
 A IA so pode tocar pastas permitidas (android/app/src/main, backend/app, backend/requirements.txt, render.yaml, README, CHANGELOG, DEPLOY). Nunca CI/segredos/.github. Uma mudanca por vez, sempre com backup e rollback automatico.
+
+## Agendamentos futuros
+_2026-07-14 21:38 UTC_
+
+Use o modelo scheduled_tasks + reminder_scheduler. Acao self_improve dispara a auto-melhoria; remind cria lembrete. Exemplo ja plantado: auto-melhoria agendada em 20 dias.
