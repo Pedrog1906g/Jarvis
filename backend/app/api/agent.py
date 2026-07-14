@@ -91,6 +91,14 @@ def _configure_identity(cwd):
     _run(["git", "config", "user.name", "Pedro Gentil Bastos"], cwd, timeout=30)
 
 
+def _configure_remote(token, cwd):
+    """Garante que o token seja usado no push. Em alguns ambientes (ex.: Render) o
+    git remove as credenciais da URL remota após o clone; o 'insteadOf' re-injeta o
+    token em todos os comandos de rede (push/pull/tag)."""
+    _run(["git", "config", "url.https://" + token + "@github.com/.insteadOf",
+          "https://github.com/"], cwd, timeout=30)
+
+
 def _extract_json(text: str) -> Optional[dict]:
     try:
         s = text.strip()
@@ -167,6 +175,7 @@ def _poll_and_rollback(commit_sha: str, backup_tag: str):
                     token = get_github_token()
                     _run(["git", "clone", f"https://{token}@github.com/{REPO}.git", tmp], cwd="/tmp", timeout=150)
                     _configure_identity(tmp)
+                    _configure_remote(token, tmp)
                     _run(["git", "revert", "--no-edit", commit_sha], cwd=tmp, timeout=60)
                     res = _run(["git", "push", "origin", "main"], cwd=tmp, timeout=60)
                     if res.returncode == 0:
@@ -190,6 +199,7 @@ def _do_self_improve(request_text: str) -> dict:
         _status("error", "clone_failed", "falha ao clonar o repo: " + clone.stderr[:200])
         return {"status": "error", "message": "falha ao clonar o repo: " + clone.stderr[:200]}
     _configure_identity(tmp)
+    _configure_remote(token, tmp)
     _status("cloned", "running", "repo clonado", "")
 
     # 2) backup
