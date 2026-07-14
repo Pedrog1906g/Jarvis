@@ -34,7 +34,7 @@ class NotificationService(private val context: Context) {
 
         val notification = NotificationCompat.Builder(context, "jarvis_notification_channel")
             .setSmallIcon(R.drawable.ic_jarvis)
-            .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.drawable.ic_jarvis))
+            .setLargeIcon(android.graphics.BitmapFactory.decodeResource(context.resources, R.drawable.ic_jarvis))
             .setContentTitle(title)
             .setContentText(message)
             .setContentIntent(pendingIntent)
@@ -50,7 +50,7 @@ class NotificationService(private val context: Context) {
 
         val notification = NotificationCompat.Builder(context, "jarvis_notification_channel")
             .setSmallIcon(R.drawable.ic_jarvis)
-            .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.drawable.ic_jarvis))
+            .setLargeIcon(android.graphics.BitmapFactory.decodeResource(context.resources, R.drawable.ic_jarvis))
             .setContentTitle(title)
             .setContentText(message)
             .setContentIntent(pendingIntent)
