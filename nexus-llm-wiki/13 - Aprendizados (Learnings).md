@@ -38,3 +38,8 @@ No Android, segredos ficam em EncryptedSharedPreferences (Android Keystore + AES
 _2026-07-14 21:38 UTC_
 
 O token do GitHub e salvo criptografado no banco (Fernet, chave derivada de JWT_SECRET) e tem prioridade sobre o token de ambiente. Rotas de auto-melhoria e agendamento sao owner-only.
+
+## Arquitetura resumida
+_2026-07-14 21:38 UTC_
+
+Backend FastAPI no Render + app Android Kotlin/Compose + Postgres (migrando para Supabase). O LLM Groq gera respostas e propoe mudancas de codigo. O GitHub guarda o codigo e o CI gera o APK.
