@@ -66,12 +66,14 @@ def _run(cmd, cwd, timeout=150):
 
 
 def _git_net(args, cwd, token, timeout=150):
-    """Roda um comando git de REDE de forma robusta em qualquer ambiente.
+    """Roda um comando git de REDE de forma robusta em QUALQUER ambiente.
 
-    A URL fica SEM credencial (https://github.com/...) e o token é fornecido em
-    tempo de execução via GIT_ASKPASS — assim não depende de remote.url nem de
-    credential.helper/insteadOf (que em alguns ambientes, como o Render, "limpam"
-    as credenciais da URL). O token é embutido no script askpass.
+    Estratégia tripla (para vencer configs globais como as do Render):
+      1. insteadOf na própria linha do comando injeta o token na URL
+         (https://github.com/... -> https://TOKEN@github.com/...), com prioridade
+         máxima, derrotando qualquer insteadOf global que "limpe" o usuário.
+      2. GIT_ASKPASS embutido fornece o token em tempo de execução (backup).
+      3. credential.helper desativado para não cachear/reescrever.
     """
     script = tempfile.NamedTemporaryFile(
         mode="w", suffix=".sh", delete=False, prefix="nexus-askpass-"
@@ -87,7 +89,11 @@ def _git_net(args, cwd, token, timeout=150):
     env["GIT_TERMINAL_PROMPT"] = "0"
     try:
         return subprocess.run(
-            ["git", "-c", "credential.helper="] + args,
+            [
+                "git",
+                "-c", "credential.helper=",
+                "-c", f"url.https://{token}@github.com/.insteadOf=https://github.com/",
+            ] + args,
             cwd=cwd, capture_output=True, text=True, timeout=timeout, env=env,
         )
     finally:
