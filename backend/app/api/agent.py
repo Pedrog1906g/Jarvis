@@ -1,13 +1,14 @@
 """Auto-melhoria do NEXUS (somente dono).
 
 Fluxo seguro:
-  1. Clona o repo (via GITHUB_TOKEN) num diretório temporário.
-  2. Cria uma tag de BACKUP do commit atual.
-  3. Pede ao LLM (Groq) UMA alteração de arquivo, restrita a pastas permitidas.
-  4. Aplica, comita e empurra para main (dispara CI de APK + deploy do Render).
-  5. Em background, monitora o build do GitHub Actions; se FALHAR, faz `git revert`
-     e empurra de volta (rollback automático). Nunca força o push (respeita a
-     branch protection do main).
+  1. Lê o GITHUB_TOKEN (variável de ambiente no Render OU token salvo criptografado
+     no banco pelo dono, via /api/agent/set_github_token).
+  2. Clona o repo num diretório temporário.
+  3. Cria uma tag de BACKUP do commit atual.
+  4. Pede ao LLM (Groq) UMA alteração de arquivo, restrita a pastas permitidas.
+  5. Aplica, comita e empurra para main (dispara CI de APK + deploy do Render).
+  6. Em background, monitora o build do GitHub Actions; se FALHAR, faz `git revert`
+     e empurra de volta (rollback automático). Nunca força o push.
 
 Tudo é owner-only e as mudanças são limitadas a código de app/backend/docs
 (NUNCA .github/workflows, segredos ou arquivos de CI).
@@ -43,8 +44,16 @@ ALLOWED_PREFIXES = (
 )
 
 REPO = os.getenv("GITHUB_REPO", "Pedrog1906g/Jarvis")
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
+GITHUB_TOKEN_ENV = os.getenv("GITHUB_TOKEN", "")
 STATUS_FILE = "/tmp/nexus_selfimprove_status.json"
+
+# Frases que disparam a auto-melhoria direto no chat (só o dono).
+TRIGGER_PHRASES = (
+    "auto melhore", "auto-melhore", "se auto melhore", "auto melhorar",
+    "melhore seu código", "melhore o código", "melhore a si mesmo",
+    "melhore seu app", "se auto aperfeiçoe", "aperfeiçoe seu código",
+    "melhore seu sistema", "se atualize", "atualize a si mesmo",
+)
 
 
 def _status(stage: str, status: str, message: str = "", backup_tag: str = "", run_url: str = ""):
@@ -82,10 +91,29 @@ def _path_allowed(path: str) -> bool:
     return any(path.startswith(p) or path == p for p in ALLOWED_PREFIXES)
 
 
+def get_github_token() -> str:
+    """Token do GitHub: prioriza variável de ambiente; senão, lê criptografado do banco."""
+    if GITHUB_TOKEN_ENV:
+        return GITHUB_TOKEN_ENV
+    try:
+        from app.db.database import SessionLocal
+        from app.core.crypto import decrypt
+        db = SessionLocal()
+        try:
+            row = db.query(models.Setting).filter_by(key="github_token").first()
+            return decrypt(row.value) if row and row.value else ""
+        finally:
+            db.close()
+    except Exception:
+        return ""
+
+
 def _latest_build_run(commit_sha: str):
-    """Retorna o run do GitHub Actions (build.yml) disparado por esse commit."""
+    token = get_github_token()
+    if not token:
+        return None
     url = f"https://api.github.com/repos/{REPO}/actions/runs?per_page=20"
-    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
     try:
         r = httpx.get(url, headers=headers, timeout=30)
         data = r.json()
@@ -114,10 +142,10 @@ def _poll_and_rollback(commit_sha: str, backup_tag: str):
                 _status("done", "success", "build OK — mudança aplicada e publicada.", backup_tag, run_url)
                 return
             else:
-                # Falhou: reverte o commit (git revert cria novo commit, sem force push).
                 try:
                     tmp = tempfile.mkdtemp()
-                    _run(["git", "clone", f"https://{GITHUB_TOKEN}@github.com/{REPO}.git", tmp], cwd="/tmp", timeout=150)
+                    token = get_github_token()
+                    _run(["git", "clone", f"https://{token}@github.com/{REPO}.git", tmp], cwd="/tmp", timeout=150)
                     _run(["git", "revert", "--no-edit", commit_sha], cwd=tmp, timeout=60)
                     res = _run(["git", "push", "origin", "main"], cwd=tmp, timeout=60)
                     if res.returncode == 0:
@@ -131,11 +159,14 @@ def _poll_and_rollback(commit_sha: str, backup_tag: str):
 
 
 def _do_self_improve(request_text: str) -> dict:
-    if not GITHUB_TOKEN:
-        return {"status": "error", "message": "GITHUB_TOKEN não configurado no Render (Environment)."}
+    token = get_github_token()
+    if not token:
+        _status("error", "no_token", "GITHUB_TOKEN não configurado (nem no Render, nem salvo no app).")
+        return {"status": "error", "message": "sem token"}
     tmp = tempfile.mkdtemp()
-    clone = _run(["git", "clone", f"https://{GITHUB_TOKEN}@github.com/{REPO}.git", tmp], cwd="/tmp", timeout=150)
+    clone = _run(["git", "clone", f"https://{token}@github.com/{REPO}.git", tmp], cwd="/tmp", timeout=150)
     if clone.returncode != 0:
+        _status("error", "clone_failed", "falha ao clonar o repo: " + clone.stderr[:200])
         return {"status": "error", "message": "falha ao clonar o repo: " + clone.stderr[:200]}
     _status("cloned", "running", "repo clonado", "")
 
@@ -160,12 +191,15 @@ def _do_self_improve(request_text: str) -> dict:
     )
     data = _extract_json(llm_out)
     if not data or not data.get("path"):
+        _status("error", "llm_invalid", "LLM não retornou mudança válida: " + str(llm_out)[:300])
         return {"status": "error", "message": "LLM não retornou mudança válida: " + str(llm_out)[:300]}
     path = data["path"]
     content = data.get("content", "")
     if not _path_allowed(path):
+        _status("error", "path_denied", f"caminho não permitido por segurança: {path}")
         return {"status": "error", "message": f"caminho não permitido por segurança: {path}"}
     if not content.strip():
+        _status("error", "empty", "conteúdo vazio recusado.")
         return {"status": "error", "message": "conteúdo vazio recusado."}
 
     # 4) escreve, comita, empurra
@@ -176,9 +210,11 @@ def _do_self_improve(request_text: str) -> dict:
     _run(["git", "add", "-A"], cwd=tmp, timeout=30)
     commit = _run(["git", "commit", "-m", f"auto-improve(owner): {request_text[:80]}"], cwd=tmp, timeout=60)
     if commit.returncode != 0:
+        _status("error", "commit_failed", "nada para commitar ou erro: " + commit.stderr[:200])
         return {"status": "error", "message": "nada para commitar ou erro: " + commit.stderr[:200]}
     push = _run(["git", "push", "origin", "main"], cwd=tmp, timeout=60)
     if push.returncode != 0:
+        _status("error", "push_failed", "falha ao empurrar: " + push.stderr[:200])
         return {"status": "error", "message": "falha ao empurrar: " + push.stderr[:200]}
 
     sha = _run(["git", "rev-parse", "HEAD"], cwd=tmp, timeout=30).stdout.strip()
@@ -191,16 +227,37 @@ def _do_self_improve(request_text: str) -> dict:
     }
 
 
+def trigger_self_improve(text: str) -> bool:
+    """Inicia a auto-melhoria em background (usado pelo chat ou pelo endpoint)."""
+    if not get_github_token():
+        _status("error", "no_token", "GITHUB_TOKEN não configurado.")
+        return False
+    _status("queued", "running", "auto-melhoria na fila (executando em background)...", "")
+    threading.Thread(target=_do_self_improve, args=(text,), daemon=True).start()
+    return True
+
+
+def detect_self_improve(text: str) -> bool:
+    t = (text or "").lower()
+    return any(p in t for p in TRIGGER_PHRASES)
+
+
 class ImproveRequest(BaseModel):
     request: str
+
+
+class GithubTokenRequest(BaseModel):
+    token: str
 
 
 @router.post("/self_improve")
 def self_improve(body: ImproveRequest, user: models.User = Depends(get_current_user)):
     if user.username != "owner":
         return {"status": "error", "message": "apenas o dono pode usar auto-melhoria"}
-    _status("queued", "running", "auto-melhoria na fila (executando em background)...", "")
-    threading.Thread(target=_do_self_improve, args=(body.request,), daemon=True).start()
+    if not get_github_token():
+        return {"status": "error",
+                "message": "GITHUB_TOKEN não configurado. Vá em Ajustes → Auto-melhoria e cole seu token do GitHub uma vez."}
+    trigger_self_improve(body.request)
     return {
         "status": "started",
         "message": "Auto-melhoria iniciada em background. Pergunte 'status da auto-melhoria' p/ acompanhar. "
@@ -212,6 +269,42 @@ def self_improve(body: ImproveRequest, user: models.User = Depends(get_current_u
 def self_improve_status(user: models.User = Depends(get_current_user)):
     try:
         with open(STATUS_FILE) as f:
-            return json.load(f)
+            data = json.load(f)
     except Exception:
-        return {"status": "idle", "message": "nenhuma auto-melhoria iniciada ainda."}
+        data = {"status": "idle", "message": "nenhuma auto-melhoria iniciada ainda."}
+    data["token_configured"] = bool(get_github_token())
+    data["token_source"] = "env" if GITHUB_TOKEN_ENV else ("db" if get_github_token() else "none")
+    return data
+
+
+@router.post("/set_github_token")
+def set_github_token(body: GithubTokenRequest, user: models.User = Depends(get_current_user)):
+    if user.username != "owner":
+        return {"status": "error", "message": "apenas o dono pode salvar o token"}
+    tok = (body.token or "").strip()
+    if not tok:
+        return {"status": "error", "message": "token vazio"}
+    try:
+        from app.db.database import SessionLocal
+        from app.core.crypto import encrypt
+        db = SessionLocal()
+        try:
+            row = db.query(models.Setting).filter_by(key="github_token").first()
+            enc = encrypt(tok)
+            if row:
+                row.value = enc
+            else:
+                row = models.Setting(key="github_token", value=enc)
+                db.add(row)
+            db.commit()
+        finally:
+            db.close()
+    except Exception as e:
+        return {"status": "error", "message": f"erro ao salvar: {e}"}
+    return {"status": "ok", "message": "Token do GitHub salvo com segurança (criptografado no banco)."}
+
+
+@router.get("/github_token_status")
+def github_token_status(user: models.User = Depends(get_current_user)):
+    tok = get_github_token()
+    return {"configured": bool(tok), "source": "env" if GITHUB_TOKEN_ENV else ("db" if tok else "none")}

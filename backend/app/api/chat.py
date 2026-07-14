@@ -113,6 +113,20 @@ async def ws_chat(websocket: WebSocket, token: str = ""):
             db.commit()
             extract_facts(db, user.id, content)
 
+            # Gatilho de auto-melhoria via chat (somente o dono).
+            if user.username == "owner":
+                from app.api import agent as _agent
+                if _agent.detect_self_improve(content):
+                    _agent.trigger_self_improve(content)
+                    await websocket.send_json({"type": "start", "conversation_id": conv.id})
+                    await websocket.send_json({
+                        "type": "delta",
+                        "content": "⚙️ Auto-melhoria iniciada em segundo plano. Vou analisar e melhorar meu "
+                                   "código, com backup automático. Pergunte 'status da auto-melhoria' para acompanhar.",
+                    })
+                    await websocket.send_json({"type": "done", "conversation_id": conv.id})
+                    continue
+
             messages = build_messages(db, user.id, conv.id, content)
             await websocket.send_json({"type": "start", "conversation_id": conv.id})
             full = []

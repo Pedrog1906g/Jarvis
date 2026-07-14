@@ -79,3 +79,12 @@ class PluginState(Base):
     enabled = Column(Boolean, default=False)
     config = Column(Text, default="{}")  # JSON
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+class Setting(Base):
+    """Chave-valor genérico para configurações do servidor (ex.: token do GitHub
+    criptografado). O valor sensível é sempre armazenado criptografado (ver core/crypto)."""
+    __tablename__ = "settings"
+    key = Column(String(120), primary_key=True)
+    value = Column(Text, nullable=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
