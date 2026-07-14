@@ -23,3 +23,8 @@ Veja [[Conexao com Obsidian]] e [[Memória da IA]].
 _2026-07-14 21:32 UTC_
 
 No Render, git push e negado (403). Use a GitHub REST API (GET/PUT/DELETE em /repos/{repo}/contents) para escrever no repo. O token do banco (criptografado) tem prioridade sobre o de ambiente. Faca sempre backup do conteudo original e rollback se o build do APK falhar.
+
+## Perfil do dono (Pedro)
+_2026-07-14 21:38 UTC_
+
+Pedro e o dono do NEXUS. Fala portugues do Brasil e NAO e programador. Responda sempre em PT-BR, simples, passo a passo, sem jargao. Ele valoriza seguranca rigida e dados locais (nada sai do aparelho alem do proprio backend).
