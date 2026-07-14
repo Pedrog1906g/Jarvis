@@ -66,12 +66,35 @@ def _run(cmd, cwd, timeout=150):
 
 
 def _git_net(args, cwd, token, timeout=150):
-    """Roda um comando git de REDE com o token na URL (como usuário) e o
-    credential.helper DESATIVADO — forma à prova de falhas em qualquer ambiente."""
-    return _run(
-        ["git", "-c", "credential.helper="] + args,
-        cwd, timeout,
+    """Roda um comando git de REDE de forma robusta em qualquer ambiente.
+
+    A URL fica SEM credencial (https://github.com/...) e o token é fornecido em
+    tempo de execução via GIT_ASKPASS — assim não depende de remote.url nem de
+    credential.helper/insteadOf (que em alguns ambientes, como o Render, "limpam"
+    as credenciais da URL). O token é embutido no script askpass.
+    """
+    script = tempfile.NamedTemporaryFile(
+        mode="w", suffix=".sh", delete=False, prefix="nexus-askpass-"
     )
+    script.write(
+        '#!/bin/sh\ncase "$1" in\n  *Username*) echo "' + token + '" ;;\n'
+        '  *Password*) echo "" ;;\nesac\n'
+    )
+    script.close()
+    os.chmod(script.name, 0o700)
+    env = dict(os.environ)
+    env["GIT_ASKPASS"] = script.name
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    try:
+        return subprocess.run(
+            ["git", "-c", "credential.helper="] + args,
+            cwd=cwd, capture_output=True, text=True, timeout=timeout, env=env,
+        )
+    finally:
+        try:
+            os.unlink(script.name)
+        except Exception:
+            pass
 
 
 def _status(stage: str, status: str, message: str = "", backup_tag: str = "", run_url: str = ""):
@@ -178,11 +201,11 @@ def _poll_and_rollback(commit_sha: str, backup_tag: str):
                 try:
                     tmp = tempfile.mkdtemp()
                     token = get_github_token()
-                    _git_net(["clone", f"https://{token}@github.com/{REPO}.git", tmp], "/tmp", token, 150)
+                    _git_net(["clone", f"https://github.com/{REPO}.git", tmp], "/tmp", token, 150)
                     _configure_identity(tmp)
                     _run(["git", "revert", "--no-edit", commit_sha], cwd=tmp, timeout=60)
                     res = _git_net(
-                        ["push", f"https://{token}@github.com/{REPO}.git", "main"],
+                        ["push", f"https://github.com/{REPO}.git", "main"],
                         tmp, token, 60,
                     )
                     if res.returncode == 0:
@@ -201,7 +224,7 @@ def _do_self_improve(request_text: str) -> dict:
         _status("error", "no_token", "GITHUB_TOKEN não configurado (nem no Render, nem salvo no app).")
         return {"status": "error", "message": "sem token"}
     tmp = tempfile.mkdtemp()
-    clone = _git_net(["clone", f"https://{token}@github.com/{REPO}.git", tmp], "/tmp", token, 150)
+    clone = _git_net(["clone", f"https://github.com/{REPO}.git", tmp], "/tmp", token, 150)
     if clone.returncode != 0:
         _status("error", "clone_failed", "falha ao clonar o repo: " + clone.stderr[:200])
         return {"status": "error", "message": "falha ao clonar o repo: " + clone.stderr[:200]}
@@ -212,7 +235,7 @@ def _do_self_improve(request_text: str) -> dict:
     rev = _run(["git", "rev-parse", "HEAD"], cwd=tmp, timeout=30).stdout.strip()
     backup_tag = f"backup-{int(time.time())}"
     _run(["git", "tag", backup_tag, rev], cwd=tmp, timeout=30)
-    _git_net(["push", f"https://{token}@github.com/{REPO}.git", backup_tag], tmp, token, 60)
+    _git_net(["push", f"https://github.com/{REPO}.git", backup_tag], tmp, token, 60)
 
     # 3) LLM propõe a mudança (1 arquivo, pasta permitida)
     system = (
@@ -250,7 +273,7 @@ def _do_self_improve(request_text: str) -> dict:
     if commit.returncode != 0:
         _status("error", "commit_failed", "nada para commitar ou erro: " + commit.stderr[:200])
         return {"status": "error", "message": "nada para commitar ou erro: " + commit.stderr[:200]}
-    push = _git_net(["push", f"https://{token}@github.com/{REPO}.git", "main"], tmp, token, 60)
+    push = _git_net(["push", f"https://github.com/{REPO}.git", "main"], tmp, token, 60)
     if push.returncode != 0:
         _status("error", "push_failed", "falha ao empurrar: " + push.stderr[:200])
         return {"status": "error", "message": "falha ao empurrar: " + push.stderr[:200]}
