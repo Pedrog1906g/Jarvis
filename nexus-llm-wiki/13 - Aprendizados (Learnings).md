@@ -93,3 +93,8 @@ Aprendizados sao salvos via POST /api/obsidian/learning e viram contexto das pro
 _2026-07-14 22:18 UTC_
 
 Implementar uma funcionalidade de ativação por voz mais sensível e menos dependente de ações manuais, como clicar no microfone, para melhorar a experiência do usuário e garantir respostas rápidas e precisas.
+
+## Otimização da Resposta por Voz
+_2026-07-14 22:48 UTC_
+
+Implementar um sistema de detecção de voz contínua e ajustar a sensibilidade do microfone para que o NEXUS AI possa responder automaticamente ao ser chamado, sem a necessidade de clique no microfone, e garantir que o volume esteja adequado para que as respostas sejam ouvidas claramente, considerando o nível de volume preferido do usuário (20), para melhorar a experiência do usuário e resolver o problema de não resposta quando chamado.
