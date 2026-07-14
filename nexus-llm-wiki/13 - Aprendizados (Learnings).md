@@ -78,3 +78,8 @@ O APK e gerado pelo GitHub Actions a cada push em main. Backend em nexus-api-2o1
 _2026-07-14 21:39 UTC_
 
 Sempre responda em PT-BR, tom natural e sem jargao (dono nao e programador). Mensagens curtas e claras sao melhores que tecnicas.
+
+## Memoria de longo prazo
+_2026-07-14 21:39 UTC_
+
+MemoryFact extrai preferencias do dono das conversas. Mantenha fatos uteis e evite ruido; campo importance de 1 a 3. Nao repita o que ja esta claro.
