@@ -87,6 +87,9 @@
   .ttsbtn{position:fixed; left:14px; bottom:80px; font-size:12px; color:var(--dim); background:var(--panel);
     border:1px solid rgba(0,229,255,.2); border-radius:20px; padding:6px 12px; cursor:pointer}
   .ttsbtn.on{color:var(--cyan); border-color:var(--cyan)}
+  .eng{position:fixed; left:14px; bottom:122px; font-size:13px; color:var(--cyan); background:var(--panel);
+    border:1px solid rgba(0,229,255,.3); border-radius:20px; padding:6px 12px; cursor:pointer}
+  .eng:hover{border-color:var(--cyan)}
 
   /* ---------- Login ---------- */
   .login{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(2,5,12,.92); z-index:50}
@@ -122,6 +125,7 @@
   <div class="bar" id="bar" style="display:none">
     <div class="inputwrap"><input id="msg" placeholder="Fale ou escreva com o JARVIS…" onkeydown="if(event.key==='Enter')send()" /></div>
     <button class="mic" id="mic" title="Falar">🎙️</button>
+    <button class="eng" id="eng" title="Pedir melhoria ao JARVIS (ele muda o código e se atualiza)">⚙️</button>
     <button class="send" id="send" title="Enviar">➤</button>
   </div>
 
@@ -212,17 +216,22 @@ function appendSystem(text){
 function setupVoices(){
   const pick=()=>{
     const vs=speechSynthesis.getVoices();
-    maleVoice = vs.find(v=>/pt[-_]BR/i.test(v.lang)&&/male|ricardo|google/i.test(v.name))
-             || vs.find(v=>/male|ricardo/i.test(v.name))
-             || vs.find(v=>/pt[-_]BR/i.test(v.lang))
-             || null;
+    if(!vs.length)return;
+    const score=v=>{
+      let s=0;
+      if(/pt[-_]BR/i.test(v.lang))s+=100; else if(/pt/i.test(v.lang))s+=40;
+      if(/male|ricardo|google/i.test(v.name))s+=50;
+      if(/neural|premium|wavenet|natural|high/i.test(v.name))s+=30;
+      return s;
+    };
+    maleVoice = vs.slice().sort((a,b)=>score(b)-score(a))[0]||null;
   };
   pick(); speechSynthesis.onvoiceschanged=pick;
 }
 function speakIfOn(text){
   if(!ttsOn||!text||!('speechSynthesis'in window))return;
   const u=new SpeechSynthesisUtterance(text.replace(/\*+|#|`/g,''));
-  u.lang='pt-BR'; u.pitch=0.7; u.rate=0.98; if(maleVoice)u.voice=maleVoice;
+  u.lang='pt-BR'; u.pitch=0.9; u.rate=1.0; if(maleVoice)u.voice=maleVoice;
   speechSynthesis.cancel(); speechSynthesis.speak(u);
 }
 document.getElementById('ttsBtn').onclick=function(){
@@ -267,6 +276,32 @@ if(SR){
   micBtn.style.opacity=.4;
 }
 document.getElementById('send').onclick=send;
+document.getElementById('eng').onclick=requestImprovement;
+
+// ---------- Pedir melhoria ao JARVIS (ele edita o código e se atualiza) ----------
+async function requestImprovement(){
+  if(!token){alert('Faça login primeiro.');return;}
+  const txt=prompt('O que você quer que o JARVIS mude ou melhore no código?\nEle edita, faz backup automático e se atualiza sozinho.\nEx.: "deixe a voz mais grave", "adicione um botão de clima", "mude a cor do app".');
+  if(!txt||!txt.trim())return;
+  appendSystem('⚙️ Enviando pedido de melhoria: '+txt.trim());
+  try{
+    const r=await fetch(serverBase+'/api/agent/self_improve',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({request:txt.trim()})});
+    const d=await r.json();
+    appendSystem(d.message||JSON.stringify(d));
+    pollImprovementStatus();
+  }catch(e){appendSystem('Erro: '+e.message);}
+}
+async function pollImprovementStatus(){
+  for(let i=0;i<24;i++){
+    await new Promise(r=>setTimeout(r,5000));
+    try{
+      const r=await fetch(serverBase+'/api/agent/self_improve/status',{headers:{'Authorization':'Bearer '+token}});
+      const d=await r.json();
+      if(d&&d.message){appendSystem('⚙️ '+d.status+': '+d.message);}
+      if(d&&(d.status==='success'||d.status==='reverted'||d.status==='manual_needed'))break;
+    }catch(e){}
+  }
+}
 </script>
 </body>
 </html>

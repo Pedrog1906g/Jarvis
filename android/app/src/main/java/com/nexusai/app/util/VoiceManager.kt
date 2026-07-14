@@ -25,13 +25,13 @@ class VoiceManager(private val context: Context) {
 
     // Ajustes de voz persistidos (compartilhados entre as instâncias).
     private val prefs = context.getSharedPreferences("jarvis_voice", Context.MODE_PRIVATE)
-    var pitch: Float = prefs.getFloat("pitch", 0.82f)
+    var pitch: Float = prefs.getFloat("pitch", 0.9f)
         set(value) {
             field = value.coerceIn(0.5f, 1.5f)
             prefs.edit().putFloat("pitch", field).apply()
             tts?.setPitch(field)
         }
-    var rate: Float = prefs.getFloat("rate", 0.98f)
+    var rate: Float = prefs.getFloat("rate", 1.0f)
         set(value) {
             field = value.coerceIn(0.5f, 2.0f)
             prefs.edit().putFloat("rate", field).apply()
@@ -53,33 +53,52 @@ class VoiceManager(private val context: Context) {
         }
     }
 
-    /** Tenta selecionar uma voz masculina e deixa o tom grave (estilo JARVIS). */
+    /**
+     * Seleciona a voz mais "humana" disponível: prioriza qualidade alta/neural,
+     * idioma pt-BR e timbre masculino (estilo JARVIS). O tom grave é ajustado
+     * via pitch/rate salvos nas preferências.
+     */
     fun applyJarvisVoice() {
         val t = tts ?: return
         t.setPitch(pitch)
         t.setSpeechRate(rate)
         try {
             val voices = t.voices ?: return
-            val male = voices.filter {
-                it.name.contains("Male", true) || it.name.contains("Masculino", true)
-                        || it.name.contains("Ricardo", true) || it.name.contains("Google", true)
+            fun score(v: Voice): Int {
+                var s = when (v.quality) {
+                    Voice.QUALITY_VERY_HIGH -> 140
+                    Voice.QUALITY_HIGH -> 90
+                    Voice.QUALITY_NORMAL -> 45
+                    Voice.QUALITY_LOW -> 15
+                    else -> 25
+                }
+                if (v.locale.language == "pt" && v.locale.country == "BR") s += 70
+                else if (v.locale.language == "pt") s += 30
+                if (v.name.contains("Male", true) || v.name.contains("Masculino", true)
+                        || v.name.contains("Ricardo", true)) s += 40
+                if (v.features.contains("network")) s += 20 // vozes online/neurais soam mais naturais
+                return s
             }
-            val chosen = male.firstOrNull { it.locale.language == "pt" && it.locale.country == "BR" }
-                ?: male.firstOrNull { it.locale.language == "en" }
-                ?: male.firstOrNull()
-                ?: voices.firstOrNull { it.locale.language == "pt" && it.locale.country == "BR" }
-                ?: voices.firstOrNull()
-            chosen?.let { t.voice = it }
+            val best = voices
+                .filter { !it.features.contains("notInstalled") }
+                .maxByOrNull { score(it) }
+            best?.let { t.voice = it }
         } catch (_: Exception) {
-            // Sem voz específica: o pitch baixo já deixa o tom mais grave.
+            // Mantém o pitch grave se não conseguir selecionar uma voz específica.
         }
     }
 
     fun speak(text: String) {
         val clean = text.replace(Regex("\\*\\*|\\*|`|#"), "").trim()
-        if (clean.isNotEmpty()) {
-            val params = Bundle()
-            tts?.speak(clean, TextToSpeech.QUEUE_FLUSH, params, "jarvis_${System.currentTimeMillis()}")
+        if (clean.isEmpty()) return
+        val t = tts ?: return
+        // Fala frase a frase (QUEUE_ADD) para um ritmo mais natural e sem cortar
+        // respostas longas. Pausas automáticas entre frases deixam a fala mais humana.
+        val parts = clean.split(Regex("(?<=[.!?…:])\\s+"))
+        parts.forEachIndexed { i, part ->
+            if (part.isBlank()) return@forEachIndexed
+            val mode = if (i == 0) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD
+            t.speak(part, mode, Bundle(), "jarvis_${System.currentTimeMillis()}_$i")
         }
     }
 

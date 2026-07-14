@@ -29,38 +29,49 @@ data class ReleaseInfo(
  */
 object UpdateChecker {
     private const val REPO = "Pedrog1906g/Jarvis"
-    private const val API = "https://api.github.com/repos/$REPO/releases/latest"
+    private const val API_LIST = "https://api.github.com/repos/$REPO/releases"
     private const val AUTHORITY = "com.nexusai.app.fileprovider"
     private val client = OkHttpClient()
 
+    /** Busca a release mais nova (maior número nexus-ai-N), ignorando rascunhos. */
     suspend fun fetchLatest(): ReleaseInfo? = withContext(Dispatchers.IO) {
         try {
-            val req = Request.Builder().url(API)
+            val req = Request.Builder().url("$API_LIST?per_page=100")
                 .header("Accept", "application/vnd.github+json")
                 .build()
             val resp = client.newCall(req).execute()
             val body = resp.body?.string() ?: return@withContext null
-            val j = JSONObject(body)
-            val tag = j.optString("tag_name", "")
-            val version = Regex("(\\d+)").find(tag)?.value?.toIntOrNull() ?: 0
-            val assets = j.optJSONArray("assets")
-            var url = ""
-            if (assets != null) {
-                for (i in 0 until assets.length()) {
-                    val o = assets.getJSONObject(i)
-                    if (o.optString("name").endsWith(".apk")) {
-                        url = o.optString("browser_download_url")
-                        break
+            val arr = org.json.JSONArray(body)
+            var best: ReleaseInfo? = null
+            for (i in 0 until arr.length()) {
+                val j = arr.getJSONObject(i)
+                if (j.optBoolean("draft", false) || j.optBoolean("prerelease", false)) continue
+                val tag = j.optString("tag_name", "")
+                val version = Regex("(\\d+)").find(tag)?.value?.toIntOrNull() ?: 0
+                if (version <= 0) continue
+                val assets = j.optJSONArray("assets")
+                var url = ""
+                if (assets != null) {
+                    for (k in 0 until assets.length()) {
+                        val o = assets.getJSONObject(k)
+                        if (o.optString("name").endsWith(".apk")) {
+                            url = o.optString("browser_download_url")
+                            break
+                        }
                     }
                 }
+                if (url.isEmpty()) continue
+                if (best == null || version > best!!.version) {
+                    best = ReleaseInfo(
+                        version = version,
+                        name = j.optString("name", tag),
+                        tag = tag,
+                        url = url,
+                        notes = j.optString("body", "")
+                    )
+                }
             }
-            ReleaseInfo(
-                version = version,
-                name = j.optString("name", tag),
-                tag = tag,
-                url = url,
-                notes = j.optString("body", "")
-            )
+            best
         } catch (_: Exception) {
             null
         }

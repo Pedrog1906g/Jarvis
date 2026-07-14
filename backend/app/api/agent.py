@@ -32,11 +32,12 @@ from app.core.llm import complete_chat
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
-# Pastas que o LLM pode tocar. .github/ e segredos ficam FORA dessa lista de propósito.
-# O Android NÃO está na lista de propósito: mudanças no app precisam de build
-# (SDK/NDK) que o ambiente de auto-melhoria não tem, e edits erradas quebram a
-# compilação do APK. O auto-melhoria atua só em backend, web e vault.
+# Pastas que o JARVIS pode modificar quando o dono pede (no celular OU no PC).
+# .github/workflows, segredos e CI ficam FORA de propósito (nunca mexer no pipeline).
+# O Android está INCLUÍDO: o JARVIS pode melhorar o próprio app; se o build falhar,
+# o backup + rollback automático restaura tudo (segurança garantida).
 ALLOWED_PREFIXES = (
+    "android/app/src/main/",
     "backend/app/",
     "backend/requirements.txt",
     "backend/.env.example",
@@ -57,8 +58,12 @@ API_BASE = "https://api.github.com"
 TRIGGER_PHRASES = (
     "auto melhore", "auto-melhore", "se auto melhore", "auto melhorar",
     "melhore seu código", "melhore o código", "melhore a si mesmo",
-    "melhore seu app", "se auto aperfeiçoe", "aperfeiçoe seu código",
+    "melhore seu app", "melhore o app", "se auto aperfeiçoe", "aperfeiçoe seu código",
     "melhore seu sistema", "se atualize", "atualize a si mesmo",
+    "mude o app", "modifique o app", "altere o app", "mexe no código", "mude o código",
+    "edite o", "altere o", "modifique o", "crie uma função", "crie uma tela",
+    "adicione uma funcionalidade", "implemente", "refatore", "corrija o bug",
+    "conserte o app", "faça uma melhoria", "melhore o jarvis", "mude o jarvis",
 )
 
 
@@ -346,6 +351,7 @@ def _do_self_improve(request_text: str) -> dict:
         "Regras: altere APENAS UM arquivo. Pastas permitidas: android/app/src/main/, backend/app/, "
         "backend/requirements.txt, backend/.env.example, render.yaml, DEPLOY.md, README.md, CHANGELOG.md. "
         "Mantenha o estilo existente; o código deve compilar; NÃO mexa em CI, segredos ou .github/. "
+        "Se o pedido NÃO for uma mudança de código (ex.: pergunta comum), responda apenas: PATH: \n```\n``` "
         "Se não conseguir fazer a mudança, responda apenas: PATH: \n```\n```"
     )
     user_msg = f"Pedido do dono: {request_text}\nRepositório: {REPO}. Proponha a mudança (1 arquivo)."

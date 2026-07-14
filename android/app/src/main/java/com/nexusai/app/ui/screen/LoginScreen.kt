@@ -73,7 +73,7 @@ fun LoginScreen(vm: AuthViewModel) {
         modifier = Modifier.fillMaxSize().background(NexusBackground).padding(24.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        Text("NEXUS", style = MaterialTheme.typography.headlineLarge, color = NexusPrimary)
+        Text("JARVIS", style = MaterialTheme.typography.headlineLarge, color = NexusPrimary)
         Text("Assistente pessoal de IA", color = NexusTextDim)
         Spacer(Modifier.height(24.dp))
 
