@@ -10,6 +10,9 @@
   no banco pelo dono (via `/api/agent/set_github_token`) sobre o `GITHUB_TOKEN` de ambiente.
   Isso contorna o token de ambiente do Render (que tem só leitura) e faz a escrita no repo
   funcionar — a auto-melhoria passa a escrever de verdade.
+- **Parser de resposta do LLM robusto**: a auto-melhoria agora aceita a mudança no formato
+  `PATH:` + bloco de código (sem exigir JSON escapado), evitando falhas de parsing quando o
+  modelo devolve o conteúdo do arquivo com quebras de linha/aspas.
 - (em andamento) **Super Base (Supabase)** + **agendamento de 20 dias** + **vault Obsidian
   no formato LLM Wiki** — ver GUIA_FACIL_NEXUS.md.
 

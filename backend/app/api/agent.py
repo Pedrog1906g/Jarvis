@@ -154,6 +154,43 @@ def _extract_json(text):
         return None
 
 
+def _parse_change(text):
+    """Extrai (path, content) da resposta do LLM.
+
+    Aceita dois formatos:
+      - JSON: {"path": "...", "content": "..."}  (fallback de compatibilidade)
+      - Formato robusto: linha 'PATH: <caminho>' seguida de um bloco de código
+        com o conteúdo COMPLETO do arquivo (sem necessidade de escapar JSON,
+        o que evita falhas com quebras de linha/aspas no conteúdo).
+    """
+    if not text:
+        return None
+    s = text.strip()
+    # 1) JSON (compatibilidade)
+    j = _extract_json(s)
+    if isinstance(j, dict) and j.get("path") and j.get("content"):
+        return j["path"].strip(), j["content"]
+    # 2) PATH: + bloco de código
+    lines = s.splitlines()
+    for i, ln in enumerate(lines):
+        if ln.strip().upper().startswith("PATH:"):
+            path = ln.split(":", 1)[1].strip().strip('`"\'')
+            path = path[1:] if path.startswith("/") else path
+            if path.startswith("./"):
+                path = path[2:]
+            rest = "\n".join(lines[i + 1:])
+            if "```" in rest:
+                parts = rest.split("```")
+                content = parts[1] if len(parts) > 1 else rest
+            else:
+                content = rest
+            content = content.strip()
+            if path and content:
+                return path, content
+            break
+    return None
+
+
 def _path_allowed(path: str) -> bool:
     if ".." in path or path.startswith("/"):
         return False
@@ -283,15 +320,21 @@ def _do_self_improve(request_text: str) -> dict:
     backup_tag = f"backup-{int(time.time())}"
     _create_backup_tag(backup_tag, head_sha, token)
 
-    # 2) LLM propõe a mudança (1 arquivo, pasta permitida)
+    # 2) LLM propõe a mudança (1 arquivo, pasta permitida) — formato robusto (sem JSON)
     system = (
         "Você é um engenheiro sênior Android (Kotlin/Jetpack Compose) e Python/FastAPI. "
-        "O usuário pediu uma melhoria no app NEXUS. Responda SOMENTE com um JSON válido, sem comentários: "
-        '{"path":"caminho/relativo/do/arquivo","content":"conteúdo COMPLETO e correto do arquivo após a mudança"}. '
-        "Regras: altere APENAS UM arquivo; mantenha o estilo existente; o código deve compilar; "
-        "não mexa em CI, segredos ou .github/. Se não conseguir, retorne {\"path\":\"\",\"content\":\"\",\"note\":\"motivo\"}."
+        "O dono pediu uma melhoria no app NEXUS. Responda EXATAMENTE neste formato, sem nada "
+        "antes ou depois (nem explicações):\n"
+        "PATH: caminho/relativo/do/arquivo\n"
+        "```\n"
+        "conteúdo COMPLETO e correto do arquivo após a mudança\n"
+        "```\n"
+        "Regras: altere APENAS UM arquivo. Pastas permitidas: android/app/src/main/, backend/app/, "
+        "backend/requirements.txt, backend/.env.example, render.yaml, DEPLOY.md, README.md, CHANGELOG.md. "
+        "Mantenha o estilo existente; o código deve compilar; NÃO mexa em CI, segredos ou .github/. "
+        "Se não conseguir fazer a mudança, responda apenas: PATH: \n```\n```"
     )
-    user_msg = f"Pedido do dono: {request_text}\nRepositório: {REPO}. Proponha a mudança."
+    user_msg = f"Pedido do dono: {request_text}\nRepositório: {REPO}. Proponha a mudança (1 arquivo)."
     try:
         llm_out = complete_chat(
             [{"role": "system", "content": system},
@@ -302,13 +345,12 @@ def _do_self_improve(request_text: str) -> dict:
         _status("error", "llm_error", f"erro ao chamar o LLM: {e}")
         return {"status": "error", "message": f"LLM error: {e}"}
 
-    data = _extract_json(llm_out)
-    if not data or not data.get("path"):
+    parsed = _parse_change(llm_out)
+    if not parsed:
         _status("error", "llm_invalid", "LLM não retornou mudança válida: " + str(llm_out)[:300])
         return {"status": "error", "message": "LLM não retornou mudança válida: " + str(llm_out)[:300]}
 
-    path = data["path"]
-    content = data.get("content", "")
+    path, content = parsed
     if not _path_allowed(path):
         _status("error", "path_denied", f"caminho não permitido por segurança: {path}")
         return {"status": "error", "message": f"caminho não permitido por segurança: {path}"}
