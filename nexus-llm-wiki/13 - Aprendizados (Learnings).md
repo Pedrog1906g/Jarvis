@@ -68,3 +68,8 @@ O Postgres free do Render expira em ~90 dias. Migrar para Supabase (sem prazo) u
 _2026-07-14 21:39 UTC_
 
 O vault nexus-llm-wiki e a memoria viva do projeto: o NEXUS le as notas como contexto e escreve aprendizados/sessoes. E o loop de aprendizado com o mentor (agente que o construiu).
+
+## Deploy e saude
+_2026-07-14 21:39 UTC_
+
+O APK e gerado pelo GitHub Actions a cada push em main. Backend em nexus-api-2o1y.onrender.com. Health check: GET /api/system/health retorna online.
