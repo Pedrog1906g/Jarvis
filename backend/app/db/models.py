@@ -88,3 +88,19 @@ class Setting(Base):
     key = Column(String(120), primary_key=True)
     value = Column(Text, nullable=True)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+class ScheduledTask(Base):
+    """Tarefa agendada para executar sozinha em uma data/hora futura (ex.: auto-melhoria
+    em 20 dias, aviso de renovação do banco). É "engatilhada" e roda no backend."""
+    __tablename__ = "scheduled_tasks"
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    action = Column(String(40), nullable=False)  # self_improve | remind
+    payload = Column(Text, default="{}")  # JSON: ex.: {"request": "..."} ou {"title","note"}
+    note = Column(Text, nullable=True)
+    run_at = Column(DateTime, nullable=False)
+    done = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=utcnow)
+
+    owner = relationship("User")

@@ -3,8 +3,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
 from app.db import models  # registra os modelos
-from app.api import auth, chat, voice, reminders, plugins, system, agent
+from app.api import auth, chat, voice, reminders, plugins, system, agent, scheduled_tasks
 from app.services.reminder_scheduler import start_scheduler
+from app.services.scheduled_tasks import start_scheduled_tasks
 from app.core.discovery import start_discovery
 from app.core.firebase import init_firebase
 from app.config import APP_NAME, APP_VERSION
@@ -15,6 +16,7 @@ Base.metadata.create_all(bind=engine)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     start_scheduler()
+    start_scheduled_tasks()  # executa tarefas agendadas (ex.: auto-melhoria de 20 em 20 dias)
     start_discovery()  # anuncia o backend na LAN via mDNS (auto-descoberta no app)
     init_firebase()    # inicializa Firebase Admin se as env vars estiverem presentes
     yield
@@ -37,6 +39,7 @@ app.include_router(reminders.router)
 app.include_router(plugins.router)
 app.include_router(system.router)
 app.include_router(agent.router)
+app.include_router(scheduled_tasks.router)
 
 
 @app.get("/")

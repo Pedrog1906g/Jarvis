@@ -13,6 +13,11 @@
 - **Parser de resposta do LLM robusto**: a auto-melhoria agora aceita a mudança no formato
   `PATH:` + bloco de código (sem exigir JSON escapado), evitando falhas de parsing quando o
   modelo devolve o conteúdo do arquivo com quebras de linha/aspas.
+- **Agendamento para o futuro (20 dias)**: novo modelo `scheduled_tasks` + agendador no
+  backend (roda em thread). O NEXUS executa tarefas sozinho no futuro — ex.: auto-melhoria
+  agendada em 20 dias e aviso de renovação antes do Postgres free do Render vencer. Endpoints
+  owner-only em `/api/scheduled_tasks`. Gambs de exemplo já incluem lembrete + auto-melhoria
+  em ~20 dias e aviso de renovação do banco.
 - (em andamento) **Super Base (Supabase)** + **agendamento de 20 dias** + **vault Obsidian
   no formato LLM Wiki** — ver GUIA_FACIL_NEXUS.md.
 
