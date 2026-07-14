@@ -28,3 +28,8 @@ No Render, git push e negado (403). Use a GitHub REST API (GET/PUT/DELETE em /re
 _2026-07-14 21:38 UTC_
 
 Pedro e o dono do NEXUS. Fala portugues do Brasil e NAO e programador. Responda sempre em PT-BR, simples, passo a passo, sem jargao. Ele valoriza seguranca rigida e dados locais (nada sai do aparelho alem do proprio backend).
+
+## Seguranca: armazenamento no app
+_2026-07-14 21:38 UTC_
+
+No Android, segredos ficam em EncryptedSharedPreferences (Android Keystore + AES-256-GCM). Nunca em texto puro. Manifest com allowBackup=false. Permissoes concedidas manualmente pelo dono.
