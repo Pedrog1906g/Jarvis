@@ -3,129 +3,270 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>NEXUS AI — Teste</title>
+<title>JARVIS — NEXUS AI</title>
 <style>
-  :root { --bg:#05070D; --surface:#0C111C; --primary:#00E5FF; --accent:#7C4DFF; --text:#E6F1FF; --dim:#7E8BA3; }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-  .wrap { max-width:680px; margin:0 auto; padding:16px; height:100vh; display:flex; flex-direction:column; }
-  h1 { color:var(--primary); font-size:22px; margin:8px 0; letter-spacing:2px; }
-  .sub { color:var(--dim); font-size:13px; margin-bottom:8px; }
-  .login { background:var(--surface); padding:16px; border-radius:12px; }
-  input { width:100%; padding:10px; margin:6px 0; border-radius:8px; border:1px solid #1b2638; background:#0a0f1a; color:var(--text); }
-  button { background:var(--primary); color:#02121a; border:0; padding:10px 14px; border-radius:8px; font-weight:600; cursor:pointer; }
-  button.ghost { background:transparent; color:var(--primary); border:1px solid var(--primary); }
-  #chat { flex:1; overflow-y:auto; padding:8px 0; }
-  .row { display:flex; margin:6px 0; }
-  .row.user { justify-content:flex-end; }
-  .bubble { max-width:85%; padding:10px 12px; border-radius:12px; white-space:pre-wrap; line-height:1.4; }
-  .row.user .bubble { background:#10303A; }
-  .row.bot .bubble { background:#111A2B; border:1px solid #16233a; }
-  .who { font-size:11px; color:var(--accent); margin-bottom:2px; }
-  .row.user .who { color:var(--primary); }
-  .bar { display:flex; gap:8px; padding-top:8px; border-top:1px solid #11192a; }
-  .bar input { flex:1; }
-  .hidden { display:none; }
-  .err { color:#FF5252; font-size:13px; margin-top:6px; }
+  :root{
+    --bg:#03060d; --panel:rgba(8,18,32,.72); --cyan:#00e5ff; --cyan2:#19f0ff;
+    --blue:#1b6dff; --violet:#7c4dff; --text:#dff3ff; --dim:#7e93ad; --red:#ff4d5e;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 800px at 50% 38%, rgba(0,120,180,.18), transparent 60%),
+      radial-gradient(900px 700px at 50% 60%, rgba(124,77,255,.10), transparent 60%),
+      var(--bg);
+    color:var(--text); font-family:"Segoe UI",system-ui,Roboto,sans-serif; overflow:hidden;
+  }
+  .gridbg:after{
+    content:""; position:fixed; inset:0; pointer-events:none; opacity:.10;
+    background-image:linear-gradient(rgba(0,229,255,.5) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,229,255,.5) 1px,transparent 1px);
+    background-size:46px 46px; mask-image:radial-gradient(circle at 50% 45%,#000 30%,transparent 75%);
+  }
+
+  /* ---------- HUD central ---------- */
+  .stage{position:fixed; inset:0; display:flex; align-items:center; justify-content:center}
+  .reactor{position:relative; width:min(62vmin,520px); height:min(62vmin,520px); display:flex; align-items:center; justify-content:center}
+  .ring{position:absolute; border-radius:50%; border:2px solid rgba(0,229,255,.25)}
+  .ring.r1{inset:0; border-style:dashed; animation:spin 26s linear infinite}
+  .ring.r2{inset:7%; border-color:rgba(124,77,255,.30); border-style:dotted; animation:spin 18s linear infinite reverse}
+  .ring.r3{inset:16%; border-color:rgba(0,229,255,.55); box-shadow:0 0 40px rgba(0,229,255,.35) inset,0 0 30px rgba(0,229,255,.25)}
+  .ring.r4{inset:24%; border-color:rgba(27,109,255,.5)}
+  .core{
+    width:34%; height:34%; border-radius:50%;
+    background:radial-gradient(circle at 50% 45%,#bff6ff,#19f0ff 38%,#0a6c8c 70%,#062a3a 100%);
+    box-shadow:0 0 60px rgba(0,229,255,.65),0 0 120px rgba(0,229,255,.35);
+    display:flex; align-items:center; justify-content:center;
+    animation:breathe 4s ease-in-out infinite;
+  }
+  .core.listening{background:radial-gradient(circle at 50% 45%,#ffd6da,#ff4d5e 40%,#7a1822 75%,#2a060c 100%);
+    box-shadow:0 0 70px rgba(255,77,94,.7),0 0 140px rgba(255,77,94,.4); animation:pulse .9s ease-in-out infinite}
+  .core .eye{width:26%;height:26%;border-radius:50%;background:#021018;box-shadow:0 0 18px rgba(0,0,0,.6) inset}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+
+  .wave{position:absolute; bottom:8%; left:50%; transform:translateX(-50%); display:flex; gap:4px; height:46px; align-items:flex-end; opacity:0; transition:.3s}
+  .wave.on{opacity:1}
+  .wave i{width:5px; background:linear-gradient(var(--cyan),var(--blue)); border-radius:3px; animation:w 1s ease-in-out infinite}
+  .wave i:nth-child(2){animation-delay:.1s}.wave i:nth-child(3){animation-delay:.2s}.wave i:nth-child(4){animation-delay:.3s}
+  .wave i:nth-child(5){animation-delay:.15s}.wave i:nth-child(6){animation-delay:.25s}.wave i:nth-child(7){animation-delay:.05s}
+  @keyframes w{0%,100%{height:8px}50%{height:42px}}
+
+  /* ---------- Chat ---------- */
+  .panel{
+    position:fixed; top:14px; right:14px; bottom:108px; width:min(440px,42vw);
+    background:var(--panel); border:1px solid rgba(0,229,255,.18); border-radius:16px;
+    backdrop-filter:blur(8px); display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:0 0 40px rgba(0,0,0,.5);
+  }
+  .phead{padding:12px 14px; border-bottom:1px solid rgba(0,229,255,.15); display:flex; align-items:center; gap:10px}
+  .phead h1{font-size:18px; letter-spacing:3px; margin:0; color:var(--cyan); text-shadow:0 0 14px rgba(0,229,255,.6)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--dim);box-shadow:0 0 8px currentColor}
+  .dot.on{background:#27e08a;color:#27e08a}.dot.off{background:var(--red);color:var(--red)}
+  .phead small{margin-left:auto;color:var(--dim);font-size:11px}
+  #chat{flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px}
+  .row{display:flex; gap:8px; max-width:92%}
+  .row.user{align-self:flex-end; flex-direction:row-reverse}
+  .bubble{padding:9px 12px; border-radius:14px; line-height:1.45; white-space:pre-wrap; font-size:14px}
+  .row.bot .bubble{background:rgba(10,26,46,.9); border:1px solid rgba(0,229,255,.22)}
+  .row.user .bubble{background:linear-gradient(135deg,#0a3b4a,#0c5a6e); color:#eafdff}
+  .who{font-size:10px; letter-spacing:1px; color:var(--cyan); margin-bottom:3px}
+  .row.user .who{color:var(--blue); text-align:right}
+  .sys{font-size:12px; color:var(--red); align-self:center; text-align:center}
+
+  .bar{position:fixed; left:14px; right:14px; bottom:14px; display:flex; gap:10px; align-items:center; padding:0 6px}
+  .bar .inputwrap{flex:1; background:var(--panel); border:1px solid rgba(0,229,255,.2); border-radius:30px; padding:4px 6px 4px 16px; display:flex; align-items:center}
+  .bar input{flex:1; background:transparent; border:0; outline:0; color:var(--text); font-size:15px; padding:10px 4px}
+  .mic,.send{width:54px;height:54px;border-radius:50%;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 40% 35%,#19f0ff,#0a6c8c); color:#02121a; box-shadow:0 0 22px rgba(0,229,255,.5); transition:.2s}
+  .mic{background:radial-gradient(circle at 40% 35%,#9fb4ff,#2742c9); box-shadow:0 0 22px rgba(60,90,255,.5)}
+  .mic.active{background:radial-gradient(circle at 40% 35%,#ff9aa6,#c41f33); box-shadow:0 0 26px rgba(255,77,94,.6); animation:pulse .9s infinite}
+  .send:active,.mic:active{transform:scale(.94)}
+  .ttsbtn{position:fixed; left:14px; bottom:80px; font-size:12px; color:var(--dim); background:var(--panel);
+    border:1px solid rgba(0,229,255,.2); border-radius:20px; padding:6px 12px; cursor:pointer}
+  .ttsbtn.on{color:var(--cyan); border-color:var(--cyan)}
+
+  /* ---------- Login ---------- */
+  .login{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(2,5,12,.92); z-index:50}
+  .login .card{width:min(380px,92vw); background:var(--panel); border:1px solid rgba(0,229,255,.25); border-radius:18px; padding:26px; box-shadow:0 0 60px rgba(0,229,255,.2)}
+  .login h2{margin:0 0 4px; color:var(--cyan); letter-spacing:4px; text-shadow:0 0 16px rgba(0,229,255,.6)}
+  .login p{color:var(--dim); font-size:13px; margin:0 0 18px}
+  .login input{width:100%; padding:12px; margin:8px 0; border-radius:10px; border:1px solid #1b2638; background:#0a0f1a; color:var(--text)}
+  .login button{width:100%; padding:12px; margin-top:10px; border:0; border-radius:10px; font-weight:700; letter-spacing:1px; cursor:pointer;
+    background:linear-gradient(135deg,#19f0ff,#1b6dff); color:#02121a}
+  .login .err{color:var(--red); font-size:13px; margin-top:8px; min-height:16px}
+  .hint{font-size:11px;color:var(--dim);margin-top:10px;line-height:1.5}
+  @media(max-width:760px){ .panel{width:auto; left:14px; right:14px; bottom:120px; top:14px} .reactor{opacity:.18; transform:scale(.8)} }
 </style>
 </head>
-<body>
-<div class="wrap">
-  <h1>NEXUS</h1>
-  <div class="sub">Cliente web de teste do cérebro (backend FastAPI + Groq)</div>
+<body class="gridbg">
+  <div class="stage"><div class="reactor" id="reactor">
+    <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><div class="ring r4"></div>
+    <div class="core" id="core"><div class="eye"></div></div>
+    <div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div></div>
 
-  <div id="login" class="login">
-    <input id="server" placeholder="Servidor (ex: http://192.168.x.x:8000)" value="http://localhost:8000" />
-    <input id="user" placeholder="Usuário" value="owner" />
-    <input id="pass" placeholder="Frase de acesso" type="password" value="nexus" />
-    <button onclick="doLogin()">Entrar</button>
-    <div id="loginErr" class="err"></div>
+  <div class="panel" id="panel" style="display:none">
+    <div class="phead">
+      <span class="dot off" id="statusDot"></span>
+      <h1>JARVIS</h1>
+      <small id="statusTxt">conectando…</small>
+    </div>
+    <div id="chat"></div>
   </div>
 
-  <div id="chat" class="hidden"></div>
+  <button class="ttsbtn on" id="ttsBtn" style="display:none">🔊 Voz do JARVIS: LIGADA</button>
 
-  <div id="bar" class="bar hidden">
-    <input id="msg" placeholder="Fale ou escreva…" onkeydown="if(event.key==='Enter')send()" />
-    <button onclick="send()">Enviar</button>
+  <div class="bar" id="bar" style="display:none">
+    <div class="inputwrap"><input id="msg" placeholder="Fale ou escreva com o JARVIS…" onkeydown="if(event.key==='Enter')send()" /></div>
+    <button class="mic" id="mic" title="Falar">🎙️</button>
+    <button class="send" id="send" title="Enviar">➤</button>
   </div>
-</div>
+
+  <div class="login" id="login">
+    <div class="card">
+      <h2>JARVIS</h2>
+      <p>Acesso ao núcleo NEXUS · use no PC</p>
+      <input id="server" placeholder="Servidor" />
+      <input id="user" placeholder="Usuário" value="owner" />
+      <input id="pass" placeholder="Frase de acesso" type="password" value="nexus" />
+      <button onclick="doLogin()">ENTRAR NO SISTEMA</button>
+      <div class="err" id="loginErr"></div>
+      <div class="hint">Servidor padrão: o endereço desta página. Deixe como está se estiver aberto no celular/PC conectado ao NEXUS.</div>
+    </div>
+  </div>
 
 <script>
-let token = null;
-let ws = null;
-let convId = null;
+let token=null, ws=null, convId=null, serverBase="";
+let ttsOn=true, recognizing=false, maleVoice=null;
 
-async function doLogin() {
-  const base = document.getElementById('server').value.replace(/\/$/,'');
-  const user = document.getElementById('user').value;
-  const pass = document.getElementById('pass').value;
-  document.getElementById('loginErr').textContent = '';
-  try {
-    const r = await fetch(base + '/api/auth/login', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username:user, passphrase:pass})
-    });
-    const data = await r.json();
-    if (!r.ok) { document.getElementById('loginErr').textContent = data.detail || 'Falha'; return; }
-    token = data.access_token;
-    document.getElementById('login').classList.add('hidden');
-    document.getElementById('chat').classList.remove('hidden');
-    document.getElementById('bar').classList.remove('hidden');
-    connectWs(base);
-  } catch(e) { document.getElementById('loginErr').textContent = 'Erro: ' + e.message; }
+// Servidor padrão = origem desta página (mesmo domínio do backend).
+document.getElementById('server').value = location.origin;
+
+async function doLogin(){
+  serverBase = document.getElementById('server').value.replace(/\/$/,'');
+  const u=document.getElementById('user').value, p=document.getElementById('pass').value;
+  document.getElementById('loginErr').textContent='';
+  try{
+    const r=await fetch(serverBase+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:u,passphrase:p})});
+    const d=await r.json();
+    if(!r.ok){document.getElementById('loginErr').textContent=d.detail||'Falha';return;}
+    token=d.access_token;
+    document.getElementById('login').style.display='none';
+    document.getElementById('panel').style.display='flex';
+    document.getElementById('bar').style.display='flex';
+    document.getElementById('ttsBtn').style.display='block';
+    setupVoices();
+    connectWs();
+  }catch(e){document.getElementById('loginErr').textContent='Erro: '+e.message;}
 }
 
-function connectWs(base) {
-  const wsBase = base.replace('http://','ws://').replace('https://','wss://');
-  ws = new WebSocket(wsBase + '/api/ws/chat?token=' + token);
-  ws.onmessage = (ev) => {
-    const m = JSON.parse(ev.data);
-    if (m.type === 'delta') appendBot(m.content);
-    else if (m.type === 'done') convId = m.conversation_id;
-    else if (m.type === 'error') appendSystem(m.message);
+function setStatus(ok, txt){
+  document.getElementById('statusDot').className='dot '+(ok?'on':'off');
+  document.getElementById('statusTxt').textContent=txt;
+}
+
+function connectWs(){
+  const wb=serverBase.replace('http://','ws://').replace('https://','wss://');
+  ws=new WebSocket(wb+'/api/ws/chat?token='+token);
+  ws.onopen=()=>setStatus(true,'online');
+  ws.onclose=()=>setStatus(false,'desconectado');
+  ws.onerror=()=>setStatus(false,'erro de conexão');
+  ws.onmessage=(ev)=>{
+    const m=JSON.parse(ev.data);
+    if(m.type==='delta') appendBot(m.content);
+    else if(m.type==='done'){convId=m.conversation_id; speakIfOn(lastBot);}
+    else if(m.type==='error') appendSystem(m.message);
   };
-  ws.onerror = () => appendSystem('Erro de conexão WebSocket');
 }
 
-function appendBot(text) {
-  let el = document.getElementById('bot-current');
-  if (!el) {
-    const wrap = document.createElement('div'); wrap.className='row bot';
-    const b = document.createElement('div'); b.className='bubble';
-    const who = document.createElement('div'); who.className='who'; who.textContent='NEXUS';
-    b.id='bot-current'; wrap.appendChild(who); wrap.appendChild(b);
-    document.getElementById('chat').appendChild(wrap);
-    el = b;
+let lastBot="";
+function appendBot(text){
+  let el=document.getElementById('bot-current');
+  if(!el){
+    const wrap=document.createElement('div'); wrap.className='row bot';
+    const who=document.createElement('div'); who.className='who'; who.textContent='JARVIS';
+    const b=document.createElement('div'); b.className='bubble'; b.id='bot-current';
+    wrap.appendChild(who); wrap.appendChild(b); document.getElementById('chat').appendChild(wrap); el=b;
   }
-  el.textContent += text;
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+  el.textContent+=text; lastBot=el.textContent;
+  const c=document.getElementById('chat'); c.scrollTop=c.scrollHeight;
 }
-
-function appendUser(text) {
-  const wrap = document.createElement('div'); wrap.className='row user';
-  const b = document.createElement('div'); b.className='bubble';
-  const who = document.createElement('div'); who.className='who'; who.textContent='Você';
-  b.textContent = text; wrap.appendChild(who); wrap.appendChild(b);
-  document.getElementById('chat').appendChild(wrap);
+function appendUser(text){
+  const wrap=document.createElement('div'); wrap.className='row user';
+  const who=document.createElement('div'); who.className='who'; who.textContent='Você';
+  const b=document.createElement('div'); b.className='bubble'; b.textContent=text;
+  wrap.appendChild(who); wrap.appendChild(b); document.getElementById('chat').appendChild(wrap);
   document.getElementById('bot-current')?.removeAttribute('id');
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+  const c=document.getElementById('chat'); c.scrollTop=c.scrollHeight;
+}
+function appendSystem(text){
+  const w=document.createElement('div'); w.className='sys'; w.textContent=text;
+  document.getElementById('chat').appendChild(w);
 }
 
-function appendSystem(text) {
-  const wrap = document.createElement('div'); wrap.className='row bot';
-  const b = document.createElement('div'); b.className='bubble'; b.style.color='#FF5252';
-  b.textContent = text; wrap.appendChild(b);
-  document.getElementById('chat').appendChild(wrap);
+// ---------- Voz (TTS no PC) ----------
+function setupVoices(){
+  const pick=()=>{
+    const vs=speechSynthesis.getVoices();
+    maleVoice = vs.find(v=>/pt[-_]BR/i.test(v.lang)&&/male|ricardo|google/i.test(v.name))
+             || vs.find(v=>/male|ricardo/i.test(v.name))
+             || vs.find(v=>/pt[-_]BR/i.test(v.lang))
+             || null;
+  };
+  pick(); speechSynthesis.onvoiceschanged=pick;
+}
+function speakIfOn(text){
+  if(!ttsOn||!text||!('speechSynthesis'in window))return;
+  const u=new SpeechSynthesisUtterance(text.replace(/\*+|#|`/g,''));
+  u.lang='pt-BR'; u.pitch=0.7; u.rate=0.98; if(maleVoice)u.voice=maleVoice;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+document.getElementById('ttsBtn').onclick=function(){
+  ttsOn=!ttsOn; this.className='ttsbtn'+(ttsOn?' on':'');
+  this.textContent= ttsOn?'🔊 Voz do JARVIS: LIGADA':'🔇 Voz do JARVIS: DESLIGADA';
+};
+
+// ---------- Música ----------
+function maybePlayMusic(text){
+  if(/\b(tocar|toque|ouvir|play|m[úu]sica|som)\b/i.test(text)){
+    const q=text.replace(/.*\b(tocar|toque|ouvir|play|m[úu]sica|som)\b/i,'')
+                .replace(/\b(no spotify|no youtube|youtube|spotify)\b/gi,'').trim()||text;
+    window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(q),'_blank');
+    return true;
+  }
+  return false;
 }
 
-function send() {
-  const inp = document.getElementById('msg');
-  const text = inp.value.trim();
-  if (!text || !ws) return;
+// ---------- Envio ----------
+function send(){
+  const inp=document.getElementById('msg'); const text=inp.value.trim();
+  if(!text||!ws)return;
   appendUser(text);
-  ws.send(JSON.stringify({type:'message', content:text, conversation_id: convId}));
-  inp.value = '';
+  if(maybePlayMusic(text)) appendSystem('▶ Abrindo música: '+text);
+  ws.send(JSON.stringify({type:'message',content:text,conversation_id:convId}));
+  inp.value='';
 }
+
+// ---------- Reconhecimento de voz (Web Speech API) ----------
+const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+const micBtn=document.getElementById('mic');
+const core=document.getElementById('core'), wave=document.getElementById('wave');
+if(SR){
+  const rec=new SR(); rec.lang='pt-BR'; rec.interimResults=false; rec.continuous=false;
+  rec.onstart=()=>{recognizing=true; micBtn.classList.add('active'); core.classList.add('listening'); wave.classList.add('on');};
+  rec.onend=()=>{recognizing=false; micBtn.classList.remove('active'); core.classList.remove('listening'); wave.classList.remove('on');};
+  rec.onerror=()=>{recognizing=false; micBtn.classList.remove('active'); core.classList.remove('listening'); wave.classList.remove('on');};
+  rec.onresult=(e)=>{ const t=e.results[0][0].transcript.trim(); if(t){document.getElementById('msg').value=t; send();} };
+  micBtn.onclick=()=>{ if(recognizing){rec.stop();return;} if(!token){alert('Faça login primeiro.');return;} rec.start(); };
+}else{
+  micBtn.title='Seu navegador não suporta reconhecimento de voz (use Chrome/Edge)';
+  micBtn.style.opacity=.4;
+}
+document.getElementById('send').onclick=send;
 </script>
 </body>
 </html>

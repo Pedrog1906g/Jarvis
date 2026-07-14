@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.db import models
 from app.core.llm import complete_chat
 from app.core.firebase import mirror_memory
-from app.core.personality import NEXUS_SYSTEM_PROMPT
+from app.core.personality import JARVIS_SYSTEM_PROMPT
 
 SHORT_TERM_LIMIT = 20  # últimas mensagens consideradas no contexto imediato
 
@@ -38,7 +38,7 @@ def get_long_term(db: Session, owner_id: int, query: str = "", limit: int = 8) -
 def build_messages(db: Session, owner_id: int, conversation_id: int, user_text: str) -> List[Dict[str, str]]:
     history = get_short_term(db, conversation_id)
     facts = get_long_term(db, owner_id, user_text)
-    system = NEXUS_SYSTEM_PROMPT
+    system = JARVIS_SYSTEM_PROMPT
     if facts:
         facts_block = "\n".join(f"- {f}" for f in facts)
         system += f"\n\nMEMÓRIA DE LONGO PRAZO (lembre-se destas preferências/fatos do usuário):\n{facts_block}"

@@ -53,9 +53,9 @@ fun SettingsScreen(authVm: AuthViewModel) {
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Assistente por voz (wake word \"Nexus\")", color = NexusText)
+                Text("Assistente por voz (wake word \"Jarvis\")", color = NexusText)
                 Text(
-                    "Mantém a NEXUS ouvindo em segundo plano, mesmo com o app fechado.",
+                    "Mantém o JARVIS ouvindo em segundo plano, mesmo com o app fechado.",
                     color = NexusTextDim, style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -77,6 +77,42 @@ fun SettingsScreen(authVm: AuthViewModel) {
         Spacer(Modifier.height(8.dp))
         Button(onClick = { requestBatteryOptimizationExemption(ctx) }) {
             Text("Otimizar bateria (manter sempre ativo)")
+        }
+
+        Spacer(Modifier.height(16.dp))
+        Divider(color = NexusSurface)
+        Spacer(Modifier.height(12.dp))
+
+        // ---- Voz do JARVIS ----
+        Text("Voz do JARVIS", color = NexusPrimary, style = MaterialTheme.typography.titleMedium)
+        Text(
+            "Ajuste o tom (mais grave = mais parecido com o JARVIS).",
+            color = NexusTextDim, style = MaterialTheme.typography.bodySmall
+        )
+        Spacer(Modifier.height(6.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Tom:", color = NexusText, modifier = Modifier.width(48.dp))
+            Slider(
+                value = vm.pitch.value,
+                onValueChange = { vm.setPitch(it) },
+                valueRange = 0.5f..1.5f,
+                modifier = Modifier.weight(1f)
+            )
+            Text("%.2f".format(vm.pitch.value), color = NexusTextDim, modifier = Modifier.width(48.dp))
+        }
+        Button(onClick = { vm.testVoice() }) { Text("Testar voz do JARVIS") }
+        vm.voiceStatus.value?.let { Text(it, color = NexusTextDim, style = MaterialTheme.typography.bodySmall) }
+
+        Spacer(Modifier.height(16.dp))
+        Divider(color = NexusSurface)
+        Spacer(Modifier.height(12.dp))
+
+        // ---- Atualização ----
+        Text("Atualização do app", color = NexusPrimary, style = MaterialTheme.typography.titleMedium)
+        Button(onClick = { vm.checkUpdate(ctx) }) { Text("Verificar atualização") }
+        vm.updateStatus.value?.let {
+            Text(it, color = if (vm.updateAvailable.value) NexusPrimary else NexusTextDim,
+                style = MaterialTheme.typography.bodySmall)
         }
 
         Spacer(Modifier.height(16.dp))

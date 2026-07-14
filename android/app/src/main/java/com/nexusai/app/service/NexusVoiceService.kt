@@ -82,13 +82,13 @@ class NexusVoiceService : Service() {
     private fun createChannel() {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "NEXUS Assistente", NotificationManager.IMPORTANCE_LOW)
+            NotificationChannel(CHANNEL_ID, "JARVIS Assistente", NotificationManager.IMPORTANCE_LOW)
         )
     }
 
     private fun buildNotification() = NotificationCompat.Builder(this, CHANNEL_ID)
-        .setContentTitle("NEXUS ativo")
-        .setContentText("Diga \"Nexus\" para falar comigo")
+        .setContentTitle("JARVIS ativo")
+        .setContentText("Diga \"Jarvis\" para falar comigo")
         .setSmallIcon(android.R.drawable.ic_btn_speak_now)
         .setOngoing(true)
         .addAction(
@@ -185,7 +185,9 @@ class NexusVoiceService : Service() {
 
     private fun containsWakeWord(text: String): Boolean {
         val t = text.lowercase()
-        return t.contains("nexus") || t.contains("néxus") || t.contains("néxis")
+        // Wake word principal: "jarvis". "nexus" fica como reserva (nome do sistema).
+        return t.contains("jarvis") || t.contains("jarvís") || t.contains("jarvi") ||
+               t.contains("nexus") || t.contains("néxus")
     }
 
     private fun onWakeDetected() {
@@ -193,7 +195,8 @@ class NexusVoiceService : Service() {
         capturing = true
         try { recognizer.stopListening() } catch (_: Exception) {}
         listening = false
-        voice.speak("Pronto")
+        voice.applyJarvisVoice()
+        voice.speak("Às ordens.")
         mainHandler.postDelayed({ startCommandListening() }, 700)
     }
 

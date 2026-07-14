@@ -1,15 +1,19 @@
 package com.nexusai.app
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.ViewModelProvider
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.nexusai.app.ui.nav.AppScaffold
 import com.nexusai.app.ui.screen.LoginScreen
 import com.nexusai.app.ui.theme.NexusTheme
 import com.nexusai.app.viewmodel.AuthViewModel
+import com.nexusai.app.util.UpdateChecker
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var authVm: AuthViewModel
@@ -25,6 +29,18 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     AppScaffold(authVm = authVm)
                 }
+            }
+        }
+
+        // Avisa sobre atualização disponível ao abrir o app.
+        lifecycleScope.launch {
+            val rel = UpdateChecker.fetchLatest()
+            if (rel != null && UpdateChecker.isUpdateAvailable(rel)) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Nova versão do JARVIS disponível (${rel.version}). Vá em Ajustes > Atualização.",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }

@@ -63,7 +63,7 @@ fun ChatScreen() {
             }
             if (isThinking) {
                 item {
-                    Text("NEXUS está pensando…", color = NexusTextDim,
+                    Text("JARVIS está pensando…", color = NexusTextDim,
                         modifier = Modifier.padding(12.dp))
                 }
             }

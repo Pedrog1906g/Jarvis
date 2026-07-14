@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.nexusai.app.NexusApplication
 import com.nexusai.app.data.model.ChatMessage
 import com.nexusai.app.data.repository.NexusRepository
+import com.nexusai.app.service.NexusController
 import com.nexusai.app.util.NexusWebSocket
 import com.nexusai.app.util.VoiceManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,6 +89,9 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     fun send(text: String) {
         val t = text.trim()
         if (t.isBlank()) return
+        // Comandos de controle local (música, abrir apps, ler tela, notificações)
+        // funcionam tanto por voz quanto digitando — fora do backend.
+        if (NexusController.tryHandleLocal(getApplication(), t, voice)) return
         ensureConnected()
         _messages.value = _messages.value + ChatMessage(id = UUID.randomUUID().toString(), role = "user", content = t)
         _isThinking.value = true

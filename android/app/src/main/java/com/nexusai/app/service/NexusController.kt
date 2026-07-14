@@ -3,6 +3,7 @@ package com.nexusai.app.service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import com.nexusai.app.util.VoiceManager
 
 /**
@@ -22,7 +23,7 @@ object NexusController {
             c.contains("mostre o que tem na tela") || c.contains("ler tela")) {
             val svc = NexusAccessibilityService.instance
             if (svc == null) {
-                voice.speak("Ative o serviço de acessibilidade do NEXUS nas configurações.")
+                voice.speak("Ative o serviço de acessibilidade do JARVIS nas configurações.")
             } else {
                 val text = svc.readScreen()
                 voice.speak(if (text.isBlank()) "A tela está vazia ou sem texto." else text.take(400))
@@ -38,27 +39,57 @@ object NexusController {
             return true
         }
 
-        // ---- Abrir app ----
-        val openMatch = Regex("""(abra|abrir|abre|inicie|iniciar|entre no|entre em|aberta)\s+(.+)""")
+        // ---- Abrir app (antes da música p/ "abrir youtube" não virar "tocar") ----
+        val openMatch = Regex("""(abra|abrir|abre|inicie|iniciar|entre no|entre em|aberta|abre o|abre a|abrir o|abrir a|abrir o app|abre o app)\s+(.+)""")
             .find(c)
         if (openMatch != null) {
-            val appName = openMatch.groupValues[2].trim()
+            val raw = openMatch.groupValues[2].trim()
+            val appName = raw.replace(
+                Regex("""\b(o|a|os|as|do|da|dos|das|no|na|nos|nas|um|uma|app|meu|minha)\b"""), " "
+            ).trim().ifBlank { raw }
             val ok = openApp(context, appName)
             voice.speak(if (ok) "Abrindo $appName" else "Não encontrei o app $appName no aparelho.")
             return true
         }
 
-        // ---- Tocar / clicar em texto ----
-        val clickMatch = Regex("""(toque|clique|aperte|selecione|toque em|clique em)\s+(.+)""")
+        // ---- Tocar / clicar em texto na tela ----
+        val clickMatch = Regex("""(toque em|toque no|toque na|clique em|clique no|aperte|selecione)\s+(.+)""")
             .find(c)
         if (clickMatch != null) {
             val target = clickMatch.groupValues[2].trim()
             val svc = NexusAccessibilityService.instance
             if (svc == null) {
-                voice.speak("Ative o serviço de acessibilidade do NEXUS para tocar na tela.")
+                voice.speak("Ative o serviço de acessibilidade do JARVIS para tocar na tela.")
             } else {
                 val ok = svc.clickByText(target)
                 voice.speak(if (ok) "Toquei em $target" else "Não encontrei $target na tela.")
+            }
+            return true
+        }
+
+        // ---- Música / tocar ----
+        if (c.contains("tocar") || c.contains("toque") || c.contains("música") ||
+            c.contains("musica") || c.contains("ouvir") || c.contains("som") ||
+            c.contains("play") || c.contains("spotify") || c.contains("youtube") ||
+            c.contains("youtube music") || c.contains("deezer")
+        ) {
+            val q = c.replace(Regex("""(.*\b(tocar|toque|ouvir|play|m[úu]sica|som)\b)"""), "")
+                .replace(Regex("""\b(no spotify|no youtube|youtube music|youtube|spotify|deezer|app|da |do )"""), " ")
+                .trim().ifBlank { c }
+            val useSpotify = c.contains("spotify")
+            val uri = if (useSpotify) {
+                Uri.parse("https://open.spotify.com/search/" + Uri.encode(q))
+            } else {
+                Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(q))
+            }
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+                voice.speak(if (q.isBlank() || q == c) "Tocando música" else "Tocando $q")
+            } catch (_: Exception) {
+                voice.speak("Não consegui abrir o player de música.")
             }
             return true
         }
@@ -87,6 +118,7 @@ object NexusController {
             "whatsapp" to "com.whatsapp",
             "instagram" to "com.instagram.android",
             "youtube" to "com.google.android.youtube",
+            "youtube music" to "com.google.android.apps.youtube.music",
             "maps" to "com.google.android.apps.maps",
             "gmail" to "com.google.android.gm",
             "chrome" to "com.android.chrome",
@@ -98,7 +130,17 @@ object NexusController {
             "camera" to "com.android.camera",
             "configurações" to "com.android.settings",
             "configuracoes" to "com.android.settings",
-            "nexus" to "com.nexusai.app"
+            "tiktok" to "com.zhiliaoapp.musically",
+            "twitter" to "com.twitter.android",
+            "x" to "com.twitter.android",
+            "linkedin" to "com.linkedin.android",
+            "netflix" to "com.netflix.mediaclient",
+            "telegram" to "org.telegram.messenger",
+            "drive" to "com.google.android.apps.docs",
+            "calendário" to "com.google.android.calendar",
+            "calculadora" to "com.google.android.calculator",
+            "nexus" to "com.nexusai.app",
+            "jarvis" to "com.nexusai.app"
         )
         val pkg = known.entries.firstOrNull { target.contains(it.key) }?.value
         if (pkg != null && launch(context, pkg)) return true

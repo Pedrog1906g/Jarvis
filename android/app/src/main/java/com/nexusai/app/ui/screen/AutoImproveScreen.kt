@@ -24,9 +24,9 @@ fun AutoImproveScreen() {
         Text("Auto-melhoria de Código", style = MaterialTheme.typography.titleLarge, color = NexusText)
         Spacer(Modifier.height(8.dp))
         Text(
-            "A NEXUS pode melhorar o próprio código sozinha. Toda mudança faz um BACKUP " +
-                "automático e, se o build quebrar, ela reverte sozinha. Você também pode pedir " +
-                "por voz: \"NEXUS, auto melhore\".",
+            "O JARVIS pode melhorar o próprio código sozinho. Toda mudança faz um BACKUP " +
+                "automático e, se o build quebrar, ele reverte sozinho. Você também pode pedir " +
+                "por voz: \"JARVIS, auto melhore\".",
             color = NexusTextDim, style = MaterialTheme.typography.bodySmall
         )
 

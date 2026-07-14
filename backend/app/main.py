@@ -1,5 +1,8 @@
+import os
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
 from app.db import models  # registra os modelos
@@ -45,7 +48,17 @@ app.include_router(scheduled_tasks.router)
 app.include_router(obsidian.router)
 
 
+# Diretório do frontend web (HUD do JARVIS para PC).
+WEB_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "web"))
+
+
+@app.get("/web")
+def web_app():
+    """HUD do JARVIS (frontend web para PC/desktop)."""
+    return FileResponse(os.path.join(WEB_DIR, "index.html"))
+
+
 @app.get("/")
 def root():
-    return {"name": APP_NAME, "status": "online", "version": APP_VERSION,
-            "docs": "/docs"}
+    """Na raiz, abre o HUD do JARVIS no navegador (uso no PC)."""
+    return FileResponse(os.path.join(WEB_DIR, "index.html"))
