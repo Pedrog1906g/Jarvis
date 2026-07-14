@@ -98,3 +98,8 @@ Implementar uma funcionalidade de ativação por voz mais sensível e menos depe
 _2026-07-14 22:48 UTC_
 
 Implementar um sistema de detecção de voz contínua e ajustar a sensibilidade do microfone para que o NEXUS AI possa responder automaticamente ao ser chamado, sem a necessidade de clique no microfone, e garantir que o volume esteja adequado para que as respostas sejam ouvidas claramente, considerando o nível de volume preferido do usuário (20), para melhorar a experiência do usuário e resolver o problema de não resposta quando chamado.
+
+## Otimização de Resposta por Voz
+_2026-07-14 23:25 UTC_
+
+Implementar uma função de 'ouvir em segundo plano' para que o NEXUS AI possa responder a comandos de voz sem a necessidade de clicar no microfone, melhorando a experiência do usuário e reduzindo a necessidade de interações manuais. Isso pode ser alcançado por meio de algoritmos de processamento de linguagem natural avançados e integração com o sistema de áudio do dispositivo para detectar comandos de voz mesmo quando o aplicativo não está em foco.
