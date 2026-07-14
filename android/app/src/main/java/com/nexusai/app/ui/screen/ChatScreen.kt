@@ -45,6 +45,7 @@ fun ChatScreen() {
 
     DisposableEffect(Unit) {
         vm.ensureConnected()
+        onDispose { }
     }
 
     LaunchedEffect(messages.size, isThinking) {

@@ -260,7 +260,7 @@ class NexusVoiceService : Service() {
         } else if (pendingCommand != null) {
             val cmd = pendingCommand
             pendingCommand = null
-            ws?.send(cmd, conversationId)
+            if (cmd != null) ws?.send(cmd, conversationId)
         }
     }
 
