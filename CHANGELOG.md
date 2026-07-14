@@ -1,5 +1,14 @@
 # CHANGELOG — NEXUS AI
 
+## v1.1.0 (auto-melhoria real + Super Base + Obsidian)
+- **Auto-melhoria funciona de verdade no Render**: `agent.py` reescrito para usar 100% a
+  **GitHub REST API** (`GET`/`PUT`/`DELETE` em `/repos/{repo}/contents`), sem `git` nenhum.
+  O Render negava `git push` com 403, mas a REST API com token Bearer funciona. Backup
+  automático (tag + conteúdo original do arquivo alvo) e **rollback sozinho** se o build
+  do APK no GitHub Actions falhar. Gatilho "auto melhore" no chat continua owner-only.
+- (em andamento) **Super Base (Supabase)** + **agendamento de 20 dias** + **vault Obsidian
+  no formato LLM Wiki** — ver GUIA_FACIL_NEXUS.md.
+
 ## v1.0.0 (tudo funcional — celular / nativo)
 - Correções de estabilidade (Jul/2026): backend aceita `null` em campos opcionais
   (`conversation_id`, `note`) que o app envia via Gson; app Android libera tráfego HTTP/WS

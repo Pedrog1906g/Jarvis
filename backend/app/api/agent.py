@@ -1,30 +1,26 @@
-"""Auto-melhoria do NEXUS (somente dono).
+"""Auto-melhoria do NEXUS (somente dono) — 100% via GitHub REST API (sem git).
 
-Fluxo seguro:
-  1. Lê o GITHUB_TOKEN (variável de ambiente no Render OU token salvo criptografado
-     no banco pelo dono, via /api/agent/set_github_token).
-  2. Clona o repo num diretório temporário.
-  3. Cria uma tag de BACKUP do commit atual.
+Fluxo seguro e sem dependência de `git` (o Render nega push via git com 403,
+mas a REST API com token Bearer funciona de verdade):
+
+  1. Lê o GITHUB_TOKEN (variável de ambiente no Render OU token salvo
+     criptografado no banco pelo dono, via /api/agent/set_github_token).
+  2. Lê o SHA atual da branch main e cria uma tag de BACKUP (best-effort).
+  3. Lê o conteúdo atual do arquivo alvo (GET /contents) como backup de rollback.
   4. Pede ao LLM (Groq) UMA alteração de arquivo, restrita a pastas permitidas.
-  5. Aplica, comita e empurra para main (dispara CI de APK + deploy do Render).
-  6. Em background, monitora o build do GitHub Actions; se FALHAR, faz `git revert`
-     e empurra de volta (rollback automático). Nunca força o push.
+  5. Aplica a mudança com PUT /repos/{repo}/contents/{path} (cria commit na main,
+     dispara CI de APK + deploy do Render). Nenhum `git` envolvido.
+  6. Em background, monitora o build do GitHub Actions; se FALHAR, restaura o
+     conteúdo original do arquivo (PUT/DELETE) — rollback automático.
 
 Tudo é owner-only e as mudanças são limitadas a código de app/backend/docs
 (NUNCA .github/workflows, segredos ou arquivos de CI).
-
-Auth git (robusta): usa o token na URL como usuário e DESATIVA o credential
-helper (`-c credential.helper=`), evitando que ambientes como o Render "limppem"
-as credenciais da remote.url após o clone. O status é persistido no BANCO
-(confiável entre instâncias do Render).
 """
 import os
 import json
 import time
+import base64
 import threading
-import tempfile
-import subprocess
-from typing import Optional
 
 import httpx
 from fastapi import APIRouter, Depends
@@ -51,6 +47,7 @@ ALLOWED_PREFIXES = (
 REPO = os.getenv("GITHUB_REPO", "Pedrog1906g/Jarvis")
 GITHUB_TOKEN_ENV = os.getenv("GITHUB_TOKEN", "")
 STATUS_KEY = "self_improve_status"
+API_BASE = "https://api.github.com"
 
 # Frases que disparam a auto-melhoria direto no chat (só o dono).
 TRIGGER_PHRASES = (
@@ -61,51 +58,69 @@ TRIGGER_PHRASES = (
 )
 
 
-def _run(cmd, cwd, timeout=150):
-    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+# --------------------------------------------------------------------------- #
+# Helpers de rede (GitHub REST API) — nenhum `git` é usado                   #
+# --------------------------------------------------------------------------- #
+def _gh(method: str, path: str, *, json_body=None, params=None, token: str = ""):
+    token = token or get_github_token()
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+    }
+    url = f"{API_BASE}/{path}"
+    return httpx.request(method, url, headers=headers, json=json_body,
+                         params=params, timeout=60)
 
 
-def _git_net(args, cwd, token, timeout=150):
-    """Roda um comando git de REDE de forma robusta em QUALQUER ambiente.
+def _get_head_sha(token: str) -> str:
+    r = _gh("GET", f"repos/{REPO}/branches/main", token=token)
+    r.raise_for_status()
+    return r.json()["commit"]["sha"]
 
-    Estratégia tripla (para vencer configs globais como as do Render):
-      1. insteadOf na própria linha do comando injeta o token na URL
-         (https://github.com/... -> https://TOKEN@github.com/...), com prioridade
-         máxima, derrotando qualquer insteadOf global que "limpe" o usuário.
-      2. GIT_ASKPASS embutido fornece o token em tempo de execução (backup).
-      3. credential.helper desativado para não cachear/reescrever.
-    """
-    script = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".sh", delete=False, prefix="nexus-askpass-"
-    )
-    script.write(
-        '#!/bin/sh\ncase "$1" in\n  *Username*) echo "' + token + '" ;;\n'
-        '  *Password*) echo "" ;;\nesac\n'
-    )
-    script.close()
-    os.chmod(script.name, 0o700)
-    env = dict(os.environ)
-    env["GIT_ASKPASS"] = script.name
-    env["GIT_TERMINAL_PROMPT"] = "0"
+
+def _get_file(path: str, token: str):
+    r = _gh("GET", f"repos/{REPO}/contents/{path}", token=token)
+    if r.status_code == 404:
+        return None
+    r.raise_for_status()
+    d = r.json()
+    content = base64.b64decode(d["content"]).decode("utf-8")
+    return {"content": content, "sha": d["sha"]}
+
+
+def _put_file(path: str, content: str, sha, message: str, token: str) -> str:
+    body = {
+        "message": message,
+        "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"),
+        "branch": "main",
+    }
+    if sha:
+        body["sha"] = sha
+    r = _gh("PUT", f"repos/{REPO}/contents/{path}", json_body=body, token=token)
+    r.raise_for_status()
+    return r.json()["commit"]["sha"]
+
+
+def _delete_file(path: str, sha: str, message: str, token: str) -> str:
+    body = {"message": message, "sha": sha, "branch": "main"}
+    r = _gh("DELETE", f"repos/{REPO}/contents/{path}", json_body=body, token=token)
+    r.raise_for_status()
+    return r.json()["commit"]["sha"]
+
+
+def _create_backup_tag(tag: str, head_sha: str, token: str):
+    """Cria uma tag de backup (best-effort). Não interrompe o fluxo se falhar."""
     try:
-        return subprocess.run(
-            [
-                "git",
-                "-c", "credential.helper=",
-                "-c", f"url.https://{token}@github.com/.insteadOf=https://github.com/",
-            ] + args,
-            cwd=cwd, capture_output=True, text=True, timeout=timeout, env=env,
-        )
-    finally:
-        try:
-            os.unlink(script.name)
-        except Exception:
-            pass
+        _gh("POST", f"repos/{REPO}/git/refs",
+            json_body={"ref": f"refs/tags/{tag}", "sha": head_sha}, token=token)
+    except Exception as e:
+        print("[NEXUS] aviso: não criou tag de backup:", e)
 
 
-def _status(stage: str, status: str, message: str = "", backup_tag: str = "", run_url: str = ""):
-    """Persiste o status da auto-melhoria no BANCO (não em /tmp), para funcionar
-    de forma confiável mesmo com várias instâncias do Render."""
+# --------------------------------------------------------------------------- #
+# Status persistido no BANCO (confiável entre instâncias do Render)          #
+# --------------------------------------------------------------------------- #
+def _status(stage, status, message="", backup_tag="", run_url=""):
     payload = json.dumps({
         "stage": stage, "status": status, "message": message,
         "backup_tag": backup_tag, "run_url": run_url, "ts": int(time.time()),
@@ -127,13 +142,7 @@ def _status(stage: str, status: str, message: str = "", backup_tag: str = "", ru
         pass
 
 
-def _configure_identity(cwd):
-    """Define a identidade do git no repo clonado (necessário p/ commitar/reverter)."""
-    _run(["git", "config", "user.email", "pedrogentil797@gmail.com"], cwd, timeout=30)
-    _run(["git", "config", "user.name", "Pedro Gentil Bastos"], cwd, timeout=30)
-
-
-def _extract_json(text: str) -> Optional[dict]:
+def _extract_json(text):
     try:
         s = text.strip()
         if "```" in s:
@@ -174,21 +183,45 @@ def _latest_build_run(commit_sha: str):
     token = get_github_token()
     if not token:
         return None
-    url = f"https://api.github.com/repos/{REPO}/actions/runs?per_page=20"
-    headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+    r = _gh("GET", f"repos/{REPO}/actions/runs?per_page=20", token=token)
     try:
-        r = httpx.get(url, headers=headers, timeout=30)
         data = r.json()
-        for run in data.get("workflow_runs", []):
-            if run.get("head_sha") == commit_sha:
-                return run
     except Exception:
-        pass
+        return None
+    for run in data.get("workflow_runs", []):
+        if run.get("head_sha") == commit_sha:
+            return run
     return None
 
 
-def _poll_and_rollback(commit_sha: str, backup_tag: str):
-    """Monitora o build; se falhar, reverte o commit (sem force push)."""
+def _rollback(backup, backup_tag, reason, run_url):
+    token = get_github_token()
+    path = backup["path"]
+    try:
+        if backup["existed"]:
+            cur = _get_file(path, token)
+            cur_sha = cur["sha"] if cur else None
+            _put_file(path, backup["old_content"], cur_sha,
+                      f"auto-rollback: restaura {path}", token)
+            _status("rolled_back", "reverted",
+                    f"{reason}; conteúdo original restaurado automaticamente.",
+                    backup_tag, run_url)
+        else:
+            cur = _get_file(path, token)
+            if cur:
+                _delete_file(path, cur["sha"], f"auto-rollback: remove {path}", token)
+                _status("rolled_back", "reverted",
+                        f"{reason}; arquivo novo removido.", backup_tag, run_url)
+            else:
+                _status("rolled_back", "reverted",
+                        f"{reason}; nada a reverter.", backup_tag, run_url)
+    except Exception as e:
+        _status("rolled_back", "manual_needed",
+                f"{reason}; falha ao reverter sozinho: {e}. Backup tag: {backup_tag}",
+                backup_tag, run_url)
+
+
+def _poll_and_rollback(commit_sha: str, backup: dict, backup_tag: str):
     _status("monitoring", "running", "acompanhando o build do APK...", backup_tag)
     deadline = time.time() + 20 * 60
     while time.time() < deadline:
@@ -201,27 +234,13 @@ def _poll_and_rollback(commit_sha: str, backup_tag: str):
         run_url = run.get("html_url", "")
         if status == "completed":
             if conclusion == "success":
-                _status("done", "success", "build OK — mudança aplicada e publicada.", backup_tag, run_url)
+                _status("done", "success",
+                        "build OK — mudança aplicada e publicada.", backup_tag, run_url)
                 return
-            else:
-                try:
-                    tmp = tempfile.mkdtemp()
-                    token = get_github_token()
-                    _git_net(["clone", f"https://github.com/{REPO}.git", tmp], "/tmp", token, 150)
-                    _configure_identity(tmp)
-                    _run(["git", "revert", "--no-edit", commit_sha], cwd=tmp, timeout=60)
-                    res = _git_net(
-                        ["push", f"https://github.com/{REPO}.git", "main"],
-                        tmp, token, 60,
-                    )
-                    if res.returncode == 0:
-                        _status("rolled_back", "reverted", f"build falhou; revertido automaticamente. {conclusion}", backup_tag, run_url)
-                    else:
-                        _status("rolled_back", "manual_needed", f"build falhou; revert manual necessário. {res.stderr[:200]}", backup_tag, run_url)
-                except Exception as e:
-                    _status("rolled_back", "manual_needed", f"erro ao reverter: {e}", backup_tag, run_url)
-                return
-    _status("monitoring", "timeout", "timeout monitorando o build (verifique em Actions).", backup_tag)
+            _rollback(backup, backup_tag, f"build falhou ({conclusion})", run_url)
+            return
+    _status("monitoring", "timeout",
+            "timeout monitorando o build (verifique em Actions).", backup_tag)
 
 
 def _do_self_improve(request_text: str) -> dict:
@@ -229,21 +248,18 @@ def _do_self_improve(request_text: str) -> dict:
     if not token:
         _status("error", "no_token", "GITHUB_TOKEN não configurado (nem no Render, nem salvo no app).")
         return {"status": "error", "message": "sem token"}
-    tmp = tempfile.mkdtemp()
-    clone = _git_net(["clone", f"https://github.com/{REPO}.git", tmp], "/tmp", token, 150)
-    if clone.returncode != 0:
-        _status("error", "clone_failed", "falha ao clonar o repo: " + clone.stderr[:200])
-        return {"status": "error", "message": "falha ao clonar o repo: " + clone.stderr[:200]}
-    _configure_identity(tmp)
-    _status("cloned", "running", "repo clonado", "")
 
-    # 2) backup
-    rev = _run(["git", "rev-parse", "HEAD"], cwd=tmp, timeout=30).stdout.strip()
+    # 1) SHA da main + tag de backup (best-effort)
+    try:
+        head_sha = _get_head_sha(token)
+    except Exception as e:
+        _status("error", "repo_unreachable", f"não consegui ler o repo: {e}")
+        return {"status": "error", "message": f"repo unreachable: {e}"}
+
     backup_tag = f"backup-{int(time.time())}"
-    _run(["git", "tag", backup_tag, rev], cwd=tmp, timeout=30)
-    _git_net(["push", f"https://github.com/{REPO}.git", backup_tag], tmp, token, 60)
+    _create_backup_tag(backup_tag, head_sha, token)
 
-    # 3) LLM propõe a mudança (1 arquivo, pasta permitida)
+    # 2) LLM propõe a mudança (1 arquivo, pasta permitida)
     system = (
         "Você é um engenheiro sênior Android (Kotlin/Jetpack Compose) e Python/FastAPI. "
         "O usuário pediu uma melhoria no app NEXUS. Responda SOMENTE com um JSON válido, sem comentários: "
@@ -252,14 +268,21 @@ def _do_self_improve(request_text: str) -> dict:
         "não mexa em CI, segredos ou .github/. Se não conseguir, retorne {\"path\":\"\",\"content\":\"\",\"note\":\"motivo\"}."
     )
     user_msg = f"Pedido do dono: {request_text}\nRepositório: {REPO}. Proponha a mudança."
-    llm_out = complete_chat(
-        [{"role": "system", "content": system}, {"role": "user", "content": user_msg}],
-        temperature=0.2,
-    )
+    try:
+        llm_out = complete_chat(
+            [{"role": "system", "content": system},
+             {"role": "user", "content": user_msg}],
+            temperature=0.2,
+        )
+    except Exception as e:
+        _status("error", "llm_error", f"erro ao chamar o LLM: {e}")
+        return {"status": "error", "message": f"LLM error: {e}"}
+
     data = _extract_json(llm_out)
     if not data or not data.get("path"):
         _status("error", "llm_invalid", "LLM não retornou mudança válida: " + str(llm_out)[:300])
         return {"status": "error", "message": "LLM não retornou mudança válida: " + str(llm_out)[:300]}
+
     path = data["path"]
     content = data.get("content", "")
     if not _path_allowed(path):
@@ -269,28 +292,32 @@ def _do_self_improve(request_text: str) -> dict:
         _status("error", "empty", "conteúdo vazio recusado.")
         return {"status": "error", "message": "conteúdo vazio recusado."}
 
-    # 4) escreve, comita, empurra
-    full = os.path.join(tmp, path)
-    os.makedirs(os.path.dirname(full), exist_ok=True)
-    with open(full, "w", encoding="utf-8") as f:
-        f.write(content)
-    _run(["git", "add", "-A"], cwd=tmp, timeout=30)
-    commit = _run(["git", "commit", "-m", f"auto-improve(owner): {request_text[:80]}"], cwd=tmp, timeout=60)
-    if commit.returncode != 0:
-        _status("error", "commit_failed", "nada para commitar ou erro: " + commit.stderr[:200])
-        return {"status": "error", "message": "nada para commitar ou erro: " + commit.stderr[:200]}
-    push = _git_net(["push", f"https://github.com/{REPO}.git", "main"], tmp, token, 60)
-    if push.returncode != 0:
-        _status("error", "push_failed", "falha ao empurrar: " + push.stderr[:200])
-        return {"status": "error", "message": "falha ao empurrar: " + push.stderr[:200]}
+    # 3) estado atual do arquivo (backup de rollback)
+    existing = _get_file(path, token)
+    backup = {
+        "path": path,
+        "existed": existing is not None,
+        "old_content": existing["content"] if existing else "",
+        "old_sha": existing["sha"] if existing else "",
+    }
 
-    sha = _run(["git", "rev-parse", "HEAD"], cwd=tmp, timeout=30).stdout.strip()
-    _status("pushed", "running", "empurrado — build do APK iniciado.", backup_tag)
-    _poll_and_rollback(sha, backup_tag)  # roda dentro da thread de background
+    # 4) aplica via REST API (sem git)
+    try:
+        commit_sha = _put_file(
+            path, content, backup["old_sha"] or None,
+            f"auto-improve(owner): {request_text[:80]}", token,
+        )
+    except Exception as e:
+        _status("error", "push_failed", f"falha ao gravar no repo: {e}")
+        return {"status": "error", "message": f"falha ao gravar no repo: {e}"}
+
+    _status("pushed", "running", "mudança enviada via API do GitHub — build do APK iniciado.", backup_tag)
+    threading.Thread(target=_poll_and_rollback, args=(commit_sha, backup, backup_tag),
+                    daemon=True).start()
     return {
         "status": "started",
         "backup_tag": backup_tag,
-        "message": "Mudança enviada. Estou monitorando o build; se falhar, reverterei sozinho. Backup: " + backup_tag,
+        "message": "Mudança enviada. Estou monitorando o build; se falhar, revertero sozinho (backup automático). Backup: " + backup_tag,
     }
 
 
