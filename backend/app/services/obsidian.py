@@ -54,9 +54,10 @@ def chat_context_message() -> dict:
 
 def _append(note: str, block: str) -> bool:
     r = github_fs.gh_read(note)
+    sha = r[1] if r else None
     existing = r[0] if r else ""
     new = (existing.rstrip() + "\n\n" + block) if existing.strip() else block
-    return github_fs.gh_write(note, new, f"obsidian: atualiza {note}")
+    return github_fs.gh_write(note, new, f"obsidian: atualiza {note}", sha)
 
 
 def add_learning(title: str, content: str) -> bool:
