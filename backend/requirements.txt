@@ -9,4 +9,8 @@ httpx==0.27.2
 python-multipart==0.0.12
 openai==1.47.1
 zeroconf>=0.115.0
-firebase-admin>=6.0.0
+
+# Opcional: Firebase Admin SDK. É pesado (puxa grpcio/cryptography/google-cloud-*).
+# Só é necessário se você for usar Firebase. Veja requirements-firebase.txt.
+# O app faz import lazy dele, então rodar SEM ele é seguro (Firebase fica desativado
+# até você instalá-lo e definir as variáveis FIREBASE_* no Render).
