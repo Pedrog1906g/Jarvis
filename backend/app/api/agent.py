@@ -33,11 +33,15 @@ from app.core.llm import complete_chat
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
 # Pastas que o LLM pode tocar. .github/ e segredos ficam FORA dessa lista de propósito.
+# O Android NÃO está na lista de propósito: mudanças no app precisam de build
+# (SDK/NDK) que o ambiente de auto-melhoria não tem, e edits erradas quebram a
+# compilação do APK. O auto-melhoria atua só em backend, web e vault.
 ALLOWED_PREFIXES = (
-    "android/app/src/main/",
     "backend/app/",
     "backend/requirements.txt",
     "backend/.env.example",
+    "web/",
+    "nexus-llm-wiki/",
     "render.yaml",
     "DEPLOY.md",
     "README.md",
