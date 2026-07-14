@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
 from app.db import models  # registra os modelos
-from app.api import auth, chat, voice, reminders, plugins, system
+from app.api import auth, chat, voice, reminders, plugins, system, agent
 from app.services.reminder_scheduler import start_scheduler
 from app.core.discovery import start_discovery
 from app.core.firebase import init_firebase
@@ -36,6 +36,7 @@ app.include_router(voice.router)
 app.include_router(reminders.router)
 app.include_router(plugins.router)
 app.include_router(system.router)
+app.include_router(agent.router)
 
 
 @app.get("/")

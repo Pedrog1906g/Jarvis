@@ -43,3 +43,8 @@ services:
         sync: false
       - key: FIREBASE_PRIVATE_KEY
         sync: false
+      # Auto-melhoria (somente o dono): o backend usa para empurrar mudanças de código.
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_REPO
+        value: "Pedrog1906g/Jarvis"

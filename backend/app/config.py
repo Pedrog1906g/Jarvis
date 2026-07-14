@@ -36,5 +36,9 @@ FIREBASE_CLIENT_EMAIL = os.getenv("FIREBASE_CLIENT_EMAIL", "")
 FIREBASE_PRIVATE_KEY = os.getenv("FIREBASE_PRIVATE_KEY", "")
 AUTH_MODE = os.getenv("AUTH_MODE", "jwt")  # jwt | firebase
 
+# Auto-melhoria (somente o dono pode empurrar mudanças pro repo).
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
+GITHUB_REPO = os.getenv("GITHUB_REPO", "Pedrog1906g/Jarvis")
+
 APP_VERSION = "1.0.0"
 APP_NAME = "NEXUS AI"
