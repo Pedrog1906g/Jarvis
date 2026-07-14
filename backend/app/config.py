@@ -29,5 +29,5 @@ OPENAI_TTS_API_KEY = os.getenv("OPENAI_TTS_API_KEY", "")
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 
-APP_VERSION = "0.1.0"
+APP_VERSION = "1.0.0"
 APP_NAME = "NEXUS AI"

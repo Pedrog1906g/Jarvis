@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Optional
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -11,14 +12,14 @@ router = APIRouter(prefix="/api/reminders", tags=["reminders"])
 
 class ReminderCreate(BaseModel):
     title: str
-    note: str = None
+    note: Optional[str] = None
     due_at: str  # ISO 8601, ex.: 2026-07-15T09:30:00
 
 
 class ReminderOut(BaseModel):
     id: int
     title: str
-    note: str = None
+    note: Optional[str] = None
     due_at: str
     done: bool
 
