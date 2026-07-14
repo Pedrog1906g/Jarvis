@@ -36,4 +36,17 @@ interface NexusApi {
 
     @POST("/api/plugins/system/command")
     suspend fun systemCommand(@Header("Authorization") auth: String, @Body body: Map<String, String>): Map<String, Any>
+
+    // ---- Auto-melhoria de código ----
+    @POST("/api/agent/self_improve")
+    suspend fun selfImprove(@Header("Authorization") auth: String, @Body body: Map<String, String>): Map<String, Any>
+
+    @GET("/api/agent/self_improve/status")
+    suspend fun selfImproveStatus(@Header("Authorization") auth: String): Map<String, Any>
+
+    @POST("/api/agent/set_github_token")
+    suspend fun setGithubToken(@Header("Authorization") auth: String, @Body body: Map<String, String>): Map<String, Any>
+
+    @GET("/api/agent/github_token_status")
+    suspend fun githubTokenStatus(@Header("Authorization") auth: String): Map<String, Any>
 }

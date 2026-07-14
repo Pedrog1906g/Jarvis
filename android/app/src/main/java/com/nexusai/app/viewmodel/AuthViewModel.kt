@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.nexusai.app.NexusApplication
 import com.nexusai.app.data.repository.NexusRepository
+import com.nexusai.app.service.NexusVoiceService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -56,6 +57,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun logout() {
+        try { NexusVoiceService.stop(getApplication()) } catch (_: Exception) {}
         repo.tokenStore.clear()
         _token.value = null
         status.value = AuthStatus.Idle

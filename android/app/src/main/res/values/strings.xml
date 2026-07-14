@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">NEXUS AI</string>
     <string name="welcome">Sistema NEXUS online.</string>
+    <string name="accessibility_label">NEXUS Assistente (Acessibilidade)</string>
+    <string name="notif_listener_label">NEXUS Notificações</string>
+    <string name="accessibility_desc">O NEXUS usa a acessibilidade para ler a tela e tocar em elementos quando você pede (por voz ou comando). Nenhuma informação de tela é enviada a lugar nenhum além do seu próprio backend.</string>
 </resources>

@@ -32,6 +32,8 @@ fun AppScaffold(authVm: AuthViewModel) {
                     "history" to "Histórico",
                     "reminders" to "Lembretes",
                     "devices" to "Dispositivos",
+                    "controle" to "Controle",
+                    "auto" to "Auto-melhoria",
                     "settings" to "Ajustes"
                 )
                 items.forEach { (key, label) ->
@@ -65,6 +67,8 @@ fun AppScaffold(authVm: AuthViewModel) {
                     "history" -> HistoryScreen()
                     "reminders" -> RemindersScreen()
                     "devices" -> DevicesScreen()
+                    "controle" -> ControlScreen()
+                    "auto" -> AutoImproveScreen()
                     "settings" -> SettingsScreen(authVm)
                 }
             }

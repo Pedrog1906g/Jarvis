@@ -27,4 +27,15 @@ class NexusRepository(val tokenStore: TokenStore) {
     suspend fun plugins(): List<PluginState> = api.plugins(auth())
     suspend fun spotify(cmd: String): Map<String, Any> = api.spotifyCommand(auth(), mapOf("command" to cmd))
     suspend fun system(cmd: String): Map<String, Any> = api.systemCommand(auth(), mapOf("command" to cmd))
+
+    // ---- Auto-melhoria de código ----
+    suspend fun selfImprove(request: String): Map<String, Any> =
+        api.selfImprove(auth(), mapOf("request" to request))
+
+    suspend fun selfImproveStatus(): Map<String, Any> = api.selfImproveStatus(auth())
+
+    suspend fun setGithubToken(token: String): Map<String, Any> =
+        api.setGithubToken(auth(), mapOf("token" to token))
+
+    suspend fun githubTokenStatus(): Map<String, Any> = api.githubTokenStatus(auth())
 }

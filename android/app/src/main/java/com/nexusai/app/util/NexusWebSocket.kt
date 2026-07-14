@@ -13,7 +13,8 @@ class NexusWebSocket(
     private val token: String,
     private val onDelta: (String) -> Unit,
     private val onDone: (Int) -> Unit,
-    private val onError: (String) -> Unit
+    private val onError: (String) -> Unit,
+    private val onOpen: () -> Unit = {}
 ) {
     private val client = OkHttpClient.Builder().pingInterval(20, TimeUnit.SECONDS).build()
     private var ws: WebSocket? = null
@@ -25,6 +26,10 @@ class NexusWebSocket(
         val url = "$wsBase/api/ws/chat?token=$token"
         val req = Request.Builder().url(url).build()
         ws = client.newWebSocket(req, object : WebSocketListener() {
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                onOpen()
+            }
+
             override fun onMessage(webSocket: WebSocket, text: String) {
                 try {
                     val json = JSONObject(text)
