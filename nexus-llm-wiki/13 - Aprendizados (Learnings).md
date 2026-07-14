@@ -48,3 +48,8 @@ Backend FastAPI no Render + app Android Kotlin/Compose + Postgres (migrando para
 _2026-07-14 21:38 UTC_
 
 Wake word Nexus (NexusVoiceService). Controle do aparelho via AccessibilityService + NotificationListener (NexusController). Permissoes concedidas manualmente pelo dono nas configuracoes do Android.
+
+## Auto-melhoria: regras de escopo
+_2026-07-14 21:38 UTC_
+
+A IA so pode tocar pastas permitidas (android/app/src/main, backend/app, backend/requirements.txt, render.yaml, README, CHANGELOG, DEPLOY). Nunca CI/segredos/.github. Uma mudanca por vez, sempre com backup e rollback automatico.
