@@ -20,6 +20,9 @@ Vault em formato **skill LLM Wiki** para o [[NEXUS AI]]. Cada nota tem *frontmat
 - LLMs/skills: leia o `frontmatter` de cada nota para decidir se ela responde ao pedido;
   siga os `triggers` para rotear perguntas.
 
+> Este vault agora é **vivo**: o backend do NEXUS lê estas notas como contexto e escreve
+> de volta (aprendizados e sessões). Veja [[Conexão com Obsidian]].
+
 ## Mapa de conteúdo
 - [[Visão Geral]] — o que é, para quem e o que resolve
 - [[Arquitetura]] — componentes e fluxo de dados
@@ -30,6 +33,9 @@ Vault em formato **skill LLM Wiki** para o [[NEXUS AI]]. Cada nota tem *frontmat
 - [[Super Base (Supabase)]] — migração do Postgres free para Supabase
 - [[Agendamentos e Lembretes]] — tarefas futuras (ex.: auto-melhoria em 20 dias)
 - [[Memória da IA]] — o que o NEXUS guarda sobre o dono e o projeto
+- [[Conexão com Obsidian]] — como o NEXUS lê e escreve neste vault (ligação viva)
+- [[Registro de Sessões]] — log automático das sessões/auto-melhorias
+- [[Aprendizados (Learnings)]] — o que o NEXUS aprende (e como aprende com o mentor)
 - [[Guias e Troubleshooting]] — passos rápidos e consertos comuns
 
 > Mantido sincronizado com o repositório `Pedrog1906g/Jarvis` (branch `main`).

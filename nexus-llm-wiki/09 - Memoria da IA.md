@@ -38,4 +38,7 @@ backend persiste dados relacionais (ver [[Backend FastAPI]]):
 > Regra de ouro ao editar este vault: mantenha o *frontmatter* e os *wikilinks*; assim
 > tanto humanos ([[Obsidian]]) quanto LLMs entendem e navegam o conhecimento.
 
+> Este vault está **conectado ao NEXUS** (o backend lê e escreve estas notas).
+> Veja [[Conexão com Obsidian]].
+
 Veja também: [[Índice (MOC)]], [[Visão Geral]], [[Segurança]].

@@ -297,8 +297,18 @@ def _poll_and_rollback(commit_sha: str, backup: dict, backup_tag: str):
             if conclusion == "success":
                 _status("done", "success",
                         "build OK — mudança aplicada e publicada.", backup_tag, run_url)
+                try:
+                    from app.services import obsidian as _obs
+                    _obs.log_session("Auto-melhoria: build OK e publicado via GitHub REST API (backup + rollback disponíveis).")
+                except Exception:
+                    pass
                 return
             _rollback(backup, backup_tag, f"build falhou ({conclusion})", run_url)
+            try:
+                from app.services import obsidian as _obs
+                _obs.log_session(f"Auto-melhoria: build falhou ({conclusion}); rollback automático acionado.")
+            except Exception:
+                pass
             return
     _status("monitoring", "timeout",
             "timeout monitorando o build (verifique em Actions).", backup_tag)

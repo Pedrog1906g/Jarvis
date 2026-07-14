@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
 from app.db import models  # registra os modelos
-from app.api import auth, chat, voice, reminders, plugins, system, agent, scheduled_tasks
+from app.api import auth, chat, voice, reminders, plugins, system, agent, scheduled_tasks, obsidian
 from app.services.reminder_scheduler import start_scheduler
 from app.services.scheduled_tasks import start_scheduled_tasks
 from app.core.discovery import start_discovery
@@ -40,6 +40,7 @@ app.include_router(plugins.router)
 app.include_router(system.router)
 app.include_router(agent.router)
 app.include_router(scheduled_tasks.router)
+app.include_router(obsidian.router)
 
 
 @app.get("/")

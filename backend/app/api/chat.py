@@ -9,6 +9,7 @@ from app.core.security import get_current_user, ws_user
 from app.core.llm import stream_chat, is_available
 from app.core.memory import build_messages, extract_facts
 from app.core.firebase import mirror_user, mirror_message
+from app.services import obsidian as _obs
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
@@ -28,6 +29,9 @@ def chat(req: ChatRequest, db: Session = Depends(get_db),
     extract_facts(db, user.id, req.content)
 
     messages = build_messages(db, user.id, conv.id, req.content)
+    _vctx = _obs.chat_context_message()
+    if _vctx:
+        messages.insert(1, _vctx)
     reply = "".join(stream_chat(messages))
     db.add(models.Message(conversation_id=conv.id, role="assistant", content=reply))
     db.commit()
@@ -128,6 +132,9 @@ async def ws_chat(websocket: WebSocket, token: str = ""):
                     continue
 
             messages = build_messages(db, user.id, conv.id, content)
+            _vctx = _obs.chat_context_message()
+            if _vctx:
+                messages.insert(1, _vctx)
             await websocket.send_json({"type": "start", "conversation_id": conv.id})
             full = []
             for delta in stream_chat(messages):
