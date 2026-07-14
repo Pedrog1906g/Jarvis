@@ -2,9 +2,10 @@ package com.nexusai.app.data.remote
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import com.nexusai.app.util.NexusConfig
 
 object RetrofitClient {
-    var baseUrl: String = "http://10.0.2.2:8000" // emulador aponta para o localhost do PC
+    var baseUrl: String = NexusConfig.API_BASE_URL // URL pública do backend (Render)
     var api: NexusApi = build()
 
     private fun build(): NexusApi = Retrofit.Builder()

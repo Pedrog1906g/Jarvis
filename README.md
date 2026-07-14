@@ -126,7 +126,10 @@ Pré-requisitos: **Android Studio** (Hedgehog+), SDK 34.
 2. `Run 'app'` num emulador ou celular (USB com Depuração USB).
 
 ### Conectar o app ao backend
-- **Emulador**: o padrão `http://10.0.2.2:8000` já aponta para o `localhost` do PC. ✅
+> Deploy em nuvem (Render + Firebase)? Veja [`DEPLOY.md`](DEPLOY.md).
+
+- **Nuvem (padrão)**: o app já aponta para `https://nexus-api.onrender.com` (backend no Render).
+- **Emulador (local)**: altere para `http://10.0.2.2:8000` (localhost do PC). ✅
 - **Celular físico** (mesma Wi-Fi do PC):
   - Toque em **"🔎 Buscar na rede"** na tela de Login — o app descobre o backend sozinho via
     mDNS (o backend anuncia o serviço `_nexus._tcp`; precisa de `zeroconf` instalado).
@@ -170,6 +173,13 @@ Nunca cole a chave no chat — use essa tela.
 5. Pipeline de atualização OTA (Firebase App Distribution / Play Store).
 
 ---
+
+## Deploy em nuvem (Render + Firebase)
+
+O backend está pronto para deploy no Render (`render.yaml` + `Procfile`, escuta em `0.0.0.0:$PORT`)
+e o app aponta para a URL pública do Render por padrão. O Firebase entra como Auth + Firestore
+(opcional, via Environment Variables — nenhuma chave no APK). Passo a passo completo em
+[`DEPLOY.md`](DEPLOY.md).
 
 ## Estrutura de pastas
 ```

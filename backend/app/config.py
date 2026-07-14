@@ -29,5 +29,12 @@ OPENAI_TTS_API_KEY = os.getenv("OPENAI_TTS_API_KEY", "")
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 
+# --- Firebase (opcional, via variáveis de ambiente no Render) ---
+# Se definidas, o backend inicializa o Firebase Admin SDK e espelha dados no Firestore.
+FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "")
+FIREBASE_CLIENT_EMAIL = os.getenv("FIREBASE_CLIENT_EMAIL", "")
+FIREBASE_PRIVATE_KEY = os.getenv("FIREBASE_PRIVATE_KEY", "")
+AUTH_MODE = os.getenv("AUTH_MODE", "jwt")  # jwt | firebase
+
 APP_VERSION = "1.0.0"
 APP_NAME = "NEXUS AI"

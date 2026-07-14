@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db import models
 from app.core.security import get_current_user
+from app.core.firebase import mirror_reminder
 
 router = APIRouter(prefix="/api/reminders", tags=["reminders"])
 
@@ -41,6 +42,10 @@ def create_reminder(req: ReminderCreate, db: Session = Depends(get_db),
     db.add(r)
     db.commit()
     db.refresh(r)
+    try:
+        mirror_reminder(user.id, r)
+    except Exception:
+        pass
     return _serialize(r)
 
 

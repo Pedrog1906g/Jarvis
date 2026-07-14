@@ -1,0 +1,43 @@
+# Render (https://render.com) — configuração de deploy do backend NEXUS AI.
+# Como usar:
+#   1. No Render, crie um "New Web Service" via este repositório (Blueprint ou manual).
+#   2. O Render lê este arquivo; os segredos marcados com `sync: false` devem ser
+#      preenchidos no painel (Environment Variables) — NUNCA commite chaves.
+services:
+  - type: web
+    name: nexus-api
+    runtime: python
+    pythonVersion: "3.11"
+    # O código do backend está em ./backend — apontar o Render para esse diretório.
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/system/health
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: PYTHON_VERSION
+        value: "3.11"
+      # Prove que o servidor escuta em 0.0.0.0 (não só localhost) — obrigatório no Render.
+      - key: HOST
+        value: "0.0.0.0"
+      # Modo DEMO (sem Groq) até você colocar a chave.
+      - key: GROQ_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: OWNER_PASSPHRASE
+        value: "nexus"
+      # SQLite funciona, mas o disco do Render é efêmero. Para persistir, aponte para
+      # um Postgres do Render ou use o espelhamento Firestore (veja DEPLOY.md).
+      - key: DATABASE_URL
+        value: "sqlite:///./nexus.db"
+      # Firebase (opcional): preencha no painel do Render quando configurar o Firebase.
+      - key: AUTH_MODE
+        value: "jwt"
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false

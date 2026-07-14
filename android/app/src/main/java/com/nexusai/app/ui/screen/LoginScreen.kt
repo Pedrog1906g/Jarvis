@@ -111,8 +111,8 @@ fun LoginScreen(vm: AuthViewModel) {
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            "Emulador: http://10.0.2.2:8000 · Celular físico: use o IP da máquina " +
-                "(ex: http://192.168.0.15:8000) ou toque em \"Buscar na rede\".",
+            "Padrão: https://nexus-api.onrender.com (backend na nuvem). Em rede local, " +
+                "toque em \"Buscar na rede\" ou digite o IP (ex: http://192.168.0.15:8000).",
             style = MaterialTheme.typography.bodySmall, color = NexusTextDim
         )
         if (connMsg != null) {

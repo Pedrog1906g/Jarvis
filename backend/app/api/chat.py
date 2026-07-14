@@ -8,6 +8,7 @@ from app.db import models
 from app.core.security import get_current_user, ws_user
 from app.core.llm import stream_chat, is_available
 from app.core.memory import build_messages, extract_facts
+from app.core.firebase import mirror_user, mirror_message
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
@@ -30,6 +31,19 @@ def chat(req: ChatRequest, db: Session = Depends(get_db),
     reply = "".join(stream_chat(messages))
     db.add(models.Message(conversation_id=conv.id, role="assistant", content=reply))
     db.commit()
+    # Espelha no Firestore (best-effort) quando o Firebase está ativo.
+    try:
+        mirror_user(user)
+        last_user = db.query(models.Message).filter_by(
+            conversation_id=conv.id, role="user").order_by(models.Message.id.desc()).first()
+        last_asst = db.query(models.Message).filter_by(
+            conversation_id=conv.id, role="assistant").order_by(models.Message.id.desc()).first()
+        if last_user:
+            mirror_message(conv.id, last_user)
+        if last_asst:
+            mirror_message(conv.id, last_asst)
+    except Exception:
+        pass
     return {"conversation_id": conv.id, "reply": reply, "demo": not is_available()}
 
 

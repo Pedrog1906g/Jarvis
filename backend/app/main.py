@@ -6,6 +6,7 @@ from app.db import models  # registra os modelos
 from app.api import auth, chat, voice, reminders, plugins, system
 from app.services.reminder_scheduler import start_scheduler
 from app.core.discovery import start_discovery
+from app.core.firebase import init_firebase
 from app.config import APP_NAME, APP_VERSION
 
 Base.metadata.create_all(bind=engine)
@@ -15,6 +16,7 @@ Base.metadata.create_all(bind=engine)
 async def lifespan(app: FastAPI):
     start_scheduler()
     start_discovery()  # anuncia o backend na LAN via mDNS (auto-descoberta no app)
+    init_firebase()    # inicializa Firebase Admin se as env vars estiverem presentes
     yield
 
 

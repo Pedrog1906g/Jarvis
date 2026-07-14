@@ -8,6 +8,11 @@
 - Conexão em celular físico (Jul/2026): **auto-descoberta do backend via mDNS** (o app acha
   o servidor na mesma Wi-Fi sem digitar IP) + botão **"Testar conexão"** na tela de Login.
   O backend anuncia o serviço `_nexus._tcp` na LAN (requer `zeroconf` instalado).
+- Infraestrutura em nuvem (Jul/2026): `render.yaml` + `Procfile` (backend escuta em
+  `0.0.0.0:$PORT`); URL padrão do app aponta para `https://nexus-api.onrender.com` via
+  `API_BASE_URL`; integração **Firebase Admin SDK** (env vars `FIREBASE_*`, auth bridge
+  `/api/auth/firebase` e espelhamento Firestore de usuários/histórico/memória/lembretes).
+  Guia passo a passo em `DEPLOY.md`.
 - Build do APK nativo Android (Kotlin + Jetpack Compose) gerado e instalável.
 - Tela de **Chaves** no app: cole a Groq API Key e o Spotify Client ID/Secret direto pelo app.
 - **Hot-reload** da chave Groq: liga o modelo real sem reiniciar o backend.

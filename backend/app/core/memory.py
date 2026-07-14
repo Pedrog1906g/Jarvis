@@ -2,6 +2,7 @@ from typing import List, Dict
 from sqlalchemy.orm import Session
 from app.db import models
 from app.core.llm import complete_chat
+from app.core.firebase import mirror_memory
 from app.core.personality import NEXUS_SYSTEM_PROMPT
 
 SHORT_TERM_LIMIT = 20  # últimas mensagens consideradas no contexto imediato
@@ -75,5 +76,12 @@ def extract_facts(db: Session, owner_id: int, user_text: str):
                     importance=int(item.get("importance", 1)),
                 ))
         db.commit()
+        # Espelha a memória de longo prazo no Firestore (best-effort).
+        try:
+            facts = db.query(models.MemoryFact).filter(
+                models.MemoryFact.owner_id == owner_id).all()
+            mirror_memory(owner_id, [f.fact for f in facts])
+        except Exception:
+            pass
     except Exception:
         db.rollback()
