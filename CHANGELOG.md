@@ -1,6 +1,10 @@
 # CHANGELOG — NEXUS AI
 
 ## v1.0.0 (tudo funcional — celular / nativo)
+- Correções de estabilidade (Jul/2026): backend aceita `null` em campos opcionais
+  (`conversation_id`, `note`) que o app envia via Gson; app Android libera tráfego HTTP/WS
+  (cleartext) para conexão em dev; deep link `nexusai://spotify/callback`; ícone adaptativo;
+  backend migrado para `lifespan` + suíte de testes pytest rodando no CI.
 - Build do APK nativo Android (Kotlin + Jetpack Compose) gerado e instalável.
 - Tela de **Chaves** no app: cole a Groq API Key e o Spotify Client ID/Secret direto pelo app.
 - **Hot-reload** da chave Groq: liga o modelo real sem reiniciar o backend.

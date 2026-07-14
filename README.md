@@ -1,5 +1,9 @@
 # NEXUS AI — Assistente Pessoal (estilo JARVIS)
 
+![Build APK](https://github.com/Pedrog1906g/Jarvis/actions/workflows/build.yml/badge.svg)
+![Backend Tests](https://github.com/Pedrog1906g/Jarvis/actions/workflows/test-backend.yml/badge.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+
 Projeto iniciado em **modo de testes (v1.0.0)**, começando pela **versão de celular (Android nativo)**.
 O objetivo é ter tudo **funcional para a fase de testes de 1–2 semanas**, e eu (o agente) vou
 **evoluindo o código continuamente** conforme você for testando e pedindo ajustes.
@@ -108,7 +112,9 @@ você abre o link no navegador, o APK baixa e instala (com "Fontes desconhecidas
    ```
    (ou me mande o repositório + um token de acesso e eu empurro e disparo o build pra você)
 3. Vá em **Actions** → o workflow `Build NEXUS AI APK` roda sozinho.
-4. Quando terminar, vá em **Releases** → baixe o `nexus-ai-v1_0_0.apk`.
+4. Quando terminar, vá em **Releases** → baixe o `app-debug.apk`.
+   Link direto de instalação (sempre o APK mais recente):
+   `https://github.com/Pedrog1906g/Jarvis/releases/latest/download/app-debug.apk`
 5. No celular: abra o link/arquivo → permita "Instalar de fontes desconhecidas" → instale.
 
 > O workflow está em `.github/workflows/build.yml`. Ele instala JDK17 + Android SDK,

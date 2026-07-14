@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
@@ -8,7 +9,14 @@ from app.config import APP_NAME, APP_VERSION
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title=APP_NAME, version=APP_VERSION)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    start_scheduler()
+    yield
+
+
+app = FastAPI(title=APP_NAME, version=APP_VERSION, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,11 +32,6 @@ app.include_router(voice.router)
 app.include_router(reminders.router)
 app.include_router(plugins.router)
 app.include_router(system.router)
-
-
-@app.on_event("startup")
-def startup():
-    start_scheduler()
 
 
 @app.get("/")

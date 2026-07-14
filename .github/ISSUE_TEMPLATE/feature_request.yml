@@ -1,0 +1,29 @@
+name: Feature request
+description: Sugira uma melhoria para a NEXUS AI
+title: "[FEAT] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Proposta
+      description: O que você gostaria que existisse?
+    validations:
+      required: true
+  - type: textarea
+    id: motivo
+    attributes:
+      label: Por que é útil?
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Onde se aplica?
+      options:
+        - App Android
+        - Backend (FastAPI)
+        - Cliente Web
+        - Outro
+    validations:
+      required: false

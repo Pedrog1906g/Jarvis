@@ -1,0 +1,44 @@
+name: Bug report
+description: Reporte um problema no NEXUS AI
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área afetada
+      options:
+        - App Android
+        - Backend (FastAPI)
+        - Cliente Web
+        - CI / Build (GitHub Actions)
+        - Outro
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: O que aconteceu?
+      description: Descreva o bug com o máximo de detalhe.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Passos para reproduzir
+      placeholder: "1. ...\n2. ...\n3. ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: O que era esperado?
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / prints / mensagens de erro
+      render: shell
+    validations:
+      required: false
