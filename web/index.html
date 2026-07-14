@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>NEXUS AI — Teste</title>
+<style>
+  :root { --bg:#05070D; --surface:#0C111C; --primary:#00E5FF; --accent:#7C4DFF; --text:#E6F1FF; --dim:#7E8BA3; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  .wrap { max-width:680px; margin:0 auto; padding:16px; height:100vh; display:flex; flex-direction:column; }
+  h1 { color:var(--primary); font-size:22px; margin:8px 0; letter-spacing:2px; }
+  .sub { color:var(--dim); font-size:13px; margin-bottom:8px; }
+  .login { background:var(--surface); padding:16px; border-radius:12px; }
+  input { width:100%; padding:10px; margin:6px 0; border-radius:8px; border:1px solid #1b2638; background:#0a0f1a; color:var(--text); }
+  button { background:var(--primary); color:#02121a; border:0; padding:10px 14px; border-radius:8px; font-weight:600; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--primary); border:1px solid var(--primary); }
+  #chat { flex:1; overflow-y:auto; padding:8px 0; }
+  .row { display:flex; margin:6px 0; }
+  .row.user { justify-content:flex-end; }
+  .bubble { max-width:85%; padding:10px 12px; border-radius:12px; white-space:pre-wrap; line-height:1.4; }
+  .row.user .bubble { background:#10303A; }
+  .row.bot .bubble { background:#111A2B; border:1px solid #16233a; }
+  .who { font-size:11px; color:var(--accent); margin-bottom:2px; }
+  .row.user .who { color:var(--primary); }
+  .bar { display:flex; gap:8px; padding-top:8px; border-top:1px solid #11192a; }
+  .bar input { flex:1; }
+  .hidden { display:none; }
+  .err { color:#FF5252; font-size:13px; margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>NEXUS</h1>
+  <div class="sub">Cliente web de teste do cérebro (backend FastAPI + Groq)</div>
+
+  <div id="login" class="login">
+    <input id="server" placeholder="Servidor (ex: http://192.168.x.x:8000)" value="http://localhost:8000" />
+    <input id="user" placeholder="Usuário" value="owner" />
+    <input id="pass" placeholder="Frase de acesso" type="password" value="nexus" />
+    <button onclick="doLogin()">Entrar</button>
+    <div id="loginErr" class="err"></div>
+  </div>
+
+  <div id="chat" class="hidden"></div>
+
+  <div id="bar" class="bar hidden">
+    <input id="msg" placeholder="Fale ou escreva…" onkeydown="if(event.key==='Enter')send()" />
+    <button onclick="send()">Enviar</button>
+  </div>
+</div>
+
+<script>
+let token = null;
+let ws = null;
+let convId = null;
+
+async function doLogin() {
+  const base = document.getElementById('server').value.replace(/\/$/,'');
+  const user = document.getElementById('user').value;
+  const pass = document.getElementById('pass').value;
+  document.getElementById('loginErr').textContent = '';
+  try {
+    const r = await fetch(base + '/api/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:user, passphrase:pass})
+    });
+    const data = await r.json();
+    if (!r.ok) { document.getElementById('loginErr').textContent = data.detail || 'Falha'; return; }
+    token = data.access_token;
+    document.getElementById('login').classList.add('hidden');
+    document.getElementById('chat').classList.remove('hidden');
+    document.getElementById('bar').classList.remove('hidden');
+    connectWs(base);
+  } catch(e) { document.getElementById('loginErr').textContent = 'Erro: ' + e.message; }
+}
+
+function connectWs(base) {
+  const wsBase = base.replace('http://','ws://').replace('https://','wss://');
+  ws = new WebSocket(wsBase + '/api/ws/chat?token=' + token);
+  ws.onmessage = (ev) => {
+    const m = JSON.parse(ev.data);
+    if (m.type === 'delta') appendBot(m.content);
+    else if (m.type === 'done') convId = m.conversation_id;
+    else if (m.type === 'error') appendSystem(m.message);
+  };
+  ws.onerror = () => appendSystem('Erro de conexão WebSocket');
+}
+
+function appendBot(text) {
+  let el = document.getElementById('bot-current');
+  if (!el) {
+    const wrap = document.createElement('div'); wrap.className='row bot';
+    const b = document.createElement('div'); b.className='bubble';
+    const who = document.createElement('div'); who.className='who'; who.textContent='NEXUS';
+    b.id='bot-current'; wrap.appendChild(who); wrap.appendChild(b);
+    document.getElementById('chat').appendChild(wrap);
+    el = b;
+  }
+  el.textContent += text;
+  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+}
+
+function appendUser(text) {
+  const wrap = document.createElement('div'); wrap.className='row user';
+  const b = document.createElement('div'); b.className='bubble';
+  const who = document.createElement('div'); who.className='who'; who.textContent='Você';
+  b.textContent = text; wrap.appendChild(who); wrap.appendChild(b);
+  document.getElementById('chat').appendChild(wrap);
+  document.getElementById('bot-current')?.removeAttribute('id');
+  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+}
+
+function appendSystem(text) {
+  const wrap = document.createElement('div'); wrap.className='row bot';
+  const b = document.createElement('div'); b.className='bubble'; b.style.color='#FF5252';
+  b.textContent = text; wrap.appendChild(b);
+  document.getElementById('chat').appendChild(wrap);
+}
+
+function send() {
+  const inp = document.getElementById('msg');
+  const text = inp.value.trim();
+  if (!text || !ws) return;
+  appendUser(text);
+  ws.send(JSON.stringify({type:'message', content:text, conversation_id: convId}));
+  inp.value = '';
+}
+</script>
+</body>
+</html>

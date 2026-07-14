@@ -1,0 +1,21 @@
+# Secrets / env
+backend/.env
+**/.env
+*.db
+*.sqlite3
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Android build
+android/.gradle/
+android/app/build/
+android/build/
+local.properties
+*.keystore
+
+# OS
+.DS_Store
