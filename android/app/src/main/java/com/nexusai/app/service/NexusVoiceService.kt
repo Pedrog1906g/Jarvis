@@ -42,6 +42,7 @@ class NexusVoiceService : Service() {
 
     private var mode = Mode.WAKE
     private var capturing = false
+    private var transitioning = false
     private var listening = false
     private var conversationId: Int? = null
     private var pendingCommand: String? = null
@@ -134,6 +135,7 @@ class NexusVoiceService : Service() {
     }
 
     private fun startCommandListening() {
+        transitioning = false
         mode = Mode.COMMAND
         capturing = false
         listening = true
@@ -175,7 +177,14 @@ class NexusVoiceService : Service() {
         }
 
         override fun onError(error: Int) {
-            scheduleRestart()
+            if (mode == Mode.COMMAND) {
+                if (transitioning) return // fim da transição wake->comando: aguarda startCommandListening
+                // Erro enquanto capturava o comando: volta a escutar a wake word.
+                capturing = false
+                startWakeListening()
+            } else {
+                scheduleRestart()
+            }
         }
 
         override fun onReadyForSpeech(bundle: Bundle?) {}
@@ -196,6 +205,8 @@ class NexusVoiceService : Service() {
     private fun onWakeDetected() {
         if (capturing) return
         capturing = true
+        transitioning = true
+        mode = Mode.COMMAND
         try { recognizer.stopListening() } catch (_: Exception) {}
         listening = false
         voice.applyJarvisVoice()
@@ -204,24 +215,27 @@ class NexusVoiceService : Service() {
     }
 
     private fun handleResult(text: String) {
-        // Ignora o "onResults" final que surge ao parar o reconhecimento durante
-        // a detecção da wake word (evita reiniciar antes de capturar o comando).
-        if (mode == Mode.WAKE && capturing) return
         val trimmed = text.trim()
         if (mode == Mode.WAKE) {
+            // Ignora o "onResults" final que surge ao parar o reconhecimento durante
+            // a detecção da wake word (evita reiniciar antes de capturar o comando).
+            if (capturing) return
             if (containsWakeWord(trimmed)) onWakeDetected()
             else scheduleRestart()
         } else {
-            if (trimmed.isEmpty()) {
+            // Remove a própria wake word do comando ("jarvis toque música" -> "toque música").
+            val cmd = trimmed.replace(Regex("(?i)\\b(jarvis|nexus)\\b"), "").trim()
+            if (cmd.isEmpty()) {
                 startWakeListening()
                 return
             }
+            capturing = false
             // Comando local (controle do celular) tem prioridade sobre o backend.
-            if (NexusController.tryHandleLocal(this, trimmed, voice)) {
+            if (NexusController.tryHandleLocal(this, cmd, voice)) {
                 startWakeListening()
                 return
             }
-            sendToBackend(trimmed)
+            sendToBackend(cmd)
         }
     }
 

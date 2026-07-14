@@ -124,7 +124,7 @@
 
   <div class="bar" id="bar" style="display:none">
     <div class="inputwrap"><input id="msg" placeholder="Fale ou escreva com o JARVIS…" onkeydown="if(event.key==='Enter')send()" /></div>
-    <button class="mic" id="mic" title="Falar">🎙️</button>
+    <button class="mic" id="mic" title="Ativar escuta contínua: diga 'Jarvis'">🎙️</button>
     <button class="eng" id="eng" title="Pedir melhoria ao JARVIS (ele muda o código e se atualiza)">⚙️</button>
     <button class="send" id="send" title="Enviar">➤</button>
   </div>
@@ -144,7 +144,7 @@
 
 <script>
 let token=null, ws=null, convId=null, serverBase="";
-let ttsOn=true, recognizing=false, maleVoice=null;
+let ttsOn=true, recognizing=false, maleVoice=null, listenMode=false, expectingCmd=false;
 
 // Servidor padrão = origem desta página (mesmo domínio do backend).
 document.getElementById('server').value = location.origin;
@@ -265,12 +265,46 @@ const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
 const micBtn=document.getElementById('mic');
 const core=document.getElementById('core'), wave=document.getElementById('wave');
 if(SR){
-  const rec=new SR(); rec.lang='pt-BR'; rec.interimResults=false; rec.continuous=false;
+  const rec=new SR();
+  rec.lang='pt-BR'; rec.interimResults=true; rec.continuous=true; rec.maxAlternatives=1;
   rec.onstart=()=>{recognizing=true; micBtn.classList.add('active'); core.classList.add('listening'); wave.classList.add('on');};
-  rec.onend=()=>{recognizing=false; micBtn.classList.remove('active'); core.classList.remove('listening'); wave.classList.remove('on');};
-  rec.onerror=()=>{recognizing=false; micBtn.classList.remove('active'); core.classList.remove('listening'); wave.classList.remove('on');};
-  rec.onresult=(e)=>{ const t=e.results[0][0].transcript.trim(); if(t){document.getElementById('msg').value=t; send();} };
-  micBtn.onclick=()=>{ if(recognizing){rec.stop();return;} if(!token){alert('Faça login primeiro.');return;} rec.start(); };
+  rec.onend=()=>{
+    recognizing=false; micBtn.classList.remove('active'); core.classList.remove('listening'); wave.classList.remove('on');
+    if(listenMode){ setTimeout(()=>{ try{ rec.start(); }catch(e){} }, 400); }
+  };
+  rec.onerror=(e)=>{
+    const err=(e&&e.error)?e.error:'';
+    if(err==='not-allowed'||err==='service-not-allowed'){
+      listenMode=false;
+      appendSystem('🎙️ Microfone bloqueado. Permita o uso do microfone no navegador (ícone de cadeado na barra) e recarregue a página.');
+    } else if(err==='network'){
+      appendSystem('🎙️ Sem conexão com o serviço de voz (precisa de internet).');
+    }
+    // onend cuida de reiniciar se estiver em modo contínuo
+  };
+  rec.onresult=(e)=>{
+    let t='';
+    for(let i=0;i<e.results.length;i++){ if(e.results[i].isFinal) t+=e.results[i][0].transcript; }
+    t=t.trim();
+    if(!t) return;
+    const low=t.toLowerCase();
+    if(low.includes('jarvis')||low.includes('nexus')){
+      const cmd=t.replace(/\b(jarvis|nexus)\b/gi,'').trim();
+      if(cmd){ document.getElementById('msg').value=cmd; send(); expectingCmd=false; }
+      else { expectingCmd=true; appendSystem('🎙️ JARVIS na escuta… fale seu comando.'); }
+    } else if(expectingCmd){
+      expectingCmd=false; document.getElementById('msg').value=t; send();
+    } else if(!listenMode){
+      document.getElementById('msg').value=t; send();
+    }
+  };
+  micBtn.onclick=()=>{
+    if(!token){ alert('Faça login primeiro.'); return; }
+    if(listenMode){ listenMode=false; try{rec.stop();}catch(e){} appendSystem('🎙️ Escuta contínua desligada.'); return; }
+    listenMode=true; expectingCmd=false;
+    try{ rec.start(); appendSystem('🎙️ Escuta contínua ATIVADA: diga "Jarvis" e seu comando (ex.: "Jarvis, toque música").'); }
+    catch(err){ listenMode=false; appendSystem('🎙️ Não consegui iniciar o microfone: '+err.message); }
+  };
 }else{
   micBtn.title='Seu navegador não suporta reconhecimento de voz (use Chrome/Edge)';
   micBtn.style.opacity=.4;
