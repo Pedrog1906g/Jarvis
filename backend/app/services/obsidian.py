@@ -27,6 +27,11 @@ def _truncate(s: str, n: int = 900) -> str:
     return s if len(s) <= n else s[:n] + "\n... (truncado)"
 
 
+def _tail(s: str, n: int = 1600) -> str:
+    s = (s or "").strip()
+    return s if len(s) <= n else "... (aprendizados mais antigos omitidos)\n" + s[-n:]
+
+
 def load_context(force: bool = False) -> str:
     now = time.time()
     if not force and _CACHE["text"] is not None and now - _CACHE["ts"] < _TTL:
@@ -35,7 +40,10 @@ def load_context(force: bool = False) -> str:
     for note in CONTEXT_NOTES:
         r = github_fs.gh_read(note)
         if r:
-            parts.append(f"### {note.split('/')[-1]}\n{_truncate(r[0])}")
+            if note.endswith("Aprendizados (Learnings).md"):
+                parts.append(f"### {note.split('/')[-1]}\n{_tail(r[0], 1600)}")
+            else:
+                parts.append(f"### {note.split('/')[-1]}\n{_truncate(r[0], 700)}")
     text = "\n\n".join(parts)
     _CACHE["text"] = text
     _CACHE["ts"] = now
