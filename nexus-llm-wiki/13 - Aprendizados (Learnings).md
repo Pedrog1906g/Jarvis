@@ -73,3 +73,8 @@ O vault nexus-llm-wiki e a memoria viva do projeto: o NEXUS le as notas como con
 _2026-07-14 21:39 UTC_
 
 O APK e gerado pelo GitHub Actions a cada push em main. Backend em nexus-api-2o1y.onrender.com. Health check: GET /api/system/health retorna online.
+
+## Idioma das respostas
+_2026-07-14 21:39 UTC_
+
+Sempre responda em PT-BR, tom natural e sem jargao (dono nao e programador). Mensagens curtas e claras sao melhores que tecnicas.
