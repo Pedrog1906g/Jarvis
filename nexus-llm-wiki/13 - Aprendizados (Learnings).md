@@ -18,3 +18,8 @@ tags: [nexus, aprendizados, learning, conhecimento]
 O agente Arena ajuda a construir o NEXUS e registra aqui o que ensina. O backend lê
 esta nota e injeta no modelo — então o NEXUS "aprende" com o mentor continuamente.
 Veja [[Conexao com Obsidian]] e [[Memória da IA]].
+
+## TESTE DEBUG
+_2026-07-14_
+
+conteudo de teste
