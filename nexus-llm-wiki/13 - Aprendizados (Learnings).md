@@ -33,3 +33,8 @@ Pedro e o dono do NEXUS. Fala portugues do Brasil e NAO e programador. Responda 
 _2026-07-14 21:38 UTC_
 
 No Android, segredos ficam em EncryptedSharedPreferences (Android Keystore + AES-256-GCM). Nunca em texto puro. Manifest com allowBackup=false. Permissoes concedidas manualmente pelo dono.
+
+## Seguranca: token do GitHub
+_2026-07-14 21:38 UTC_
+
+O token do GitHub e salvo criptografado no banco (Fernet, chave derivada de JWT_SECRET) e tem prioridade sobre o token de ambiente. Rotas de auto-melhoria e agendamento sao owner-only.
