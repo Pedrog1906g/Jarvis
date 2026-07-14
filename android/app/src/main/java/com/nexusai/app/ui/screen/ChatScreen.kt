@@ -12,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.unit.dp
@@ -27,10 +26,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChatScreen() {
     val vm: ChatViewModel = viewModel()
-    val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
-    val voice = remember { VoiceManager(ctx) }
+    val voice = vm.getVoice()
 
     val messages by vm.messages.collectAsState()
     val isThinking by vm.isThinking.collectAsState()
@@ -47,8 +45,6 @@ fun ChatScreen() {
 
     DisposableEffect(Unit) {
         vm.ensureConnected()
-        voice.initTts()
-        onDispose { voice.shutdown() }
     }
 
     LaunchedEffect(messages.size, isThinking) {

@@ -7,6 +7,7 @@ import com.nexusai.app.NexusApplication
 import com.nexusai.app.data.model.ChatMessage
 import com.nexusai.app.data.repository.NexusRepository
 import com.nexusai.app.util.NexusWebSocket
+import com.nexusai.app.util.VoiceManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +35,15 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     private var ws: NexusWebSocket? = null
     private var streamingIndex: Int? = null
 
+    // Voz (TTS/STT) — instância única, com o contexto da Application.
+    private val voice = VoiceManager(app)
+
+    init {
+        voice.initTts()
+    }
+
+    fun getVoice(): VoiceManager = voice
+
     fun ensureConnected() {
         if (ws == null) {
             val token = repo.tokenStore.getToken() ?: return
@@ -45,6 +55,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 onDone = { cid ->
                     if (cid > 0) _conversationId.value = cid
                     _isThinking.value = false
+                    // Fala a resposta do assistente automaticamente.
+                    _messages.value.lastOrNull()?.let {
+                        if (it.role == "assistant") voice.speak(it.content)
+                    }
                 },
                 onError = { e ->
                     _error.value = e
@@ -109,5 +123,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     override fun onCleared() {
         ws?.close()
+        voice.shutdown()
     }
 }
