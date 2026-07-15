@@ -1,47 +1,56 @@
-# Super Base (Supabase) — passo a passo
+# Supabase — NEXUS AI
 
-O NEXUS usa Postgres via SQLAlchemy + `psycopg2`. O Supabase **é** Postgres, então
-a troca é direta: não precisa mudar nenhuma linha de código do app — só a string de
-conexão (`DATABASE_URL`).
+O NEXUS já está **preparado** para o Supabase. Não há nada fixado em código: basta
+preencher as variáveis de ambiente.
 
-## Por que migrar
+## O que já existe (pronto para usar)
+- `supabase/schema.sql` — cria tabelas, índices, RLS (segurança por linha) e o
+  trigger que cria o perfil do usuário no login do Auth.
+- `supabase/README.md` — passo a passo de configuração.
+- `backend/app/core/supabase_client.py` — cliente configurável (no-op se não
+  configurado; import preguiçoso do `supabase-py`).
+- `backend/app/services/supabase_sync.py` — sincronização best-effort de
+  mensagens/memória/config (cross-device). Não quebra se desativado.
+
+## Por que usar
 - O Postgres free do Render **expira em ~90 dias** (os dados somem).
-- O Supabase tem camada free sem prazo e traz Auth, Storage e Realtime de brinde.
+- O Supabase tem camada free sem prazo e traz Auth, Storage e Realtime.
 
 ## 1) Criar o projeto
-1. Acesse https://supabase.com e crie um projeto (região mais perto de você).
-2. Anote a **senha** do banco (você define na criação).
-3. Vá em **Settings → Database → Connection string** e copie a URI `postgresql://...`.
-   Ela tem o formato:
-   `postgresql://postgres:<SENHA>@db.<PROJETO>.supabase.co:5432/postgres`
+1. https://supabase.com → crie um projeto (região perto de você).
+2. Anote a senha do banco.
+3. Settings → Database → Connection string → copie a URI
+   `postgresql://postgres:<SENHA>@db.<PROJ>.supabase.co:5432/postgres`.
 
-## 2) Migrar os dados atuais
-No seu computador (com o repo clonado e o Python do backend instalado):
+## 2) Criar as tabelas
+SQL Editor → cole `supabase/schema.sql` → Run.
+
+## 3) Migrar os dados atuais (opcional)
+No seu PC (repo clonado, Python do backend instalado):
 
 ```bash
 cd Jarvis/backend
 pip install -r requirements.txt
-export DATABASE_URL="postgresql://USUARIO:SENHA@db.render.com:5432/nexus"   # ORIGEM (Render)
+export DATABASE_URL="postgresql://USUARIO:SENHA@db.render.com:5432/nexus"   # ORIGEM
 export TARGET_DATABASE_URL="postgresql://postgres:<SENHA>@db.<PROJ>.supabase.co:5432/postgres"  # DESTINO
 python migrate_to_supabase.py
 ```
 
-O script cria as tabelas na Super Base e copia todos os dados (usuários, conversas,
+O script cria as tabelas na Supabase e copia todos os dados (usuários, conversas,
 mensagens, memória, lembretes, configurações e tarefas agendadas).
 
-> Dica: se preferir, exporte um dump do Render (`pg_dump`) e importe pela UI do
-> Supabase (SQL Editor → restaurar). O script acima é o caminho mais simples.
+## 4) Apontar o Render para a Supabase
+1. Painel do Render → serviço **nexus-api** → **Environment**.
+2. Edite `DATABASE_URL` e cole a URI do Supabase (banco PRINCIPAL), **e** adicione
+   `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+   `SUPABASE_JWT_SECRET` (de Settings → API do Supabase).
+3. Salve e aguarde o deploy.
+4. Confira: `https://nexus-api-2o1y.onrender.com/api/system/health` → `online`.
 
-## 3) Apontar o Render para a Super Base
-1. No painel do Render, abra o serviço **nexus-api**.
-2. **Environment** → edite `DATABASE_URL` e cole a URI do Supabase.
-3. Salve e aguarde o deploy (ele reinicia sozinho).
-4. Confira: `https://nexus-api-2o1y.onrender.com/api/system/health` deve retornar `online`.
+## 5) Cross-device (sincronização)
+Com as env vars do Supabase definidas, o backend passa a espelhar mensagens e
+memória no Supabase (`supabase_sync`). Assim, celular e PC compartilham o contexto
+em tempo real quando o backend está online.
 
-Pronto — o NEXUS está na Super Base, sem prazo de expiração.
-
-## 4) (Opcional) usar Auth/Storage do Supabase
-O backend já tem o `AUTH_MODE=jwt` e suporte a Firebase opcional. Para usar o Auth
-nativo do Supabase, basta plugar o `SUPABASE_URL` e `SUPABASE_KEY` nas env vars e
-(extensão futura) trocar o `security.py` pelo cliente `supabase-py`. Não é necessário
-para o funcionamento básico.
+> Dica: para usar o Auth nativo do Supabase, basta plugar as env vars acima. O
+> `security.py` continua válido (JWT); o cliente `supabase-py` é opcional.

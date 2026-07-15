@@ -66,16 +66,27 @@ def extract_facts(db: Session, owner_id: int, user_text: str):
         if not m:
             return
         data = json.loads(m.group(0))
+        existing = {
+            f.fact
+            for f in db.query(models.MemoryFact)
+            .filter(models.MemoryFact.owner_id == owner_id).all()
+        }
+        added = 0
         for item in data.get("facts", []):
             fact = item.get("fact")
-            if fact:
+            if fact and fact not in existing:
                 db.add(models.MemoryFact(
                     owner_id=owner_id,
                     fact=fact,
                     category=item.get("category", "geral"),
                     importance=int(item.get("importance", 1)),
                 ))
-        db.commit()
+                existing.add(fact)
+                added += 1
+        if added:
+            db.commit()
+        else:
+            db.rollback()
         # Espelha a memória de longo prazo no Firestore (best-effort).
         try:
             facts = db.query(models.MemoryFact).filter(

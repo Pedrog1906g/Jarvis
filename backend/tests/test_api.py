@@ -15,9 +15,9 @@ def _login(client):
 def test_root(client):
     r = client.get("/")
     assert r.status_code == 200
-    body = r.json()
-    assert body["name"] == "NEXUS AI"
-    assert body["status"] == "online"
+    # A raiz serve o HUD (HTML), não JSON.
+    assert "text/html" in r.headers.get("content-type", "")
+    assert "JARVIS" in r.text
 
 
 def test_login_returns_token(client):
