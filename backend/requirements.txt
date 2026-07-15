@@ -14,6 +14,11 @@ openai==1.47.1
 zeroconf>=0.115.0
 cryptography>=44.0.0
 
+# Opcional: LLM Providers
+ollama>=0.3.0  # Para usar Ollama localmente
+anthropic>=0.34.0  # Para usar Anthropic Claude
+google-generativeai>=0.8.0  # Para usar Google Gemini
+
 # Opcional: Firebase Admin SDK. É pesado (puxa grpcio/cryptography/google-cloud-*).
 # Só é necessário se você for usar Firebase. Veja requirements-firebase.txt.
 # O app faz import lazy dele, então rodar SEM ele é seguro (Firebase fica desativado

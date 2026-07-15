@@ -8,10 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#010812; --panel:rgba(4,12,26,.72); --cyan:#00e5ff; --cyan-dim:rgba(0,229,255,.35);
-    --cyan-glow:rgba(0,229,255,.5); --blue:#1565ff; --violet:#7c3dff; --text:#c8ecff;
-    --dim:#4a7a96; --red:#ff2d4a; --gold:#ffc84a; --orange:#ff6200; --green:#00e599;
-    --panel-border:rgba(0,229,255,.12);
+    --bg:#010610; --panel:rgba(3,10,24,.78); --cyan:#00e5ff; --cyan-dim:rgba(0,229,255,.35);
+    --cyan-glow:rgba(0,229,255,.6); --blue:#1a6cff; --violet:#8c4dff; --text:#d6f3ff;
+    --dim:#507f9f; --red:#ff3a58; --gold:#ffd15a; --orange:#ff7420; --green:#00f0a0;
+    --panel-border:rgba(0,229,255,.15);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;font-family:"Share Tech Mono", monospace;background:var(--bg);color:var(--text);overflow:hidden}
@@ -19,8 +19,9 @@
   /* ─── BG + atmosfera ─── */
   body{
     background:
-      radial-gradient(ellipse 180% 90% at 50% -20%, rgba(0,80,180,.18) 0%, transparent 70%),
-      radial-gradient(ellipse 120% 80% at 50% 110%, rgba(124,61,255,.1) 0%, transparent 70%),
+      radial-gradient(ellipse 200% 100% at 50% -25%, rgba(0,90,200,.22) 0%, transparent 70%),
+      radial-gradient(ellipse 140% 90% at 50% 115%, rgba(140,77,255,.12) 0%, transparent 70%),
+      radial-gradient(circle at 50% 50%, rgba(0,229,255,.04) 0%, transparent 50%),
       var(--bg);
   }
 
@@ -29,121 +30,141 @@
   .gridbg::before{
     content:"";position:absolute;inset:0;
     background-image:
-      linear-gradient(rgba(0,229,255,.055) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(0,229,255,.055) 1px,transparent 1px);
-    background-size:60px 60px;
-    transform:perspective(800px) rotateX(25deg) scaleY(1.8);
+      linear-gradient(rgba(0,229,255,.06) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,229,255,.06) 1px,transparent 1px);
+    background-size:55px 55px;
+    transform:perspective(900px) rotateX(28deg) scaleY(1.9);
     transform-origin:50% 100%;
-    mask-image:linear-gradient(to top, transparent 0%, #000 60%, transparent 100%);
+    mask-image:linear-gradient(to top, transparent 0%, #000 65%, transparent 100%);
+    animation:gridPulse 6s ease-in-out infinite;
   }
   .gridbg::after{
     content:"";position:absolute;inset:0;
     background-image:
-      linear-gradient(rgba(0,229,255,.035) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(0,229,255,.035) 1px,transparent 1px);
-    background-size:20px 20px;
-    mask-image:radial-gradient(circle at 50% 50%, #000 30%, transparent 80%);
+      linear-gradient(rgba(0,229,255,.04) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,229,255,.04) 1px,transparent 1px);
+    background-size:18px 18px;
+    mask-image:radial-gradient(circle at 50% 50%, #000 35%, transparent 80%);
+    animation:gridPulse2 8s ease-in-out infinite;
   }
+  @keyframes gridPulse{0%,100%{opacity:1}50%{opacity:.85}}
+  @keyframes gridPulse2{0%,100%{opacity:.9}50%{opacity:.75}}
 
   /* Vinheta */
   .vignette{position:fixed;inset:0;pointer-events:none;z-index:1;
-    background:radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0,0,0,.85) 100%)}
+    background:radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,.88) 100%)}
 
   /* Scanlines finas */
-  .scan{position:fixed;inset:0;pointer-events:none;z-index:2;opacity:.025;
-    background:repeating-linear-gradient(0deg,#000 0 1px,transparent 1px 3px)}
+  .scan{position:fixed;inset:0;pointer-events:none;z-index:2;opacity:.035;
+    background:repeating-linear-gradient(0deg,#000 0 1px,transparent 1px 3px);
+    animation:scanShift 18s linear infinite;}
+  @keyframes scanShift{0%{background-position:0 0}100%{background-position:0 100%}}
+
+  /* Holographic scan sweep */
+  .scan-sweep{position:fixed;top:0;left:0;right:0;height:200%;
+    background:linear-gradient(0deg,transparent 0%,rgba(0,229,255,.03) 45%,rgba(0,229,255,.06) 50%,rgba(0,229,255,.03) 55%,transparent 100%);
+    pointer-events:none;z-index:3;animation:sweep 8s linear infinite;}
+  @keyframes sweep{0%{transform:translateY(-50%)}100%{transform:translateY(0)}}
 
   /* Cantos HUD animados */
-  .corner{position:fixed;width:52px;height:52px;pointer-events:none;z-index:8}
-  .corner::before,.corner::after{content:"";position:absolute;background:var(--cyan);opacity:.8}
+  .corner{position:fixed;width:58px;height:58px;pointer-events:none;z-index:8}
+  .corner::before,.corner::after{content:"";position:absolute;background:var(--cyan);opacity:.9;box-shadow:0 0 10px var(--cyan-dim)}
   .corner::before{width:2px;height:100%}
   .corner::after{width:100%;height:2px}
-  .corner.tl{top:18px;left:18px}.corner.tl::before{top:0;left:0}.corner.tl::after{top:0;left:0}
-  .corner.tr{top:18px;right:18px}.corner.tr::before{top:0;right:0;left:auto}.corner.tr::after{top:0;right:0;left:auto}
-  .corner.bl{bottom:18px;left:18px}.corner.bl::before{bottom:0;top:auto;left:0}.corner.bl::after{bottom:0;top:auto;left:0}
-  .corner.br{bottom:18px;right:18px}.corner.br::before{bottom:0;top:auto;right:0;left:auto}.corner.br::after{bottom:0;top:auto;right:0;left:auto}
-  @keyframes cornerPulse{0%,100%{opacity:.7}50%{opacity:1}}
+  .corner.tl{top:16px;left:16px}.corner.tl::before{top:0;left:0}.corner.tl::after{top:0;left:0}
+  .corner.tr{top:16px;right:16px}.corner.tr::before{top:0;right:0;left:auto}.corner.tr::after{top:0;right:0;left:auto}
+  .corner.bl{bottom:16px;left:16px}.corner.bl::before{bottom:0;top:auto;left:0}.corner.bl::after{bottom:0;top:auto;left:0}
+  .corner.br{bottom:16px;right:16px}.corner.br::before{bottom:0;top:auto;right:0;left:auto}.corner.br::after{bottom:0;top:auto;right:0;left:auto}
+  @keyframes cornerPulse{0%,100%{opacity:.75}50%{opacity:1}}
   .corner{animation:cornerPulse 4s ease-in-out infinite}
   .corner.tr{animation-delay:1s}.corner.bl{animation-delay:2s}.corner.br{animation-delay:3s}
 
   /* Borda horizontal de topo e base */
-  .hud-line{position:fixed;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan-dim),var(--cyan),var(--cyan-dim),transparent);pointer-events:none;z-index:8}
-  .hud-line.top{top:14px}.hud-line.bottom{bottom:14px}
+  .hud-line{position:fixed;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan-dim),var(--cyan),var(--cyan-dim),transparent);pointer-events:none;z-index:8;box-shadow:0 0 8px var(--cyan-dim)}
+  .hud-line.top{top:12px}.hud-line.bottom{bottom:12px}
 
   /* ─── REATOR CENTRAL ─── */
   .stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:3;pointer-events:none}
-  .reactor-wrap{position:relative;width:min(62vmin,440px);height:min(62vmin,440px);display:flex;align-items:center;justify-content:center}
+  .reactor-wrap{position:relative;width:min(66vmin,460px);height:min(66vmin,460px);display:flex;align-items:center;justify-content:center}
   .reactor-wrap::before{
-    content:"";position:absolute;inset:-20px;border-radius:50%;
-    background:radial-gradient(circle,rgba(0,229,255,.07) 0%,transparent 70%);
+    content:"";position:absolute;inset:-30px;border-radius:50%;
+    background:radial-gradient(circle,rgba(0,229,255,.09) 0%,transparent 70%);
     animation:breatheGlow 4s ease-in-out infinite;
+    filter:blur(2px);
   }
-  @keyframes breatheGlow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+  .reactor-wrap::after{
+    content:"";position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(circle,rgba(0,229,255,.03) 0%,transparent 65%);
+    animation:breatheGlow2 6s ease-in-out infinite;
+  }
+  @keyframes breatheGlow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+  @keyframes breatheGlow2{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.5;transform:scale(1.04)}}
 
   /* SVG reator */
-  .reactor-svg{width:100%;height:100%;animation:reactorFloat 6s ease-in-out infinite}
-  @keyframes reactorFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .reactor-svg{width:100%;height:100%;animation:reactorFloat 6s ease-in-out infinite;filter:drop-shadow(0 0 12px rgba(0,229,255,.25))}
+  @keyframes reactorFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 
   /* Anel exterior animado */
-  .ring-outer{animation:spinCW 30s linear infinite}
-  .ring-mid{animation:spinCCW 20s linear infinite}
-  .ring-inner{animation:spinCW 12s linear infinite}
-  .ring-scan{animation:spinCW 3s linear infinite}
+  .ring-outer{animation:spinCW 28s linear infinite}
+  .ring-mid{animation:spinCCW 18s linear infinite}
+  .ring-inner{animation:spinCW 10s linear infinite}
+  .ring-scan{animation:spinCW 2.8s linear infinite}
   @keyframes spinCW{to{transform:rotate(360deg);transform-origin:center}}
   @keyframes spinCCW{to{transform:rotate(-360deg);transform-origin:center}}
 
   /* Núcleo pulsante */
-  .core-glow{animation:coreGlow 3.5s ease-in-out infinite}
-  @keyframes coreGlow{0%,100%{r:38px;opacity:1}50%{r:42px;opacity:.85}}
-  .core-pulse{animation:corePulse 3.5s ease-in-out infinite}
-  @keyframes corePulse{0%,100%{r:26px}50%{r:30px}}
+  .core-glow{animation:coreGlow 3.2s ease-in-out infinite}
+  @keyframes coreGlow{0%,100%{r:39px;opacity:1}50%{r:44px;opacity:.8}}
+  .core-pulse{animation:corePulse 3.2s ease-in-out infinite}
+  @keyframes corePulse{0%,100%{r:27px}50%{r:32px}}
 
   /* Anel de ondas sonoras (visível quando falando/ouvindo) */
   .sound-ring{opacity:0;transition:opacity .4s}
   .sound-ring.on{opacity:1}
-  .sound-r1{animation:soundWave 1s ease-in-out infinite}
-  .sound-r2{animation:soundWave 1s ease-in-out .2s infinite}
-  .sound-r3{animation:soundWave 1s ease-in-out .4s infinite}
-  @keyframes soundWave{0%{r:55px;opacity:.8}100%{r:95px;opacity:0}}
+  .sound-r1{animation:soundWave 0.9s ease-in-out infinite}
+  .sound-r2{animation:soundWave 0.9s ease-in-out .18s infinite}
+  .sound-r3{animation:soundWave 0.9s ease-in-out .36s infinite}
+  @keyframes soundWave{0%{r:52px;opacity:.9}100%{r:98px;opacity:0}}
 
   .reactor-label{
-    margin-top:22px;font-family:"Orbitron",sans-serif;font-size:clamp(14px,2.5vw,20px);
-    letter-spacing:12px;color:var(--cyan);text-align:center;z-index:3;
-    text-shadow:0 0 20px var(--cyan-glow),0 0 40px var(--cyan-dim);
+    margin-top:24px;font-family:"Orbitron",sans-serif;font-size:clamp(14px,2.6vw,22px);
+    letter-spacing:14px;color:var(--cyan);text-align:center;z-index:3;
+    text-shadow:0 0 24px var(--cyan-glow),0 0 48px var(--cyan-dim);
     animation:labelGlow 4s ease-in-out infinite;
   }
-  @keyframes labelGlow{0%,100%{opacity:.9;text-shadow:0 0 20px var(--cyan-glow),0 0 40px var(--cyan-dim)}
-    50%{opacity:1;text-shadow:0 0 30px var(--cyan-glow),0 0 60px rgba(0,229,255,.3)}}
-  .reactor-sub{margin-top:6px;font-size:clamp(9px,1.4vw,12px);letter-spacing:5px;color:var(--dim);text-align:center;z-index:3}
-  .reactor-version{margin-top:3px;font-size:9px;letter-spacing:3px;color:rgba(0,229,255,.3);text-align:center;z-index:3}
+  @keyframes labelGlow{0%,100%{opacity:.9;text-shadow:0 0 24px var(--cyan-glow),0 0 48px var(--cyan-dim)}
+    50%{opacity:1;text-shadow:0 0 36px var(--cyan-glow),0 0 72px rgba(0,229,255,.4)}}
+  .reactor-sub{margin-top:8px;font-size:clamp(10px,1.5vw,13px);letter-spacing:6px;color:var(--dim);text-align:center;z-index:3}
+  .reactor-version{margin-top:4px;font-size:9px;letter-spacing:4px;color:rgba(0,229,255,.35);text-align:center;z-index:3}
 
   /* ─── PAINEL ESQUERDO ─── */
   .panel-left{
-    position:fixed;top:22px;left:22px;bottom:110px;width:min(300px,26vw);
-    background:var(--panel);border:1px solid var(--panel-border);border-radius:10px;
-    backdrop-filter:blur(14px);padding:0;display:flex;flex-direction:column;
-    box-shadow:0 0 40px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.03);z-index:6;
+    position:fixed;top:20px;left:20px;bottom:105px;width:min(310px,28vw);
+    background:var(--panel);border:1px solid var(--panel-border);border-radius:12px;
+    backdrop-filter:blur(18px);padding:0;display:flex;flex-direction:column;
+    box-shadow:0 0 50px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.04),0 0 20px rgba(0,229,255,.08);z-index:6;
     overflow:hidden;
   }
   .panel-head{
-    padding:12px 16px;border-bottom:1px solid var(--panel-border);
-    background:rgba(0,229,255,.04);display:flex;align-items:center;gap:8px;
+    padding:12px 18px;border-bottom:1px solid var(--panel-border);
+    background:rgba(0,229,255,.05);display:flex;align-items:center;gap:10px;
   }
-  .panel-head-icon{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
-  .panel-head-title{font-family:"Orbitron",sans-serif;font-size:10px;letter-spacing:3px;color:var(--cyan)}
-  .panel-body{padding:14px 16px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+  .panel-head-icon{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);animation:iconPulse 2s ease-in-out infinite}
+  @keyframes iconPulse{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+  .panel-head-title{font-family:"Orbitron",sans-serif;font-size:11px;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 6px var(--cyan-dim)}
+  .panel-body{padding:16px 18px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
   .panel-body::-webkit-scrollbar{width:3px}
-  .panel-body::-webkit-scrollbar-thumb{background:var(--cyan-dim);border-radius:2px}
+  .panel-body::-webkit-scrollbar-thumb{background:var(--cyan-dim);border-radius:2px;box-shadow:0 0 6px var(--cyan-dim)}
 
   /* Métricas */
-  .metric{display:flex;flex-direction:column;gap:4px}
+  .metric{display:flex;flex-direction:column;gap:5px}
   .metric-row{display:flex;justify-content:space-between;font-size:10px;color:var(--dim)}
-  .metric-label{letter-spacing:1px}
-  .metric-val{color:var(--cyan)}
-  .metric-val.green{color:var(--green)}
-  .metric-val.orange{color:var(--orange)}
-  .metric-bar{height:2px;background:rgba(0,229,255,.1);border-radius:1px;overflow:hidden}
-  .metric-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:1px;transition:width .8s ease}
+  .metric-label{letter-spacing:1.2px}
+  .metric-val{color:var(--cyan);text-shadow:0 0 4px var(--cyan-dim)}
+  .metric-val.green{color:var(--green);text-shadow:0 0 4px rgba(0,240,160,.3)}
+  .metric-val.orange{color:var(--orange);text-shadow:0 0 4px rgba(255,116,32,.3)}
+  .metric-bar{height:3px;background:rgba(0,229,255,.12);border-radius:1.5px;overflow:hidden}
+  .metric-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:1.5px;transition:width .7s ease;box-shadow:0 0 4px var(--cyan-dim)}
 
   /* Status items */
   .status-item{display:flex;align-items:center;gap:8px;font-size:10px;padding:6px 0;border-bottom:1px solid rgba(0,229,255,.06)}
@@ -167,45 +188,46 @@
 
   /* ─── PAINEL DIREITO (chat) ─── */
   .panel-right{
-    position:fixed;top:22px;right:22px;bottom:110px;width:min(460px,38vw);
-    background:var(--panel);border:1px solid var(--panel-border);border-radius:10px;
-    backdrop-filter:blur(14px);display:flex;flex-direction:column;overflow:hidden;
-    box-shadow:0 0 40px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.03);z-index:6;
+    position:fixed;top:20px;right:20px;bottom:105px;width:min(480px,40vw);
+    background:var(--panel);border:1px solid var(--panel-border);border-radius:12px;
+    backdrop-filter:blur(18px);display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:0 0 50px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.04),0 0 20px rgba(0,229,255,.08);z-index:6;
   }
-  .phead{padding:12px 16px;border-bottom:1px solid var(--panel-border);display:flex;align-items:center;gap:10px;background:rgba(0,229,255,.04)}
-  .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:.4s}
-  .conn-dot.on{background:var(--green);box-shadow:0 0 8px var(--green);animation:connPulse 2s ease-in-out infinite}
-  .conn-dot.off{background:var(--red);box-shadow:0 0 6px var(--red)}
-  @keyframes connPulse{0%,100%{box-shadow:0 0 8px var(--green)}50%{box-shadow:0 0 16px var(--green)}}
-  .phead-title{font-family:"Orbitron",sans-serif;font-size:13px;letter-spacing:5px;color:var(--cyan);text-shadow:0 0 10px var(--cyan-dim)}
-  .phead-status{margin-left:auto;font-size:10px;color:var(--dim);letter-spacing:1px}
+  .phead{padding:12px 18px;border-bottom:1px solid var(--panel-border);display:flex;align-items:center;gap:10px;background:rgba(0,229,255,.05)}
+  .conn-dot{width:9px;height:9px;border-radius:50%;background:var(--dim);transition:.4s}
+  .conn-dot.on{background:var(--green);box-shadow:0 0 10px var(--green);animation:connPulse 2s ease-in-out infinite}
+  .conn-dot.off{background:var(--red);box-shadow:0 0 7px var(--red)}
+  @keyframes connPulse{0%,100%{box-shadow:0 0 10px var(--green)}50%{box-shadow:0 0 18px var(--green)}}
+  .phead-title{font-family:"Orbitron",sans-serif;font-size:14px;letter-spacing:6px;color:var(--cyan);text-shadow:0 0 12px var(--cyan-dim)}
+  .phead-status{margin-left:auto;font-size:10px;color:var(--dim);letter-spacing:1.2px}
 
   /* Chat */
-  #chat{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+  #chat{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
   #chat::-webkit-scrollbar{width:3px}
-  #chat::-webkit-scrollbar-thumb{background:var(--cyan-dim);border-radius:2px}
+  #chat::-webkit-scrollbar-thumb{background:var(--cyan-dim);border-radius:2px;box-shadow:0 0 6px var(--cyan-dim)}
   .msg-row{display:flex;flex-direction:column;max-width:90%}
   .msg-row.user{align-self:flex-end;align-items:flex-end}
   .msg-row.bot{align-self:flex-start;align-items:flex-start}
-  .msg-who{font-size:9px;letter-spacing:2px;margin-bottom:3px;color:var(--dim)}
-  .msg-row.user .msg-who{color:var(--blue)}
-  .msg-row.bot .msg-who{color:var(--cyan);opacity:.7}
+  .msg-who{font-size:9px;letter-spacing:2.2px;margin-bottom:3px;color:var(--dim)}
+  .msg-row.user .msg-who{color:var(--blue);text-shadow:0 0 4px rgba(26,108,255,.3)}
+  .msg-row.bot .msg-who{color:var(--cyan);opacity:.75;text-shadow:0 0 4px var(--cyan-dim)}
   .bubble{
-    padding:9px 14px;border-radius:8px;font-size:12px;line-height:1.55;white-space:pre-wrap;word-break:break-word;
+    padding:10px 16px;border-radius:9px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;
   }
   .msg-row.bot .bubble{
-    background:rgba(0,50,80,.5);border:1px solid rgba(0,229,255,.15);color:#e8f8ff;
-    border-top-left-radius:2px;
+    background:rgba(0,55,85,.55);border:1px solid rgba(0,229,255,.18);color:#e8f8ff;
+    border-top-left-radius:2px;box-shadow:0 0 12px rgba(0,229,255,.06),inset 0 0 0 1px rgba(255,255,255,.03);
   }
   .msg-row.user .bubble{
-    background:linear-gradient(135deg,rgba(5,30,55,.9),rgba(12,60,100,.9));
-    border:1px solid rgba(0,229,255,.25);color:#fff;
-    border-top-right-radius:2px;
+    background:linear-gradient(135deg,rgba(6,32,58,.92),rgba(14,64,105,.92));
+    border:1px solid rgba(0,229,255,.28);color:#fff;
+    border-top-right-radius:2px;box-shadow:0 0 12px rgba(0,229,255,.08),inset 0 0 0 1px rgba(255,255,255,.04);
   }
   .msg-sys{
     font-size:10px;color:var(--orange);align-self:center;text-align:center;
-    background:rgba(255,98,0,.1);border:1px solid rgba(255,98,0,.2);
-    padding:5px 12px;border-radius:4px;letter-spacing:.5px;max-width:90%;
+    background:rgba(255,116,32,.12);border:1px solid rgba(255,116,32,.24);
+    padding:6px 14px;border-radius:5px;letter-spacing:.6px;max-width:90%;
+    text-shadow:0 0 4px rgba(255,116,32,.2);box-shadow:0 0 10px rgba(255,116,32,.05);
   }
 
   /* Cursor digitando */
@@ -320,10 +342,23 @@
   <div class="gridbg"></div>
   <div class="vignette"></div>
   <div class="scan"></div>
+  <div class="scan-sweep"></div>
   <div class="hud-line top"></div>
   <div class="hud-line bottom"></div>
   <div class="corner tl"></div><div class="corner tr"></div>
   <div class="corner bl"></div><div class="corner br"></div>
+
+  <!-- Targeting reticle -->
+  <svg class="reticle" viewBox="0 0 100 100" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:140px;height:140px;pointer-events:none;z-index:4;opacity:.25">
+    <circle cx="50" cy="50" r="45" fill="none" stroke="#00e5ff" stroke-width=".3" stroke-dasharray="3 2"/>
+    <circle cx="50" cy="50" r="35" fill="none" stroke="#00e5ff" stroke-width=".2" stroke-dasharray="2 3"/>
+    <line x1="50" y1="5" x2="50" y2="25" stroke="#00e5ff" stroke-width=".5"/>
+    <line x1="50" y1="75" x2="50" y2="95" stroke="#00e5ff" stroke-width=".5"/>
+    <line x1="5" y1="50" x2="25" y2="50" stroke="#00e5ff" stroke-width=".5"/>
+    <line x1="75" y1="50" x2="95" y2="50" stroke="#00e5ff" stroke-width=".5"/>
+    <circle cx="50" cy="50" r="2" fill="#00e5ff"/>
+    <circle cx="50" cy="50" r="8" fill="none" stroke="#00e5ff" stroke-width=".3"/>
+  </svg>
 
   <!-- ── Reator central ── -->
   <div class="stage">
