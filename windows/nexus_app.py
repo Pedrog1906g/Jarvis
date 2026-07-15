@@ -6,14 +6,15 @@ Execute:
 Gere o .exe:
     pyinstaller --noconsole --onefile nexus_app.py
 
-O app fica na bandeja, roda em segundo plano, conversa por voz (TTS masculino
-SAPI + STT) e manda os comandos ao backend (mesmo do celular/PC web). Também
-executa comandos locais: abrir programas, organizar arquivos e mostrar desempenho.
+O app fica na bandeja, liga sozinho no modo "Jarvis" (wake word) ao abrir e
+responde por voz (TTS masculino SAPI + STT). Também executa comandos locais:
+abrir programas, organizar arquivos, mostrar desempenho e controlar o volume.
 """
 
 import os
 import re
 import json
+import logging
 import threading
 
 import tkinter as tk
@@ -22,12 +23,18 @@ from tkinter import scrolledtext
 import requests
 import websocket  # pacote websocket-client
 
-from commands import classify_command, open_program, organize_folder, system_stats
+from commands import (classify_command, open_program, organize_folder,
+                      system_stats, set_volume, change_volume)
 from voice import WindowsVoice
 
 APP_NAME = "JARVIS"
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), "jarvis_windows_config.json")
 DEFAULT_SERVER = "https://nexus-api-2o1y.onrender.com"
+LOG_PATH = os.path.join(os.path.expanduser("~"), "jarvis_windows.log")
+
+logging.basicConfig(filename=LOG_PATH, level=logging.INFO,
+                    format="%(asctime)s %(levelname)s %(message)s")
+log = logging.getLogger("jarvis")
 
 
 # ----------------------------- Configuração -----------------------------
@@ -65,9 +72,12 @@ class Backend:
                               timeout=20)
             if r.status_code == 200:
                 self.token = r.json().get("access_token")
+                log.info("login OK")
                 return True
+            log.warning("login falhou: %s", r.status_code)
             return False
-        except Exception:
+        except Exception as e:
+            log.warning("login erro: %s", e)
             return False
 
     def connect_ws(self):
@@ -80,8 +90,10 @@ class Backend:
                 url, on_open=self._on_open, on_message=self._on_message,
                 on_error=self._on_error, on_close=self._on_close)
             threading.Thread(target=self.ws.run_forever, daemon=True).start()
+            log.info("ws conectando %s", url[:60])
             return True
-        except Exception:
+        except Exception as e:
+            log.warning("ws erro: %s", e)
             return False
 
     def _on_open(self, ws):
@@ -99,6 +111,7 @@ class Backend:
             self.on_done()
 
     def _on_error(self, ws, e):
+        log.warning("ws on_error: %s", e)
         if self.on_status:
             self.on_status(False)
 
@@ -113,7 +126,8 @@ class Backend:
             self.ws.send(json.dumps({
                 "type": "message", "content": text, "conversation_id": conv_id}))
             return True
-        except Exception:
+        except Exception as e:
+            log.warning("ws send erro: %s", e)
             return False
 
 
@@ -131,35 +145,54 @@ class App:
         self.backend.on_text = self._bot_chunk
         self.backend.on_done = self._bot_finish
         self.backend.on_status = self._set_status
+        log.info("voz selecionada: %s", self.voice.voice_name())
         self._auto_connect()
 
     # ----- UI -----
     def _build_ui(self):
         self.root = tk.Tk()
         self.root.title(APP_NAME + " — NEXUS AI")
-        self.root.geometry("480x640")
+        self.root.geometry("480x680")
+        self.root.configure(bg="#02040a")
         self.root.protocol("WM_DELETE_WINDOW", lambda: self.root.withdraw())
+
+        hdr = tk.Label(self.root, text="⚡ JARVIS  •  NEXUS AI",
+                       bg="#02040a", fg="#5fe0ff",
+                       font=("Segoe UI", 14, "bold"))
+        hdr.pack(fill=tk.X, padx=8, pady=(8, 0))
 
         self.chat = scrolledtext.ScrolledText(
             self.root, wrap=tk.WORD, state=tk.DISABLED,
-            bg="#03060d", fg="#dff3ff", font=("Segoe UI", 11))
+            bg="#03060d", fg="#dff3ff", font=("Segoe UI", 11),
+            insertbackground="#5fe0ff")
         self.chat.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
 
         self.input = tk.Entry(self.root, bg="#0a0f1a", fg="#dff3ff",
-                               font=("Segoe UI", 12))
+                              font=("Segoe UI", 12), insertbackground="#5fe0ff")
         self.input.pack(fill=tk.X, padx=8, pady=(0, 4))
         self.input.bind("<Return>", lambda e: self._send())
 
-        bar = tk.Frame(self.root)
-        bar.pack(fill=tk.X, padx=8, pady=(0, 8))
+        bar = tk.Frame(self.root, bg="#02040a")
+        bar.pack(fill=tk.X, padx=8, pady=(0, 4))
         tk.Button(bar, text="Enviar", command=self._send).pack(side=tk.LEFT)
         tk.Button(bar, text="🎙 Falar", command=self._push_to_talk).pack(side=tk.LEFT, padx=4)
         tk.Button(bar, text="🎙 Jarvis", command=self.toggle_continuous).pack(side=tk.LEFT, padx=4)
         tk.Button(bar, text="⚙ Config", command=self._open_settings).pack(side=tk.LEFT, padx=4)
 
+        self.status = tk.Label(self.root, text="Iniciando...", bg="#02040a",
+                               fg="#5fe0ff", font=("Segoe UI", 9), anchor="w")
+        self.status.pack(fill=tk.X, padx=8, pady=(0, 6))
+
     def _set_status(self, ok):
         try:
             self.root.title(APP_NAME + (" — online" if ok else " — offline"))
+            self._set_statusbar("Conectado" if ok else "Sem conexão")
+        except Exception:
+            pass
+
+    def _set_statusbar(self, text):
+        try:
+            self.status.configure(text=text)
         except Exception:
             pass
 
@@ -180,6 +213,10 @@ class App:
         self.chat.configure(state=tk.DISABLED)
         self.chat.see(tk.END)
 
+    def _append_bot_chunk(self, text):
+        # referência usada pelo modo contínuo "Jarvis"
+        self._bot_chunk(text)
+
     def _bot_finish(self):
         self.chat.configure(state=tk.NORMAL)
         self.chat.insert(tk.END, "\n")
@@ -197,7 +234,7 @@ class App:
 
         intent = classify_command(text)
         if intent == "open_app":
-            m = re.search(r"(abrir|abre|execute|rodar|iniciar)\s+(.+)", text, re.I)
+            m = re.search(r"(abrir|abre|abra|execute|rodar|iniciar|inicie)\s+(.+)", text, re.I)
             name = m.group(2) if m else text
             result = open_program(name)
         elif intent == "organize":
@@ -221,11 +258,14 @@ class App:
         self.backend.send(text, self.conv_id)
 
     def _push_to_talk(self):
+        self._set_statusbar("Ouvindo... (fale agora)")
         text = self.voice.listen_once()
         if text:
             self.input.delete(0, tk.END)
             self.input.insert(0, text)
             self._send()
+        else:
+            self._set_statusbar("Não entendi. Tente de novo.")
 
     # ----- Wake word "Jarvis" contínuo -----
     def toggle_continuous(self):
@@ -234,18 +274,28 @@ class App:
             self._continuous = False
             self._append_bot_chunk("Modo contínuo 'Jarvis' desligado.")
             self._bot_finish()
+            self._set_statusbar("Microfone parado")
             return
         ok = self.voice.start_continuous(self._on_phrase)
         self._continuous = ok
         if ok:
             self._append_bot_chunk("Modo 'Jarvis' ligado. Diga 'Jarvis' e seu comando a qualquer momento.")
             self._bot_finish()
+            self._set_statusbar("🎙 Ouvindo 'Jarvis'...")
+            log.info("wake word ligado")
         else:
             self._append_bot_chunk("Não consegui iniciar o reconhecimento contínuo (verifique o microfone).")
             self._bot_finish()
+            self._set_statusbar("Erro no microfone")
+
+    def _auto_wake(self):
+        if not self._continuous:
+            self.toggle_continuous()
 
     def _on_phrase(self, text):
         t = (text or "").lower()
+        log.info("frase reconhecida: %s", text)
+        self._set_statusbar("🎙 Ouvi: " + (text or "")[:60])
         if "jarvis" in t or "nexus" in t:
             cmd = re.sub(r"\b(jarvis|nexus)\b", "", t, flags=re.I).strip()
             if cmd:
@@ -265,12 +315,12 @@ class App:
     def _handle_volume(self, text):
         m = re.search(r"(\d+)\s*%", text)
         if m:
-            return commands.set_volume(int(m.group(1)))
+            return set_volume(int(m.group(1)))
         if "aument" in text or "sobe" in text or "suba" in text or "maior" in text:
-            return commands.change_volume(15)
+            return change_volume(15)
         if "diminu" in text or "baix" in text or "menor" in text:
-            return commands.change_volume(-15)
-        return commands.set_volume(50)
+            return change_volume(-15)
+        return set_volume(50)
 
     def _auto_connect(self):
         if self.backend.login(self.cfg.get("server", DEFAULT_SERVER),
@@ -278,7 +328,7 @@ class App:
                               self.cfg.get("passphrase", "nexus")):
             self.backend.connect_ws()
             self._set_status(True)
-            self._bot_chunk("JARVIS online. Escreva ou clique em 🎙 Falar.")
+            self._bot_chunk("JARVIS online. Diga 'Jarvis' para falar comigo, ou escreva abaixo.")
             self._bot_finish()
         else:
             self._set_status(False)
@@ -288,19 +338,20 @@ class App:
     def _open_settings(self):
         win = tk.Toplevel(self.root)
         win.title("Configurações do JARVIS")
-        win.geometry("380x200")
+        win.geometry("380x220")
+        win.configure(bg="#02040a")
 
-        tk.Label(win, text="Servidor").pack(anchor="w", padx=10, pady=(8, 0))
+        tk.Label(win, text="Servidor", bg="#02040a", fg="#5fe0ff").pack(anchor="w", padx=10, pady=(8, 0))
         srv = tk.Entry(win)
         srv.insert(0, self.cfg.get("server", DEFAULT_SERVER))
         srv.pack(fill=tk.X, padx=10)
 
-        tk.Label(win, text="Usuário").pack(anchor="w", padx=10, pady=(6, 0))
+        tk.Label(win, text="Usuário", bg="#02040a", fg="#5fe0ff").pack(anchor="w", padx=10, pady=(6, 0))
         usr = tk.Entry(win)
         usr.insert(0, self.cfg.get("username", "owner"))
         usr.pack(fill=tk.X, padx=10)
 
-        tk.Label(win, text="Frase de acesso").pack(anchor="w", padx=10, pady=(6, 0))
+        tk.Label(win, text="Frase de acesso", bg="#02040a", fg="#5fe0ff").pack(anchor="w", padx=10, pady=(6, 0))
         pwd = tk.Entry(win, show="*")
         pwd.insert(0, self.cfg.get("passphrase", "nexus"))
         pwd.pack(fill=tk.X, padx=10)
@@ -338,6 +389,9 @@ class App:
             def talk(ic, item):
                 threading.Thread(target=self._push_to_talk, daemon=True).start()
 
+            def wake(ic, item):
+                self.root.after(0, self.toggle_continuous)
+
             def quit_(ic, item):
                 try:
                     self.voice.stop_continuous()
@@ -349,14 +403,17 @@ class App:
             icon.menu = pystray.Menu(
                 pystray.MenuItem("Mostrar", show),
                 pystray.MenuItem("🎙 Falar", talk),
+                pystray.MenuItem("🎙 Jarvis (ligar/desligar)", wake),
                 pystray.MenuItem("Sair", quit_),
             )
             threading.Thread(target=icon.run, daemon=True).start()
-        except Exception:
-            pass
+        except Exception as e:
+            log.warning("tray erro: %s", e)
 
     def run(self):
         self._start_tray()
+        # liga o modo 'Jarvis' sozinho após a janela abrir (sem precisar clicar)
+        self.root.after(1500, self._auto_wake)
         self.root.mainloop()
 
 

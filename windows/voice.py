@@ -26,6 +26,7 @@ class WindowsVoice:
         self.engine = None
         self._listen_thread = None
         self._stop = None
+        self._voice_name = None
         if self._libs.get("tts"):
             try:
                 self.engine = self._libs["tts"].init()
@@ -37,20 +38,35 @@ class WindowsVoice:
         try:
             voices = self.engine.getProperty("voices")
             picked = None
+            male_keys = ["male", "homem", "ricardo", "daniel", "antonio",
+                         "antônio", "gustavo", "felipe", "marcos", "bruno",
+                         "rafael", "lucas", "diego", "pedro"]
+            # 1) voz masculina (preferencialmente PT-BR)
             for v in voices:
-                if "male" in v.name.lower() or "homem" in v.name.lower():
+                n = (v.name or "").lower()
+                if any(k in n for k in male_keys):
                     picked = v
                     break
+            # 2) qualquer voz em português
             if not picked:
                 for v in voices:
-                    if "portug" in v.name.lower() or "brazil" in v.name.lower():
+                    n = (v.name or "").lower()
+                    if any(k in n for k in ["portug", "brazil", "brasil", "português"]):
                         picked = v
                         break
+            # 3) primeira disponível
+            if not picked and voices:
+                picked = voices[0]
             if picked:
                 self.engine.setProperty("voice", picked.id)
-            self.engine.setProperty("rate", 175)
+                self._voice_name = picked.name
+            self.engine.setProperty("rate", 165)   # tom mais grave/lento (estilo JARVIS)
+            self.engine.setProperty("volume", 1.0)
         except Exception:
-            pass
+            self._voice_name = None
+
+    def voice_name(self):
+        return getattr(self, "_voice_name", None)
 
     def speak(self, text: str):
         clean = " ".join(str(text).split())

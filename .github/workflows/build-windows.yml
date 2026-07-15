@@ -36,6 +36,8 @@ jobs:
             --hidden-import=pycaw `
             --hidden-import=comtypes `
             --hidden-import=pystray `
+            --collect-all pyaudio `
+            --collect-all pycaw `
             nexus_app.py
 
       - name: Publish Windows release
