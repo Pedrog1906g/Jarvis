@@ -1,6 +1,7 @@
 package com.nexusai.app.ui.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -23,6 +24,7 @@ fun MessageBubble(message: ChatMessage, onSpeak: (String) -> Unit = {}) {
             modifier = Modifier.fillMaxWidth(0.85f)
                 .clip(RoundedCornerShape(12.dp))
                 .background(if (isUser) NexusUserBubble else NexusBotBubble)
+                .border(1.dp, (if (isUser) NexusPrimary else NexusAccent).copy(alpha = 0.5f), RoundedCornerShape(12.dp))
                 .padding(12.dp)
         ) {
             Text(

@@ -168,6 +168,8 @@ class App:
             bg="#03060d", fg="#dff3ff", font=("Segoe UI", 11),
             insertbackground="#5fe0ff")
         self.chat.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+        self.chat.tag_config("user", foreground="#19f0ff")
+        self.chat.tag_config("jarvis", foreground="#7c4dff")
 
         self.input = tk.Entry(self.root, bg="#0a0f1a", fg="#dff3ff",
                               font=("Segoe UI", 12), insertbackground="#5fe0ff")
@@ -188,25 +190,36 @@ class App:
 
     def _build_reactor(self, parent):
         try:
-            c = tk.Canvas(parent, width=34, height=34, bg="#02040a", highlightthickness=0)
-            c.pack(side=tk.LEFT, padx=(0, 8))
+            import math
+            c = tk.Canvas(parent, width=72, height=72, bg="#02040a", highlightthickness=0)
+            c.pack(side=tk.LEFT, padx=(0, 12))
             self._reactor = c
             self._reactor_angle = 0
 
             def draw():
                 try:
                     c.delete("all")
-                    cx, cy, r = 17, 17, 14
-                    c.create_oval(cx - r, cy - r, cx + r, cy + r, outline="#0a6c8c", width=2)
+                    cx, cy, r = 36, 36, 32
+                    c.create_oval(cx - r, cy - r, cx + r, cy + r, outline="#0a4a5a", width=2)
+                    c.create_oval(cx - 23, cy - 23, cx + 23, cy + 23, outline="#0a6c8c", width=1)
                     a = self._reactor_angle
-                    c.create_arc(cx - r, cy - r, cx + r, cy + r, start=a, extent=120,
+                    # varredura (radar)
+                    c.create_arc(cx - r, cy - r, cx + r, cy + r, start=a, extent=70,
                                 outline="#00e5ff", width=2, style="arc")
+                    c.create_arc(cx - 23, cy - 23, cx + 23, cy + 23, start=-a * 1.3, extent=50,
+                                outline="#7c4dff", width=1, style="arc")
+                    # íris central
+                    c.create_oval(cx - 12, cy - 12, cx + 12, cy + 12, outline="#19f0ff", width=1)
                     c.create_oval(cx - 4, cy - 4, cx + 4, cy + 4, fill="#19f0ff", outline="")
-                    self._reactor_angle = (a + 8) % 360
+                    # linha de varredura
+                    ang = math.radians(a)
+                    c.create_line(cx, cy, cx + r * math.cos(ang), cy + r * math.sin(ang),
+                                  fill="#00e5ff", width=1)
+                    self._reactor_angle = (a + 6) % 360
                 except Exception:
                     return
-                self.root.after(80, draw)
-            self.root.after(80, draw)
+                self.root.after(60, draw)
+            self.root.after(60, draw)
         except Exception:
             pass
 
@@ -240,14 +253,14 @@ class App:
 
     def _user(self, text):
         self.chat.configure(state=tk.NORMAL)
-        self.chat.insert(tk.END, "Você: " + text + "\n")
+        self.chat.insert(tk.END, "Você: " + text + "\n", "user")
         self.chat.configure(state=tk.DISABLED)
         self.chat.see(tk.END)
 
     def _bot_chunk(self, text):
         self.chat.configure(state=tk.NORMAL)
         if not self._bot_open:
-            self.chat.insert(tk.END, "JARVIS: ")
+            self.chat.insert(tk.END, "JARVIS: ", "jarvis")
             self._bot_open = True
             self._bot_buf = ""
         self.chat.insert(tk.END, text)

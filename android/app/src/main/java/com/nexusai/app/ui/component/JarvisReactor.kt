@@ -13,12 +13,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nexusai.app.ui.theme.*
+import kotlin.math.cos
+import kotlin.math.sin
 
 @Composable
 fun JarvisReactor(
@@ -31,12 +38,41 @@ fun JarvisReactor(
     val rot1 by transition.animateFloat(0f, 360f, infiniteRepeatable(tween(12000, easing = LinearEasing)))
     val rot2 by transition.animateFloat(360f, 0f, infiniteRepeatable(tween(9000, easing = LinearEasing)))
     val rot3 by transition.animateFloat(0f, 360f, infiniteRepeatable(tween(6000, easing = LinearEasing)))
-    val pulse by transition.animateFloat(1f, 1.1f, infiniteRepeatable(tween(900), RepeatMode.Reverse))
+    val pulse by transition.animateFloat(1f, 1.12f, infiniteRepeatable(tween(900), RepeatMode.Reverse))
 
     Box(
-        modifier.fillMaxWidth().height(210.dp).clickable(onClick = onClick),
+        modifier.fillMaxWidth().height(220.dp).clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
+        // radar sweep + ticks (estilo HUD do filme)
+        Canvas(modifier = Modifier.size(190.dp)) {
+            val cx = center.x
+            val cy = center.y
+            val r = size.minDimension / 2f - 6.dp.toPx()
+            for (i in 0 until 72) {
+                val a = (i * 5) * Math.PI / 180.0
+                val major = i % 6 == 0
+                val r2 = if (major) r - 9.dp.toPx() else r - 4.dp.toPx()
+                drawLine(
+                    color = NexusPrimary.copy(alpha = if (major) 0.55f else 0.22f),
+                    start = Offset(cx + (r) * cos(a).toFloat(), cy + (r) * sin(a).toFloat()),
+                    end = Offset(cx + (r2) * cos(a).toFloat(), cy + (r2) * sin(a).toFloat()),
+                    strokeWidth = 1.dp.toPx()
+                )
+            }
+            rotate(rot1) {
+                drawArc(
+                    color = NexusPrimary.copy(alpha = 0.6f),
+                    startAngle = 0f,
+                    sweepAngle = 75f,
+                    useCenter = false,
+                    topLeft = Offset(cx - r, cy - r),
+                    size = Size(r * 2f, r * 2f),
+                    style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
+                )
+            }
+        }
+
         Box(Modifier.size(184.dp).rotate(rot1).border(2.dp, NexusPrimary.copy(alpha = 0.35f), CircleShape)) {}
         Box(Modifier.size(150.dp).rotate(rot2).border(2.dp, NexusAccent.copy(alpha = 0.45f), CircleShape)) {}
         Box(Modifier.size(118.dp).rotate(rot3).border(1.dp, NexusPrimary.copy(alpha = 0.7f), CircleShape)) {}

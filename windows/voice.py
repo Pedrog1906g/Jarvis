@@ -60,7 +60,7 @@ class WindowsVoice:
             if picked:
                 self.engine.setProperty("voice", picked.id)
                 self._voice_name = picked.name
-            self.engine.setProperty("rate", 165)   # tom mais grave/lento (estilo JARVIS)
+            self.engine.setProperty("rate", 150)   # tom mais grave/lento (estilo JARVIS)
             self.engine.setProperty("volume", 1.0)
         except Exception:
             self._voice_name = None
@@ -69,12 +69,19 @@ class WindowsVoice:
         return getattr(self, "_voice_name", None)
 
     def speak(self, text: str):
+        import re, time
         clean = " ".join(str(text).split())
         if not clean or not self.engine:
             return
         try:
-            self.engine.say(clean)
-            self.engine.runAndWait()
+            parts = [p.strip() for p in re.split(r"(?<=[.!?…])\s+", clean) if p.strip()]
+            if not parts:
+                parts = [clean]
+            for i, part in enumerate(parts):
+                self.engine.say(part)
+                self.engine.runAndWait()
+                if i < len(parts) - 1:
+                    time.sleep(0.14)  # pausa natural entre frases (mais humano)
         except Exception:
             pass
 

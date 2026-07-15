@@ -25,13 +25,13 @@ class VoiceManager(private val context: Context) {
 
     // Ajustes de voz persistidos (compartilhados entre as instâncias).
     private val prefs = context.getSharedPreferences("jarvis_voice", Context.MODE_PRIVATE)
-    var pitch: Float = prefs.getFloat("pitch", 0.9f)
+    var pitch: Float = prefs.getFloat("pitch", 0.82f)
         set(value) {
             field = value.coerceIn(0.5f, 1.5f)
             prefs.edit().putFloat("pitch", field).apply()
             tts?.setPitch(field)
         }
-    var rate: Float = prefs.getFloat("rate", 1.0f)
+    var rate: Float = prefs.getFloat("rate", 0.95f)
         set(value) {
             field = value.coerceIn(0.5f, 2.0f)
             prefs.edit().putFloat("rate", field).apply()
