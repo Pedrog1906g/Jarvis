@@ -1,8 +1,9 @@
 name: Build NEXUS AI Windows EXE
 
 # Gera o JARVIS para Windows como um .exe pronto (baixar e clicar, sem instalar).
-# Disparo manual: abra "Actions" -> "Build NEXUS AI Windows EXE" -> Run workflow.
 on:
+  push:
+    branches: [main, master]
   workflow_dispatch:
 
 permissions:
