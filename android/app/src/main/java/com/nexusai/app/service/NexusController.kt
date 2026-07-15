@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Base64
+import com.nexusai.app.BuildConfig
 import com.nexusai.app.util.VoiceManager
 import java.net.HttpURLConnection
 import java.net.URL

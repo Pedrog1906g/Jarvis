@@ -27,6 +27,7 @@ jobs:
           pip install pyinstaller
 
       - name: Inject Spotify keys (só no build, não vai para o repo)
+        shell: bash
         run: |
           if [ -n "${{ secrets.SPOTIFY_CLIENT_ID }}" ]; then
             sed -i "s/__SPOTIFY_CLIENT_ID__/${{ secrets.SPOTIFY_CLIENT_ID }}/" windows/spotify_auth.py
@@ -43,6 +44,7 @@ jobs:
             --hidden-import=pycaw `
             --hidden-import=comtypes `
             --hidden-import=pystray `
+            --hidden-import=spotify_auth `
             --collect-all pyaudio `
             --collect-all pycaw `
             nexus_app.py
