@@ -1,0 +1,48 @@
+name: Build NEXUS AI Windows EXE
+
+# Gera o JARVIS para Windows como um .exe pronto (baixar e clicar, sem instalar).
+# Disparo manual: abra "Actions" -> "Build NEXUS AI Windows EXE" -> Run workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r windows/requirements.txt
+          pip install pyinstaller
+
+      - name: Build executable (onefile, sem console)
+        working-directory: windows
+        run: |
+          pyinstaller --noconsole --onefile --name JARVIS `
+            --hidden-import=pyttsx3 `
+            --hidden-import=speech_recognition `
+            --hidden-import=pyaudio `
+            --hidden-import=pycaw `
+            --hidden-import=comtypes `
+            --hidden-import=pystray `
+            nexus_app.py
+
+      - name: Publish Windows release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nexus-pc-${{ github.run_number }}
+          name: NEXUS AI (Windows)
+          files: windows/dist/JARVIS.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
