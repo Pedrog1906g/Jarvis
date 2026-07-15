@@ -801,7 +801,8 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const micBtn=document.getElementById('mic');
 if(SR){
   rec=new SR();
-  rec.lang='pt-BR';rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=1;
+  rec.lang='pt-BR';rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=3;
+  let lastRestart=0;
   rec.onstart=()=>{
     recognizing=true;
     micBtn.classList.add('active');
@@ -816,7 +817,11 @@ if(SR){
     if(!isSpeakingTTS){setCoreState(listenMode?'listening':'idle');}
     document.getElementById('sv-voice').textContent=listenMode?'ACTIVE':'STANDBY';
     document.getElementById('sd-voice').className='status-dot '+(listenMode?'on':'warn');
-    if(listenMode&&!isSpeakingTTS){setTimeout(()=>{try{rec.start();}catch(e){}},400);}
+    const now=Date.now();
+    if(listenMode&&!isSpeakingTTS&&now-lastRestart>500){
+      lastRestart=now;
+      setTimeout(()=>{try{rec.start();}catch(e){}},300);
+    }
   };
   rec.onerror=(e)=>{
     const err=(e&&e.error)?e.error:'';
@@ -825,13 +830,15 @@ if(SR){
       appendSys('🎙 Microfone bloqueado. Clique no cadeado da barra e permita o microfone.');
     } else if(err==='network'){
       appendSys('🎙 Sem acesso ao serviço de voz (precisa de internet).');
+    } else if(err==='no-speech' && listenMode){
+      // Ignore no-speech errors and just restart
     }
   };
   function processVoice(t){
     t=t.trim();if(!t)return;
     const low=t.toLowerCase();
-    if(low.includes('jarvis')||low.includes('nexus')){
-      const cmd=t.replace(/\b(jarvis|nexus)\b/gi,'').trim();
+    if(low.includes('jarvis')||low.includes('nexus')||low.includes('ei jarvis')||low.includes('hey jarvis')){
+      const cmd=t.replace(/\b(ei|hey)?\s*(jarvis|nexus)\b/gi,'').trim();
       if(cmd){expectingCmd=false;document.getElementById('msg').value=cmd;send();}
       else{expectingCmd=true;appendSys('🎙 JARVIS na escuta… fale seu comando.');}
     } else if(expectingCmd){
@@ -842,7 +849,19 @@ if(SR){
   }
   rec.onresult=(e)=>{
     for(let i=e.resultIndex;i<e.results.length;i++){
-      if(e.results[i].isFinal) processVoice(e.results[i][0].transcript);
+      if(e.results[i].isFinal){
+        let transcript='';
+        for(let j=0;j<e.results[i].length;j++){
+          const altLow=e.results[i][j].transcript.toLowerCase();
+          if(altLow.includes('jarvis')||altLow.includes('nexus')){
+            transcript=e.results[i][j].transcript;
+            break;
+          } else if(j===0){
+            transcript=e.results[i][j].transcript;
+          }
+        }
+        processVoice(transcript);
+      }
     }
   };
   micBtn.onclick=()=>{
