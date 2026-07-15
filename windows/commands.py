@@ -240,10 +240,19 @@ def play_music(query: str) -> str:
         if use_spotify:
             term = q.lower().replace("spotify", "").strip()
             search = term if term else "lofi hip hop"
-            tid = _spotify_track_id(search)
+            tid = None
+            label = search
+            try:
+                from spotify_auth import search_track
+                res = search_track(search)
+                if res:
+                    tid, name, artists = res
+                    label = (artists + " — " + name).strip(" —") or search
+            except Exception:
+                tid = None
             if tid:
                 webbrowser.open("spotify:track:" + tid)
-                return f"Tocando {search} no Spotify."
+                return f"Tocando {label} no Spotify."
             # fallback: abre a busca DENTRO do app Spotify (não a tela do navegador)
             enc = urllib.parse.quote(search)
             if not webbrowser.open("spotify:search:" + enc):

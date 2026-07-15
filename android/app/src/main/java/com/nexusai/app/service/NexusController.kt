@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.util.Base64
 import com.nexusai.app.util.VoiceManager
 import java.net.HttpURLConnection
 import java.net.URL
@@ -220,22 +221,42 @@ object NexusController {
         return best
     }
 
-    /** Tenta achar o ID da música no Spotify (precisa do app/site com o URI). */
-    private fun spotifyTrackId(query: String): String? {
+    /** Pega o access_token do Spotify via Client Credentials (app-to-app, sem login). */
+    private fun spotifyToken(): String? {
+        val cid = BuildConfig.SPOTIFY_CLIENT_ID
+        val sec = BuildConfig.SPOTIFY_CLIENT_SECRET
+        if (cid.isBlank() || sec.isBlank() || cid.startsWith("__")) return null
         return try {
-            val url = "https://open.spotify.com/search/" + URLEncoder.encode(query, "UTF-8")
-            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
-                setRequestProperty("User-Agent", "Mozilla/5.0")
-                connectTimeout = 8000
-                readTimeout = 8000
-            }
-            val html = conn.inputStream.bufferedReader().readText()
-            val m = Regex("spotify:track:([A-Za-z0-9]+)").find(html)
-                ?: Regex("\"uri\":\"spotify:track:([A-Za-z0-9]+)\"").find(html)
-            m?.groupValues?.get(1)
+            val auth = Base64.encodeToString("$cid:$sec".toByteArray(), Base64.NO_WRAP)
+            val conn = (URL("https://accounts.spotify.com/api/token")).openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.doOutput = true
+            conn.setRequestProperty("Authorization", "Basic $auth")
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+            conn.connectTimeout = 8000
+            conn.readTimeout = 8000
+            conn.outputStream.write("grant_type=client_credentials".toByteArray())
+            val resp = conn.inputStream.bufferedReader().readText()
+            org.json.JSONObject(resp).optString("access_token").ifBlank { null }
         } catch (_: Exception) { null }
     }
+
+    /** Tenta achar o ID exato da música no Spotify (precisa de Premium na conta dona do app). */
+    private fun spotifyTrackId(query: String): String? {
+        val token = spotifyToken() ?: return null
+        return try {
+            val q = URLEncoder.encode(query, "UTF-8")
+            val conn = (URL("https://api.spotify.com/v1/search?q=$q&type=track&limit=1")).openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.setRequestProperty("Authorization", "Bearer $token")
+            conn.connectTimeout = 8000
+            conn.readTimeout = 8000
+            val resp = conn.inputStream.bufferedReader().readText()
+            val items = org.json.JSONObject(resp).getJSONObject("tracks").getJSONArray("items")
+            if (items.length() == 0) null else items.getJSONObject(0).getString("id")
+        } catch (_: Exception) { null }
+    }
+
 
     /** Toca música de verdade:
      *  - Spotify: abre a música no app (spotify:track:ID) ou a busca dentro do app.

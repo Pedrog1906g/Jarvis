@@ -13,6 +13,12 @@ android {
         targetSdk 34
         versionCode 5
         versionName "1.0.0"
+
+        // Chaves do Spotify (lidas do gradle.properties / injetadas no build).
+        def spotifyCid = project.findProperty('SPOTIFY_CLIENT_ID') ?: ''
+        def spotifySec = project.findProperty('SPOTIFY_CLIENT_SECRET') ?: ''
+        buildConfigField "String", "SPOTIFY_CLIENT_ID", "\"${spotifyCid}\""
+        buildConfigField "String", "SPOTIFY_CLIENT_SECRET", "\"${spotifySec}\""
     }
 
     signingConfigs {

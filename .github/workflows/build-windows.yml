@@ -26,6 +26,13 @@ jobs:
           pip install -r windows/requirements.txt
           pip install pyinstaller
 
+      - name: Inject Spotify keys (só no build, não vai para o repo)
+        run: |
+          if [ -n "${{ secrets.SPOTIFY_CLIENT_ID }}" ]; then
+            sed -i "s/__SPOTIFY_CLIENT_ID__/${{ secrets.SPOTIFY_CLIENT_ID }}/" windows/spotify_auth.py
+            sed -i "s/__SPOTIFY_CLIENT_SECRET__/${{ secrets.SPOTIFY_CLIENT_SECRET }}/" windows/spotify_auth.py
+          fi
+
       - name: Build executable (onefile, sem console)
         working-directory: windows
         run: |
