@@ -7,7 +7,7 @@ from app.db.database import get_db
 from app.db import models
 from app.core.security import get_current_user, ws_user
 from app.core.llm import stream_chat, is_available
-from app.core.memory import build_messages, extract_facts
+from app.core.memory import build_messages, extract_facts, maybe_compress_history
 from app.core.firebase import mirror_user, mirror_message
 from app.services import obsidian as _obs
 
@@ -157,6 +157,16 @@ async def ws_chat(websocket: WebSocket, token: str = ""):
             db.add(models.Message(conversation_id=conv.id, role="assistant", content=reply))
             db.commit()
             _sync_msg(user.username, conv.id, "assistant", reply)
+            # Comprime histórico se ficou muito longo (best-effort, em background)
+            try:
+                import threading
+                threading.Thread(
+                    target=maybe_compress_history,
+                    args=(next(get_db()), user.id, conv.id),
+                    daemon=True
+                ).start()
+            except Exception:
+                pass
             await websocket.send_json({"type": "done", "conversation_id": conv.id})
     except WebSocketDisconnect:
         pass

@@ -25,7 +25,8 @@ import requests
 import websocket  # pacote websocket-client
 
 from commands import (classify_command, open_program, organize_folder,
-                      system_stats, set_volume, change_volume, play_music)
+                      system_stats, set_volume, change_volume, play_music,
+                      take_screenshot, get_weather, web_search, lock_screen, get_clipboard)
 from voice import WindowsVoice
 
 APP_NAME = "JARVIS"
@@ -379,6 +380,20 @@ class App:
             result = self._handle_volume(text)
         elif intent == "music":
             result = play_music(text)
+        elif intent == "screenshot":
+            result = take_screenshot()
+        elif intent == "weather":
+            # Extrai nome da cidade se mencionado
+            m = re.search(r"(?:em|para|de|do|da)\s+([A-Za-z\u00C0-\u024F\s]+)", text, re.I)
+            city = m.group(1).strip() if m else None
+            result = get_weather(city)
+        elif intent == "search":
+            query = re.sub(r"\b(pesquisar|pesquise|buscar|busque|googlar|google|pesquisa|sobre|por)\b", "", text, flags=re.I).strip()
+            result = web_search(query or text)
+        elif intent == "lock":
+            result = lock_screen()
+        elif intent == "clipboard":
+            result = get_clipboard()
         else:
             result = None
 

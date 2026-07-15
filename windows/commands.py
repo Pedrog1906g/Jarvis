@@ -30,13 +30,13 @@ KNOWN_APPS = {
 
 
 def classify_command(text: str) -> str:
-    """Retorna a intenção: open_app | organize | stats | volume | reminder | chat."""
+    """Retorna a intenção: open_app | organize | stats | volume | reminder | screenshot | weather | search | lock | clipboard | chat."""
     t = (text or "").lower().strip()
     if re.search(r"\b(abrir|abre|abra|execute|rodar|iniciar|inicie)\b", t):
         return "open_app"
     if "organiz" in t or "arrumar os arquivos" in t or "arrumar arquivos" in t:
         return "organize"
-    if "desempenho" in t or "performance" in t or "cpu" in t or "memória" in t or "memoria" in t:
+    if "desempenho" in t or "performance" in t or "cpu" in t or "memória" in t or "memoria" in t or "ram" in t:
         return "stats"
     if "volume" in t:
         return "volume"
@@ -45,6 +45,16 @@ def classify_command(text: str) -> str:
     if re.search(r"\b(tocar|toque|ouvir|play|m[úu]sica|som)\b", t) or \
        "spotify" in t or "youtube" in t or "deezer" in t:
         return "music"
+    if "screenshot" in t or "captura de tela" in t or "printscreen" in t or "print screen" in t:
+        return "screenshot"
+    if "tempo" in t or "clima" in t or "previsão" in t or "chuva" in t or "temperatura" in t:
+        return "weather"
+    if re.search(r"\b(pesquisar|pesquise|buscar|busque|googlar|google|pesquisa)\b", t):
+        return "search"
+    if "travar" in t or "bloquear o pc" in t or "bloquear tela" in t or "lock" in t:
+        return "lock"
+    if "área de transferência" in t or "clipboard" in t or "copiei" in t:
+        return "clipboard"
     return "chat"
 
 
@@ -100,16 +110,112 @@ def organize_folder(path: str = None) -> str:
 
 
 def system_stats() -> str:
+    """Mostra estatísticas detalhadas do sistema."""
     try:
         import psutil
         cpu = psutil.cpu_percent(interval=1)
         mem = psutil.virtual_memory()
         disk = psutil.disk_usage("/")
+        temps = ""
+        try:
+            t = psutil.sensors_temperatures()
+            if t:
+                for name, entries in t.items():
+                    if entries:
+                        temps = f" | Temp CPU: {entries[0].current:.0f}°C"
+                        break
+        except Exception:
+            pass
         return (f"CPU: {cpu:.0f}% | RAM: {mem.percent:.0f}% "
                 f"({mem.used // (1024 ** 3)}/{mem.total // (1024 ** 3)} GB) | "
-                f"Disco: {disk.percent:.0f}%")
+                f"Disco: {disk.percent:.0f}%{temps}")
     except Exception as e:
         return f"Não consegui ler o desempenho: {e}"
+
+
+def take_screenshot(save_path: str = None) -> str:
+    """Faz uma captura de tela e salva em Imagens ou no caminho especificado."""
+    try:
+        import datetime
+        from PIL import ImageGrab
+        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        if not save_path:
+            pics = os.path.join(os.path.expanduser("~"), "Pictures", "JARVIS")
+            os.makedirs(pics, exist_ok=True)
+            save_path = os.path.join(pics, f"screenshot_{ts}.png")
+        img = ImageGrab.grab()
+        img.save(save_path)
+        return f"Screenshot salvo em: {save_path}"
+    except ImportError:
+        # Fallback: usar PowerShell
+        try:
+            ps = (
+                "Add-Type -AssemblyName System.Windows.Forms; "
+                "$bmp=[System.Drawing.Bitmap]::new([System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width,"
+                "[System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height); "
+                "$g=[System.Drawing.Graphics]::FromImage($bmp); "
+                "$g.CopyFromScreen(0,0,0,0,$bmp.Size); "
+                f"$bmp.Save('{save_path or os.path.join(os.path.expanduser('~'), 'screenshot.png')}')"
+            )
+            subprocess.run(["powershell", "-Command", ps], timeout=10)
+            return f"Screenshot salvo (via PowerShell)."
+        except Exception as e2:
+            return f"Não consegui tirar screenshot: {e2}"
+    except Exception as e:
+        return f"Não consegui tirar screenshot: {e}"
+
+
+def get_weather(city: str = None) -> str:
+    """Busca o clima atual usando a API pública do wttr.in (sem chave necessária)."""
+    try:
+        import requests
+        loc = city or "auto"
+        url = f"https://wttr.in/{urllib.parse.quote(loc)}?format=3&lang=pt"
+        r = requests.get(url, timeout=8, headers={"User-Agent": "curl/7.0"})
+        if r.status_code == 200:
+            return "Clima: " + r.text.strip()
+        return f"Não consegui buscar o clima para '{city or 'sua localização'}'."
+    except Exception as e:
+        return f"Erro ao buscar clima: {e}"
+
+
+def web_search(query: str) -> str:
+    """Abre uma pesquisa no Google no navegador padrão."""
+    if not query:
+        return "Diga o que deseja pesquisar."
+    try:
+        webbrowser.open("https://www.google.com/search?q=" + urllib.parse.quote(query))
+        return f"Pesquisando '{query}' no Google."
+    except Exception as e:
+        return f"Erro ao pesquisar: {e}"
+
+
+def lock_screen() -> str:
+    """Bloqueia a tela do Windows."""
+    try:
+        import ctypes
+        ctypes.windll.user32.LockWorkStation()
+        return "Tela bloqueada."
+    except Exception as e:
+        return f"Não consegui bloquear a tela: {e}"
+
+
+def get_clipboard() -> str:
+    """Lê o conteúdo da área de transferência."""
+    try:
+        import tkinter as tk
+        root = tk.Tk()
+        root.withdraw()
+        clip = root.clipboard_get()
+        root.destroy()
+        if clip:
+            preview = clip[:200] + ("…" if len(clip) > 200 else "")
+            return f"Área de transferência: {preview}"
+        return "Área de transferência está vazia."
+    except Exception as e:
+        return f"Não consegui ler a área de transferência: {e}"
+
+
 
 
 def set_volume(percent: int) -> str:

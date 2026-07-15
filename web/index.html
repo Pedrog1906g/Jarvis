@@ -4,375 +4,805 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>JARVIS — NEXUS AI</title>
+<meta name="description" content="JARVIS — Assistente Pessoal IA estilo Iron Man. Powered by NEXUS AI e Groq." />
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#02040a; --panel:rgba(8,18,32,.72); --cyan:#00e5ff; --cyan2:#19f0ff;
-    --blue:#1b6dff; --violet:#7c4dff; --text:#dff3ff; --dim:#7e93ad; --red:#ff4d5e; --gold:#ffd54a;
+    --bg:#010812; --panel:rgba(4,12,26,.72); --cyan:#00e5ff; --cyan-dim:rgba(0,229,255,.35);
+    --cyan-glow:rgba(0,229,255,.5); --blue:#1565ff; --violet:#7c3dff; --text:#c8ecff;
+    --dim:#4a7a96; --red:#ff2d4a; --gold:#ffc84a; --orange:#ff6200; --green:#00e599;
+    --panel-border:rgba(0,229,255,.12);
   }
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;font-family:"Share Tech Mono", monospace;background:var(--bg);color:var(--text);overflow:hidden}
+
+  /* ─── BG + atmosfera ─── */
   body{
     background:
-      radial-gradient(1200px 800px at 50% 38%, rgba(0,120,180,.20), transparent 60%),
-      radial-gradient(900px 700px at 50% 62%, rgba(124,77,255,.12), transparent 60%),
+      radial-gradient(ellipse 180% 90% at 50% -20%, rgba(0,80,180,.18) 0%, transparent 70%),
+      radial-gradient(ellipse 120% 80% at 50% 110%, rgba(124,61,255,.1) 0%, transparent 70%),
       var(--bg);
-    color:var(--text); font-family:"Segoe UI",system-ui,Roboto,sans-serif; overflow:hidden;
   }
 
-  /* ---- Grade de fundo + vinheta ---- */
-  .gridbg:after{
-    content:""; position:fixed; inset:0; pointer-events:none; opacity:.10;
-    background-image:linear-gradient(rgba(0,229,255,.5) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(0,229,255,.5) 1px,transparent 1px);
-    background-size:46px 46px;
-    mask-image:radial-gradient(circle at 50% 45%,#000 30%,transparent 78%);
+  /* Grade perspectiva */
+  .gridbg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .gridbg::before{
+    content:"";position:absolute;inset:0;
+    background-image:
+      linear-gradient(rgba(0,229,255,.055) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,229,255,.055) 1px,transparent 1px);
+    background-size:60px 60px;
+    transform:perspective(800px) rotateX(25deg) scaleY(1.8);
+    transform-origin:50% 100%;
+    mask-image:linear-gradient(to top, transparent 0%, #000 60%, transparent 100%);
   }
-  .vignette{position:fixed; inset:0; pointer-events:none;
-    background:radial-gradient(circle at 50% 45%,transparent 55%,rgba(0,0,0,.65) 100%);}
-
-  /* ---- Cantos do HUD (moldura) ---- */
-  .corner{position:fixed; width:54px; height:54px; border:2px solid rgba(0,229,255,.55);
-    pointer-events:none; filter:drop-shadow(0 0 6px rgba(0,229,255,.5)); z-index:5}
-  .corner.tl{top:14px; left:14px; border-right:0; border-bottom:0}
-  .corner.tr{top:14px; right:14px; border-left:0; border-bottom:0}
-  .corner.bl{bottom:14px; left:14px; border-right:0; border-top:0}
-  .corner.br{bottom:14px; right:14px; border-left:0; border-top:0}
-
-  /* ---- Scanline suave ---- */
-  .scan{position:fixed; inset:0; pointer-events:none; opacity:.06; z-index:4;
-    background:repeating-linear-gradient(0deg, #fff 0 1px, transparent 1px 3px);}
-
-  /* ---------- HUD central (reator) ---------- */
-  .stage{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column}
-  .reactor{position:relative; width:min(64vmin,540px); height:min(64vmin,540px); display:flex; align-items:center; justify-content:center}
-
-  /* anel de ticks (marcações) */
-  .ticks{position:absolute; inset:0; border-radius:50%;
-    background:repeating-conic-gradient(from 0deg, rgba(0,229,255,.55) 0deg 1deg, transparent 1deg 9deg);
-    -webkit-mask:radial-gradient(circle, transparent 47%, #000 48%, #000 50%, transparent 51%);
-            mask:radial-gradient(circle, transparent 47%, #000 48%, #000 50%, transparent 51%);
-    opacity:.55; animation:spin 60s linear infinite}
-
-  /* varredura de radar */
-  .sweep{position:absolute; inset:0; border-radius:50%; overflow:hidden; opacity:.45}
-  .sweep:before{content:""; position:absolute; inset:0;
-    background:conic-gradient(from 0deg, rgba(0,229,255,0) 0deg, rgba(0,229,255,.30) 40deg, rgba(0,229,255,0) 70deg);
-    animation:spin 4.5s linear infinite}
-
-  .ring{position:absolute; border-radius:50%; border:2px solid rgba(0,229,255,.25)}
-  .ring.r1{inset:0; border-style:dashed; animation:spin 26s linear infinite}
-  .ring.r2{inset:7%; border-color:rgba(124,77,255,.30); border-style:dotted; animation:spin 18s linear infinite reverse}
-  .ring.r3{inset:16%; border-color:rgba(0,229,255,.55); box-shadow:0 0 40px rgba(0,229,255,.35) inset,0 0 30px rgba(0,229,255,.25)}
-  .ring.r4{inset:24%; border-color:rgba(27,109,255,.5)}
-
-  .core{
-    width:34%; height:34%; border-radius:50%;
-    background:radial-gradient(circle at 50% 45%,#bff6ff,#19f0ff 38%,#0a6c8c 70%,#062a3a 100%);
-    box-shadow:0 0 60px rgba(0,229,255,.65),0 0 120px rgba(0,229,255,.35);
-    display:flex; align-items:center; justify-content:center; position:relative;
-    animation:breathe 4s ease-in-out infinite;
+  .gridbg::after{
+    content:"";position:absolute;inset:0;
+    background-image:
+      linear-gradient(rgba(0,229,255,.035) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,229,255,.035) 1px,transparent 1px);
+    background-size:20px 20px;
+    mask-image:radial-gradient(circle at 50% 50%, #000 30%, transparent 80%);
   }
-  /* íris interna */
-  .core:before{content:""; position:absolute; width:62%; height:62%; border-radius:50%;
-    background:radial-gradient(circle at 50% 50%, #021018 0 38%, rgba(2,16,24,.2) 39% 60%, #021018 61% 100%);
-    box-shadow:0 0 18px rgba(0,0,0,.6) inset;}
-  .core:after{content:""; position:absolute; width:14%; height:14%; border-radius:50%; background:#021018;
-    box-shadow:0 0 14px rgba(0,229,255,.9);}
-  .core.listening{background:radial-gradient(circle at 50% 45%,#ffd6da,#ff4d5e 40%,#7a1822 75%,#2a060c 100%);
-    box-shadow:0 0 70px rgba(255,77,94,.7),0 0 140px rgba(255,77,94,.4); animation:pulse .9s ease-in-out infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
 
-  /* texto de status sob o reator */
-  .hudlabel{margin-top:18px; text-align:center; letter-spacing:6px; font-size:14px; color:var(--cyan);
-    text-shadow:0 0 12px rgba(0,229,255,.6); z-index:3}
-  .hudlabel b{color:var(--gold); text-shadow:0 0 12px rgba(255,213,74,.7)}
-  .hudsub{margin-top:4px; font-size:11px; letter-spacing:3px; color:var(--dim)}
+  /* Vinheta */
+  .vignette{position:fixed;inset:0;pointer-events:none;z-index:1;
+    background:radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0,0,0,.85) 100%)}
 
-  .wave{position:absolute; bottom:6%; left:50%; transform:translateX(-50%); display:flex; gap:4px; height:46px; align-items:flex-end; opacity:0; transition:.3s; z-index:3}
-  .wave.on{opacity:1}
-  .wave i{width:5px; background:linear-gradient(var(--cyan),var(--blue)); border-radius:3px; animation:w 1s ease-in-out infinite}
-  .wave i:nth-child(2){animation-delay:.1s}.wave i:nth-child(3){animation-delay:.2s}.wave i:nth-child(4){animation-delay:.3s}
-  .wave i:nth-child(5){animation-delay:.15s}.wave i:nth-child(6){animation-delay:.25s}.wave i:nth-child(7){animation-delay:.05s}
-  @keyframes w{0%,100%{height:8px}50%{height:42px}}
+  /* Scanlines finas */
+  .scan{position:fixed;inset:0;pointer-events:none;z-index:2;opacity:.025;
+    background:repeating-linear-gradient(0deg,#000 0 1px,transparent 1px 3px)}
 
-  /* partículas flutuantes */
-  .p{position:fixed; width:3px; height:3px; border-radius:50%; background:var(--cyan); opacity:.5;
-    box-shadow:0 0 8px var(--cyan); pointer-events:none; z-index:1; animation:float linear infinite}
-  @keyframes float{from{transform:translateY(110vh)}to{transform:translateY(-10vh)}}
+  /* Cantos HUD animados */
+  .corner{position:fixed;width:52px;height:52px;pointer-events:none;z-index:8}
+  .corner::before,.corner::after{content:"";position:absolute;background:var(--cyan);opacity:.8}
+  .corner::before{width:2px;height:100%}
+  .corner::after{width:100%;height:2px}
+  .corner.tl{top:18px;left:18px}.corner.tl::before{top:0;left:0}.corner.tl::after{top:0;left:0}
+  .corner.tr{top:18px;right:18px}.corner.tr::before{top:0;right:0;left:auto}.corner.tr::after{top:0;right:0;left:auto}
+  .corner.bl{bottom:18px;left:18px}.corner.bl::before{bottom:0;top:auto;left:0}.corner.bl::after{bottom:0;top:auto;left:0}
+  .corner.br{bottom:18px;right:18px}.corner.br::before{bottom:0;top:auto;right:0;left:auto}.corner.br::after{bottom:0;top:auto;right:0;left:auto}
+  @keyframes cornerPulse{0%,100%{opacity:.7}50%{opacity:1}}
+  .corner{animation:cornerPulse 4s ease-in-out infinite}
+  .corner.tr{animation-delay:1s}.corner.bl{animation-delay:2s}.corner.br{animation-delay:3s}
 
-  /* ---------- Chat ---------- */
-  .panel{
-    position:fixed; top:14px; right:14px; bottom:108px; width:min(440px,42vw);
-    background:var(--panel); border:1px solid rgba(0,229,255,.18); border-radius:16px;
-    backdrop-filter:blur(8px); display:flex; flex-direction:column; overflow:hidden;
-    box-shadow:0 0 40px rgba(0,0,0,.5), 0 0 0 1px rgba(0,229,255,.06) inset; z-index:6;
+  /* Borda horizontal de topo e base */
+  .hud-line{position:fixed;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan-dim),var(--cyan),var(--cyan-dim),transparent);pointer-events:none;z-index:8}
+  .hud-line.top{top:14px}.hud-line.bottom{bottom:14px}
+
+  /* ─── REATOR CENTRAL ─── */
+  .stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:3;pointer-events:none}
+  .reactor-wrap{position:relative;width:min(62vmin,440px);height:min(62vmin,440px);display:flex;align-items:center;justify-content:center}
+  .reactor-wrap::before{
+    content:"";position:absolute;inset:-20px;border-radius:50%;
+    background:radial-gradient(circle,rgba(0,229,255,.07) 0%,transparent 70%);
+    animation:breatheGlow 4s ease-in-out infinite;
   }
-  .panel:before, .panel:after{content:""; position:absolute; width:14px; height:14px; border:2px solid var(--cyan); opacity:.7}
-  .panel:before{top:6px; left:6px; border-right:0; border-bottom:0}
-  .panel:after{bottom:6px; right:6px; border-left:0; border-top:0}
-  .phead{padding:12px 14px; border-bottom:1px solid rgba(0,229,255,.15); display:flex; align-items:center; gap:10px}
-  .phead h1{font-size:18px; letter-spacing:3px; margin:0; color:var(--cyan); text-shadow:0 0 14px rgba(0,229,255,.6)}
-  .dot{width:9px;height:9px;border-radius:50%;background:var(--dim);box-shadow:0 0 8px currentColor}
-  .dot.on{background:#27e08a;color:#27e08a}.dot.off{background:var(--red);color:var(--red)}
-  .phead small{margin-left:auto;color:var(--dim);font-size:11px}
-  #chat{flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px}
-  .row{display:flex; gap:8px; max-width:92%}
-  .row.user{align-self:flex-end; flex-direction:row-reverse}
-  .bubble{padding:9px 12px; border-radius:14px; line-height:1.45; white-space:pre-wrap; font-size:14px}
-  .row.bot .bubble{background:rgba(10,26,46,.9); border:1px solid rgba(0,229,255,.22)}
-  .row.user .bubble{background:linear-gradient(135deg,#0a3b4a,#0c5a6e); color:#eafdff}
-  .who{font-size:10px; letter-spacing:1px; color:var(--cyan); margin-bottom:3px}
-  .row.user .who{color:var(--blue); text-align:right}
-  .sys{font-size:12px; color:var(--red); align-self:center; text-align:center}
+  @keyframes breatheGlow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
 
-  .bar{position:fixed; left:14px; right:14px; bottom:14px; display:flex; gap:10px; align-items:center; padding:0 6px; z-index:6}
-  .bar .inputwrap{flex:1; background:var(--panel); border:1px solid rgba(0,229,255,.2); border-radius:30px; padding:4px 6px 4px 16px; display:flex; align-items:center}
-  .bar input{flex:1; background:transparent; border:0; outline:0; color:var(--text); font-size:15px; padding:10px 4px}
-  .mic,.send{width:54px;height:54px;border-radius:50%;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(circle at 40% 35%,#19f0ff,#0a6c8c); color:#02121a; box-shadow:0 0 22px rgba(0,229,255,.5); transition:.2s}
-  .mic{background:radial-gradient(circle at 40% 35%,#9fb4ff,#2742c9); box-shadow:0 0 22px rgba(60,90,255,.5)}
-  .mic.active{background:radial-gradient(circle at 40% 35%,#ff9aa6,#c41f33); box-shadow:0 0 26px rgba(255,77,94,.6); animation:pulse .9s infinite}
-  .mic.hint{animation:hintpulse 1.4s ease-in-out infinite}
-  @keyframes hintpulse{0%,100%{box-shadow:0 0 22px rgba(60,90,255,.5)}50%{box-shadow:0 0 42px rgba(60,90,255,.95)}}
-  .send:active,.mic:active{transform:scale(.94)}
-  .ttsbtn{position:fixed; left:14px; bottom:80px; font-size:12px; color:var(--dim); background:var(--panel);
-    border:1px solid rgba(0,229,255,.2); border-radius:20px; padding:6px 12px; cursor:pointer; z-index:6}
-  .ttsbtn.on{color:var(--cyan); border-color:var(--cyan)}
-  .eng{position:fixed; left:14px; bottom:122px; font-size:13px; color:var(--cyan); background:var(--panel);
-    border:1px solid rgba(0,229,255,.3); border-radius:20px; padding:6px 12px; cursor:pointer; z-index:6}
-  .eng:hover{border-color:var(--cyan)}
+  /* SVG reator */
+  .reactor-svg{width:100%;height:100%;animation:reactorFloat 6s ease-in-out infinite}
+  @keyframes reactorFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 
-  /* ---------- Login ---------- */
-  .login{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(2,5,12,.92); z-index:50}
-  .login .card{width:min(380px,92vw); background:var(--panel); border:1px solid rgba(0,229,255,.25); border-radius:18px; padding:26px; box-shadow:0 0 60px rgba(0,229,255,.2)}
-  .login h2{margin:0 0 4px; color:var(--cyan); letter-spacing:4px; text-shadow:0 0 16px rgba(0,229,255,.6)}
-  .login p{color:var(--dim); font-size:13px; margin:0 0 18px}
-  .login input{width:100%; padding:12px; margin:8px 0; border-radius:10px; border:1px solid #1b2638; background:#0a0f1a; color:var(--text)}
-  .login button{width:100%; padding:12px; margin-top:10px; border:0; border-radius:10px; font-weight:700; letter-spacing:1px; cursor:pointer;
-    background:linear-gradient(135deg,#19f0ff,#1b6dff); color:#02121a}
-  .login .err{color:var(--red); font-size:13px; margin-top:8px; min-height:16px}
-  .hint{font-size:11px;color:var(--dim);margin-top:10px;line-height:1.5}
-  @media(max-width:760px){ .panel{width:auto; left:14px; right:14px; bottom:120px; top:14px} .reactor{opacity:.16; transform:scale(.8)} .corner{display:none} }
+  /* Anel exterior animado */
+  .ring-outer{animation:spinCW 30s linear infinite}
+  .ring-mid{animation:spinCCW 20s linear infinite}
+  .ring-inner{animation:spinCW 12s linear infinite}
+  .ring-scan{animation:spinCW 3s linear infinite}
+  @keyframes spinCW{to{transform:rotate(360deg);transform-origin:center}}
+  @keyframes spinCCW{to{transform:rotate(-360deg);transform-origin:center}}
+
+  /* Núcleo pulsante */
+  .core-glow{animation:coreGlow 3.5s ease-in-out infinite}
+  @keyframes coreGlow{0%,100%{r:38px;opacity:1}50%{r:42px;opacity:.85}}
+  .core-pulse{animation:corePulse 3.5s ease-in-out infinite}
+  @keyframes corePulse{0%,100%{r:26px}50%{r:30px}}
+
+  /* Anel de ondas sonoras (visível quando falando/ouvindo) */
+  .sound-ring{opacity:0;transition:opacity .4s}
+  .sound-ring.on{opacity:1}
+  .sound-r1{animation:soundWave 1s ease-in-out infinite}
+  .sound-r2{animation:soundWave 1s ease-in-out .2s infinite}
+  .sound-r3{animation:soundWave 1s ease-in-out .4s infinite}
+  @keyframes soundWave{0%{r:55px;opacity:.8}100%{r:95px;opacity:0}}
+
+  .reactor-label{
+    margin-top:22px;font-family:"Orbitron",sans-serif;font-size:clamp(14px,2.5vw,20px);
+    letter-spacing:12px;color:var(--cyan);text-align:center;z-index:3;
+    text-shadow:0 0 20px var(--cyan-glow),0 0 40px var(--cyan-dim);
+    animation:labelGlow 4s ease-in-out infinite;
+  }
+  @keyframes labelGlow{0%,100%{opacity:.9;text-shadow:0 0 20px var(--cyan-glow),0 0 40px var(--cyan-dim)}
+    50%{opacity:1;text-shadow:0 0 30px var(--cyan-glow),0 0 60px rgba(0,229,255,.3)}}
+  .reactor-sub{margin-top:6px;font-size:clamp(9px,1.4vw,12px);letter-spacing:5px;color:var(--dim);text-align:center;z-index:3}
+  .reactor-version{margin-top:3px;font-size:9px;letter-spacing:3px;color:rgba(0,229,255,.3);text-align:center;z-index:3}
+
+  /* ─── PAINEL ESQUERDO ─── */
+  .panel-left{
+    position:fixed;top:22px;left:22px;bottom:110px;width:min(300px,26vw);
+    background:var(--panel);border:1px solid var(--panel-border);border-radius:10px;
+    backdrop-filter:blur(14px);padding:0;display:flex;flex-direction:column;
+    box-shadow:0 0 40px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.03);z-index:6;
+    overflow:hidden;
+  }
+  .panel-head{
+    padding:12px 16px;border-bottom:1px solid var(--panel-border);
+    background:rgba(0,229,255,.04);display:flex;align-items:center;gap:8px;
+  }
+  .panel-head-icon{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+  .panel-head-title{font-family:"Orbitron",sans-serif;font-size:10px;letter-spacing:3px;color:var(--cyan)}
+  .panel-body{padding:14px 16px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+  .panel-body::-webkit-scrollbar{width:3px}
+  .panel-body::-webkit-scrollbar-thumb{background:var(--cyan-dim);border-radius:2px}
+
+  /* Métricas */
+  .metric{display:flex;flex-direction:column;gap:4px}
+  .metric-row{display:flex;justify-content:space-between;font-size:10px;color:var(--dim)}
+  .metric-label{letter-spacing:1px}
+  .metric-val{color:var(--cyan)}
+  .metric-val.green{color:var(--green)}
+  .metric-val.orange{color:var(--orange)}
+  .metric-bar{height:2px;background:rgba(0,229,255,.1);border-radius:1px;overflow:hidden}
+  .metric-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:1px;transition:width .8s ease}
+
+  /* Status items */
+  .status-item{display:flex;align-items:center;gap:8px;font-size:10px;padding:6px 0;border-bottom:1px solid rgba(0,229,255,.06)}
+  .status-item:last-child{border-bottom:none}
+  .status-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+  .status-dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+  .status-dot.off{background:var(--red);box-shadow:0 0 6px var(--red)}
+  .status-dot.warn{background:var(--orange);box-shadow:0 0 6px var(--orange)}
+  .status-label{color:var(--dim);letter-spacing:.5px;flex:1}
+  .status-label-val{color:var(--text);font-size:9px}
+
+  /* Separador */
+  .divider{height:1px;background:var(--panel-border);margin:4px 0}
+
+  /* Logs de atividade */
+  .activity-log{font-size:9px;color:var(--dim);letter-spacing:.5px;line-height:1.6;max-height:80px;overflow-y:auto;padding-top:4px}
+  .activity-log::-webkit-scrollbar{display:none}
+  .log-entry{display:flex;gap:6px;margin-bottom:2px}
+  .log-entry .log-time{color:rgba(0,229,255,.4);flex-shrink:0}
+  .log-entry .log-msg{color:rgba(200,236,255,.5)}
+
+  /* ─── PAINEL DIREITO (chat) ─── */
+  .panel-right{
+    position:fixed;top:22px;right:22px;bottom:110px;width:min(460px,38vw);
+    background:var(--panel);border:1px solid var(--panel-border);border-radius:10px;
+    backdrop-filter:blur(14px);display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:0 0 40px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.03);z-index:6;
+  }
+  .phead{padding:12px 16px;border-bottom:1px solid var(--panel-border);display:flex;align-items:center;gap:10px;background:rgba(0,229,255,.04)}
+  .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:.4s}
+  .conn-dot.on{background:var(--green);box-shadow:0 0 8px var(--green);animation:connPulse 2s ease-in-out infinite}
+  .conn-dot.off{background:var(--red);box-shadow:0 0 6px var(--red)}
+  @keyframes connPulse{0%,100%{box-shadow:0 0 8px var(--green)}50%{box-shadow:0 0 16px var(--green)}}
+  .phead-title{font-family:"Orbitron",sans-serif;font-size:13px;letter-spacing:5px;color:var(--cyan);text-shadow:0 0 10px var(--cyan-dim)}
+  .phead-status{margin-left:auto;font-size:10px;color:var(--dim);letter-spacing:1px}
+
+  /* Chat */
+  #chat{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+  #chat::-webkit-scrollbar{width:3px}
+  #chat::-webkit-scrollbar-thumb{background:var(--cyan-dim);border-radius:2px}
+  .msg-row{display:flex;flex-direction:column;max-width:90%}
+  .msg-row.user{align-self:flex-end;align-items:flex-end}
+  .msg-row.bot{align-self:flex-start;align-items:flex-start}
+  .msg-who{font-size:9px;letter-spacing:2px;margin-bottom:3px;color:var(--dim)}
+  .msg-row.user .msg-who{color:var(--blue)}
+  .msg-row.bot .msg-who{color:var(--cyan);opacity:.7}
+  .bubble{
+    padding:9px 14px;border-radius:8px;font-size:12px;line-height:1.55;white-space:pre-wrap;word-break:break-word;
+  }
+  .msg-row.bot .bubble{
+    background:rgba(0,50,80,.5);border:1px solid rgba(0,229,255,.15);color:#e8f8ff;
+    border-top-left-radius:2px;
+  }
+  .msg-row.user .bubble{
+    background:linear-gradient(135deg,rgba(5,30,55,.9),rgba(12,60,100,.9));
+    border:1px solid rgba(0,229,255,.25);color:#fff;
+    border-top-right-radius:2px;
+  }
+  .msg-sys{
+    font-size:10px;color:var(--orange);align-self:center;text-align:center;
+    background:rgba(255,98,0,.1);border:1px solid rgba(255,98,0,.2);
+    padding:5px 12px;border-radius:4px;letter-spacing:.5px;max-width:90%;
+  }
+
+  /* Cursor digitando */
+  .typing-cursor::after{content:"▋";animation:blink .7s step-start infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+  /* ─── BARRA INFERIOR ─── */
+  .bar{
+    position:fixed;left:22px;right:22px;bottom:22px;
+    display:flex;gap:10px;align-items:center;z-index:7;
+  }
+  .input-wrap{
+    flex:1;background:rgba(4,14,30,.85);border:1px solid rgba(0,229,255,.2);
+    border-radius:28px;padding:4px 6px 4px 20px;display:flex;align-items:center;
+    backdrop-filter:blur(16px);transition:border-color .3s,box-shadow .3s;
+  }
+  .input-wrap:focus-within{
+    border-color:var(--cyan);box-shadow:0 0 20px rgba(0,229,255,.15),inset 0 0 8px rgba(0,229,255,.05)
+  }
+  #msg{
+    flex:1;background:transparent;border:0;outline:0;color:var(--text);
+    font-size:13px;padding:8px 4px;font-family:"Share Tech Mono",monospace;
+  }
+  #msg::placeholder{color:var(--dim)}
+
+  /* Botões circulares */
+  .btn-circle{
+    width:50px;height:50px;border-radius:50%;border:0;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:18px;
+    transition:transform .15s,box-shadow .2s;flex-shrink:0;
+  }
+  .btn-circle:active{transform:scale(.9)}
+  .btn-mic{
+    background:radial-gradient(circle at 40% 35%,#5b7fff,#1b3bc7);
+    box-shadow:0 0 16px rgba(30,80,255,.5);
+  }
+  .btn-mic.active{
+    background:radial-gradient(circle at 40% 35%,#ff6080,#c01030);
+    box-shadow:0 0 22px rgba(255,40,70,.7);
+    animation:micPulse .8s ease-in-out infinite;
+  }
+  .btn-mic.hint{animation:hintGlow 1.6s ease-in-out infinite}
+  @keyframes micPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+  @keyframes hintGlow{0%,100%{box-shadow:0 0 16px rgba(30,80,255,.5)}50%{box-shadow:0 0 30px rgba(0,229,255,.9)}}
+  .btn-send{
+    background:radial-gradient(circle at 40% 35%,#20f4ff,#0a7c99);
+    box-shadow:0 0 16px rgba(0,229,255,.4);color:#021014;
+  }
+  .btn-send:hover{box-shadow:0 0 26px rgba(0,229,255,.7)}
+
+  /* Botões flutuantes */
+  .float-btn{
+    position:fixed;z-index:7;font-size:10px;letter-spacing:1px;
+    background:var(--panel);border:1px solid var(--panel-border);border-radius:20px;
+    padding:6px 14px;cursor:pointer;font-family:"Share Tech Mono",monospace;color:var(--dim);
+    transition:border-color .2s,color .2s,box-shadow .2s;backdrop-filter:blur(10px);
+  }
+  .float-btn:hover{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,.2)}
+  .float-btn.on{color:var(--cyan);border-color:var(--cyan)}
+  #ttsBtn{right:22px;bottom:100px}
+  #engBtn{right:22px;bottom:136px}
+
+  /* ─── LOGIN ─── */
+  .login{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(1,8,18,.97);z-index:50;backdrop-filter:blur(10px);
+  }
+  .login-card{
+    width:min(380px,94vw);background:rgba(6,18,38,.95);
+    border:1px solid rgba(0,229,255,.2);border-radius:14px;padding:32px;
+    box-shadow:0 0 60px rgba(0,229,255,.15),inset 0 0 0 1px rgba(255,255,255,.04);
+  }
+  .login-logo{
+    font-family:"Orbitron",sans-serif;font-size:28px;letter-spacing:8px;
+    color:var(--cyan);text-shadow:0 0 24px var(--cyan-glow);margin-bottom:4px;
+  }
+  .login-sub{font-size:11px;letter-spacing:3px;color:var(--dim);margin-bottom:24px}
+  .login-field{
+    width:100%;padding:11px 14px;margin:6px 0;border-radius:7px;
+    border:1px solid rgba(0,229,255,.15);background:rgba(0,20,40,.6);
+    color:var(--text);font-family:"Share Tech Mono",monospace;font-size:13px;
+    outline:none;transition:border-color .2s,box-shadow .2s;
+  }
+  .login-field:focus{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,.12)}
+  .login-btn{
+    width:100%;padding:12px;margin-top:14px;border:0;border-radius:7px;
+    font-weight:700;letter-spacing:3px;cursor:pointer;font-size:12px;
+    background:linear-gradient(135deg,#0a8cff,#0adff5);color:#01090f;
+    font-family:"Orbitron",sans-serif;transition:opacity .2s,box-shadow .2s;
+    box-shadow:0 0 20px rgba(0,229,255,.25);
+  }
+  .login-btn:hover{opacity:.92;box-shadow:0 0 30px rgba(0,229,255,.4)}
+  .login-err{color:var(--red);font-size:11px;margin-top:8px;min-height:16px;letter-spacing:.5px}
+  .login-hint{font-size:10px;color:var(--dim);margin-top:12px;line-height:1.5;letter-spacing:.3px}
+
+  /* ─── RESPONSIVO ─── */
+  @media(max-width:1000px){
+    .panel-left{display:none}
+    .panel-right{left:22px;width:auto}
+    .stage .reactor-wrap{opacity:.15;transform:scale(.65);pointer-events:none}
+  }
+  @media(max-width:600px){
+    .panel-right{top:10px;bottom:90px;left:10px;right:10px}
+    .bar{left:10px;right:10px;bottom:10px}
+    #ttsBtn,#engBtn{display:none!important}
+    .corner{display:none}
+  }
 </style>
 </head>
-<body class="gridbg">
-  <!-- moldura + efeitos -->
+<body>
+  <!-- Elementos de fundo -->
+  <div class="gridbg"></div>
   <div class="vignette"></div>
   <div class="scan"></div>
-  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="hud-line top"></div>
+  <div class="hud-line bottom"></div>
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
 
-  <!-- partículas -->
-  <div class="p" style="left:12%; animation-duration:16s"></div>
-  <div class="p" style="left:28%; animation-duration:22s; animation-delay:2s"></div>
-  <div class="p" style="left:46%; animation-duration:19s; animation-delay:1s"></div>
-  <div class="p" style="left:63%; animation-duration:25s; animation-delay:3s"></div>
-  <div class="p" style="left:81%; animation-duration:17s; animation-delay:0.5s"></div>
-  <div class="p" style="left:92%; animation-duration:21s; animation-delay:4s"></div>
+  <!-- ── Reator central ── -->
+  <div class="stage">
+    <div class="reactor-wrap" id="reactorWrap">
+      <svg class="reactor-svg" viewBox="0 0 440 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="coreGrad" cx="50%" cy="45%" r="50%">
+            <stop offset="0%" stop-color="#e0fdff"/>
+            <stop offset="30%" stop-color="#00e5ff"/>
+            <stop offset="65%" stop-color="#055a72"/>
+            <stop offset="100%" stop-color="#010c15"/>
+          </radialGradient>
+          <radialGradient id="coreOrange" cx="50%" cy="45%" r="50%">
+            <stop offset="0%" stop-color="#ffe8d0"/>
+            <stop offset="30%" stop-color="#ff8000"/>
+            <stop offset="65%" stop-color="#7a2800"/>
+            <stop offset="100%" stop-color="#1a0500"/>
+          </radialGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glowStrong"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
 
-  <div class="stage"><div class="reactor" id="reactor">
-    <div class="ticks"></div>
-    <div class="sweep"></div>
-    <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><div class="ring r4"></div>
-    <div class="core" id="core"><div class="eye"></div></div>
-    <div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <!-- Ondas sonoras (ocultas por padrão) -->
+        <g class="sound-ring" id="soundRing">
+          <circle class="sound-r1" cx="220" cy="220" r="55" fill="none" stroke="#00e5ff" stroke-width="1.5" opacity=".5"/>
+          <circle class="sound-r2" cx="220" cy="220" r="55" fill="none" stroke="#00e5ff" stroke-width="1" opacity=".4"/>
+          <circle class="sound-r3" cx="220" cy="220" r="55" fill="none" stroke="#00e5ff" stroke-width=".5" opacity=".3"/>
+        </g>
+
+        <!-- Anel externo - ticks -->
+        <g class="ring-outer" style="transform-origin:220px 220px">
+          <!-- Círculo base -->
+          <circle cx="220" cy="220" r="200" stroke="rgba(0,229,255,.1)" stroke-width="1"/>
+          <!-- Ticks gerados por JS -->
+          <g id="ticksOuter"></g>
+        </g>
+
+        <!-- Anel médio - pontilhado laranja -->
+        <g class="ring-mid" style="transform-origin:220px 220px">
+          <circle cx="220" cy="220" r="165" stroke="rgba(255,98,0,.25)" stroke-width="1.5" stroke-dasharray="4 8"/>
+        </g>
+
+        <!-- Anel de varredura radar -->
+        <g class="ring-scan" style="transform-origin:220px 220px">
+          <path d="M220 220 L220 60" stroke="rgba(0,229,255,.6)" stroke-width="1.5" filter="url(#glow)"/>
+          <circle cx="220" cy="220" r="160" stroke="none" fill="none"/>
+          <!-- Fan radar -->
+          <path id="radarFan" d="" fill="url(#radarGrad)" opacity=".15"/>
+          <defs>
+            <radialGradient id="radarGrad" cx="50%" cy="50%" r="50%" gradientUnits="objectBoundingBox">
+              <stop offset="0%" stop-color="#00e5ff" stop-opacity=".4"/>
+              <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+        </g>
+
+        <!-- Anel interno 1 -->
+        <circle cx="220" cy="220" r="130" stroke="rgba(0,229,255,.15)" stroke-width="1.5"/>
+        <!-- Anel interno 2 -->
+        <g style="transform-origin:220px 220px" class="ring-inner">
+          <circle cx="220" cy="220" r="110" stroke="rgba(21,101,255,.3)" stroke-width="1" stroke-dasharray="2 6"/>
+        </g>
+        <!-- Anel interno 3 -->
+        <circle cx="220" cy="220" r="90" stroke="rgba(0,229,255,.12)" stroke-width="2"/>
+
+        <!-- Cruz central decorativa -->
+        <line x1="220" y1="135" x2="220" y2="165" stroke="rgba(0,229,255,.35)" stroke-width="1"/>
+        <line x1="220" y1="275" x2="220" y2="305" stroke="rgba(0,229,255,.35)" stroke-width="1"/>
+        <line x1="135" y1="220" x2="165" y2="220" stroke="rgba(0,229,255,.35)" stroke-width="1"/>
+        <line x1="275" y1="220" x2="305" y2="220" stroke="rgba(0,229,255,.35)" stroke-width="1"/>
+
+        <!-- Diamantes nos 4 pontos -->
+        <polygon points="220,125 225,135 220,145 215,135" fill="rgba(0,229,255,.5)"/>
+        <polygon points="220,295 225,305 220,315 215,305" fill="rgba(0,229,255,.5)"/>
+        <polygon points="125,220 135,215 145,220 135,225" fill="rgba(0,229,255,.5)"/>
+        <polygon points="295,220 305,215 315,220 305,225" fill="rgba(0,229,255,.5)"/>
+
+        <!-- Núcleo externo brilhante -->
+        <circle class="core-glow" id="coreGlow" cx="220" cy="220" r="38" fill="none" stroke="#00e5ff" stroke-width="3" filter="url(#glowStrong)" opacity=".7"/>
+        <!-- Núcleo -->
+        <circle class="core-pulse" id="corePulse" cx="220" cy="220" r="26"
+          fill="url(#coreGrad)" id="coreCircle" filter="url(#glow)"/>
+        <!-- Highlight do núcleo -->
+        <circle cx="210" cy="210" r="9" fill="rgba(255,255,255,.15)"/>
+        <!-- Ponto central -->
+        <circle cx="220" cy="220" r="6" fill="#00e5ff" filter="url(#glow)"/>
+        <circle cx="220" cy="220" r="3" fill="#ffffff"/>
+
+        <!-- Textos HUD ao redor -->
+        <text x="220" y="28" fill="rgba(0,229,255,.4)" font-family="Share Tech Mono" font-size="9" text-anchor="middle" letter-spacing="3">NEXUS CORE v1.0</text>
+        <text x="220" y="422" fill="rgba(0,229,255,.4)" font-family="Share Tech Mono" font-size="9" text-anchor="middle" letter-spacing="3">ALL SYSTEMS NOMINAL</text>
+        <text x="30" y="224" fill="rgba(0,229,255,.35)" font-family="Share Tech Mono" font-size="8" text-anchor="middle" letter-spacing="1" transform="rotate(-90 30 224)">GROQ LLM</text>
+        <text x="410" y="224" fill="rgba(0,229,255,.35)" font-family="Share Tech Mono" font-size="8" text-anchor="middle" letter-spacing="1" transform="rotate(90 410 224)">FIREBASE</text>
+      </svg>
+    </div>
+    <div class="reactor-label">J A R V I S</div>
+    <div class="reactor-sub" id="reactorSub">NÚCLEO PRONTO</div>
+    <div class="reactor-version">NEXUS AI • BUILD 1.0</div>
   </div>
-  <div class="hudlabel">JARVIS <b>•</b> NEXUS AI</div>
-  <div class="hudsub" id="hudsub">NÚCLEO PRONTO</div>
+
+  <!-- ── Painel esquerdo: diagnósticos ── -->
+  <div class="panel-left" id="diagPanel">
+    <div class="panel-head">
+      <div class="panel-head-icon"></div>
+      <span class="panel-head-title">SYSTEM DIAGNOSTICS</span>
+    </div>
+    <div class="panel-body">
+
+      <!-- Métricas dinâmicas -->
+      <div class="metric">
+        <div class="metric-row">
+          <span class="metric-label">CPU USAGE</span>
+          <span class="metric-val" id="cpuVal">—</span>
+        </div>
+        <div class="metric-bar"><div class="metric-bar-fill" id="cpuBar" style="width:0%"></div></div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-row">
+          <span class="metric-label">MEMORY LOAD</span>
+          <span class="metric-val" id="memVal">—</span>
+        </div>
+        <div class="metric-bar"><div class="metric-bar-fill" id="memBar" style="width:0%;background:linear-gradient(90deg,var(--violet),#a06eff)"></div></div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-row">
+          <span class="metric-label">LATENCY</span>
+          <span class="metric-val green" id="latVal">—</span>
+        </div>
+        <div class="metric-bar"><div class="metric-bar-fill" id="latBar" style="width:0%;background:linear-gradient(90deg,var(--green),#00ffc8)"></div></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Status dos serviços -->
+      <div class="status-item">
+        <div class="status-dot on" id="sd-llm"></div>
+        <span class="status-label">GROQ LLM</span>
+        <span class="status-label-val" id="sv-llm">ONLINE</span>
+      </div>
+      <div class="status-item">
+        <div class="status-dot on" id="sd-db"></div>
+        <span class="status-label">FIREBASE DB</span>
+        <span class="status-label-val" id="sv-db">CONNECTED</span>
+      </div>
+      <div class="status-item">
+        <div class="status-dot on" id="sd-ws"></div>
+        <span class="status-label">WEBSOCKET</span>
+        <span class="status-label-val" id="sv-ws">ACTIVE</span>
+      </div>
+      <div class="status-item">
+        <div class="status-dot warn" id="sd-voice"></div>
+        <span class="status-label">WAKE WORD</span>
+        <span class="status-label-val" id="sv-voice">STANDBY</span>
+      </div>
+      <div class="status-item">
+        <div class="status-dot on"></div>
+        <span class="status-label">AUTH TOKEN</span>
+        <span class="status-label-val">SECURE</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Log de atividade -->
+      <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:4px">ACTIVITY LOG</div>
+      <div class="activity-log" id="activityLog">
+        <div class="log-entry"><span class="log-time">--:--</span><span class="log-msg">Sistema aguardando login...</span></div>
+      </div>
+    </div>
   </div>
 
-  <div class="panel" id="panel" style="display:none">
+  <!-- ── Painel direito: chat ── -->
+  <div class="panel-right" id="chatPanel" style="display:none">
     <div class="phead">
-      <span class="dot off" id="statusDot"></span>
-      <h1>JARVIS</h1>
-      <small id="statusTxt">conectando…</small>
+      <div class="conn-dot off" id="connDot"></div>
+      <span class="phead-title">JARVIS</span>
+      <span class="phead-status" id="connTxt">conectando…</span>
     </div>
     <div id="chat"></div>
   </div>
 
-  <button class="ttsbtn on" id="ttsBtn" style="display:none">🔊 Voz do JARVIS: LIGADA</button>
+  <!-- Botões flutuantes -->
+  <button class="float-btn on" id="ttsBtn" style="display:none">🔊 VOZ: LIGADA</button>
+  <button class="float-btn" id="engBtn" style="display:none">⚙ AUTO-MELHORIA</button>
 
+  <!-- Barra de entrada -->
   <div class="bar" id="bar" style="display:none">
-    <div class="inputwrap"><input id="msg" placeholder="Fale ou escreva com o JARVIS…" onkeydown="if(event.key==='Enter')send()" /></div>
-    <button class="mic" id="mic" title="Ativar escuta contínua: diga 'Jarvis'">🎙️</button>
-    <button class="eng" id="eng" title="Pedir melhoria ao JARVIS (ele muda o código e se atualiza)">⚙️</button>
-    <button class="send" id="send" title="Enviar">➤</button>
+    <div class="input-wrap">
+      <input id="msg" placeholder='Fale ou escreva com o JARVIS…' onkeydown="if(event.key==='Enter')send()" autocomplete="off"/>
+    </div>
+    <button class="btn-circle btn-mic hint" id="mic" title="Ativar escuta — diga 'Jarvis'">🎙</button>
+    <button class="btn-circle btn-send" id="sendBtn" title="Enviar">➤</button>
   </div>
 
-  <div class="login" id="login">
-    <div class="card">
-      <h2>JARVIS</h2>
-      <p>Acesso ao núcleo NEXUS · use no PC</p>
-      <input id="server" placeholder="Servidor" />
-      <input id="user" placeholder="Usuário" value="owner" />
-      <input id="pass" placeholder="Frase de acesso" type="password" value="nexus" />
-      <button onclick="doLogin()">ENTRAR NO SISTEMA</button>
-      <div class="err" id="loginErr"></div>
-      <div class="hint">Servidor padrão: o endereço desta página. Deixe como está se estiver aberto no celular/PC conectado ao NEXUS.</div>
+  <!-- Tela de login -->
+  <div class="login" id="loginScreen">
+    <div class="login-card">
+      <div class="login-logo">JARVIS</div>
+      <div class="login-sub">NEXUS AI · ACESSO SEGURO</div>
+      <input class="login-field" id="server" placeholder="Servidor (URL do backend)" />
+      <input class="login-field" id="userInp" placeholder="Usuário" value="owner" />
+      <input class="login-field" id="passInp" placeholder="Frase de acesso" type="password" value="nexus" />
+      <button class="login-btn" onclick="doLogin()">INICIALIZAR SISTEMA</button>
+      <div class="login-err" id="loginErr"></div>
+      <div class="login-hint">Servidor padrão: endereço desta página. Deixe como está se estiver acessando pelo PC ou celular conectado ao NEXUS.</div>
     </div>
   </div>
 
 <script>
-let token=null, ws=null, convId=null, serverBase="";
-let ttsOn=true, recognizing=false, maleVoice=null, listenMode=false, expectingCmd=false;
+// ── Globais ──
+let token=null,ws=null,convId=null,serverBase="";
+let ttsOn=true,recognizing=false,maleVoice=null,listenMode=false,expectingCmd=false;
+let rec=null,isSpeakingTTS=false,lastBot="";
+let wsConnected=false;
 
-// Servidor padrão = origem desta página (mesmo domínio do backend).
+// Preenche servidor padrão
 document.getElementById('server').value = location.origin;
 
+// ── Ticks SVG do reator ──
+(function buildTicks(){
+  const g = document.getElementById('ticksOuter');
+  if(!g) return;
+  const cx=220,cy=220,r=200;
+  for(let i=0;i<120;i++){
+    const ang = (i/120)*Math.PI*2 - Math.PI/2;
+    const major = i%10===0;
+    const len = major?18:i%5===0?12:7;
+    const r1=r, r2=r-len;
+    const x1=cx+r1*Math.cos(ang), y1=cy+r1*Math.sin(ang);
+    const x2=cx+r2*Math.cos(ang), y2=cy+r2*Math.sin(ang);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1.toFixed(2));line.setAttribute('y1',y1.toFixed(2));
+    line.setAttribute('x2',x2.toFixed(2));line.setAttribute('y2',y2.toFixed(2));
+    line.setAttribute('stroke',major?'rgba(0,229,255,.7)':i%5===0?'rgba(0,229,255,.4)':'rgba(0,229,255,.2)');
+    line.setAttribute('stroke-width',major?'2':i%5===0?'1.5':'1');
+    g.appendChild(line);
+  }
+})();
+
+// ── Métricas dinâmicas (simuladas) ──
+function updateMetrics(){
+  const cpu=(18+Math.random()*22).toFixed(1);
+  const mem=(38+Math.random()*14).toFixed(0);
+  const lat=(22+Math.random()*30).toFixed(0);
+  document.getElementById('cpuVal').textContent=cpu+'%';
+  document.getElementById('memVal').textContent=mem+'%';
+  document.getElementById('latVal').textContent=lat+'ms';
+  document.getElementById('cpuBar').style.width=cpu+'%';
+  document.getElementById('memBar').style.width=mem+'%';
+  document.getElementById('latBar').style.width=Math.min(lat/2,100)+'%';
+}
+setInterval(updateMetrics,2800);
+updateMetrics();
+
+// ── Log de atividade ──
+function addLog(msg){
+  const log=document.getElementById('activityLog');
+  if(!log)return;
+  const now=new Date();
+  const t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const entry=document.createElement('div');
+  entry.className='log-entry';
+  entry.innerHTML=`<span class="log-time">${t}</span><span class="log-msg">${msg}</span>`;
+  log.insertBefore(entry,log.firstChild);
+  while(log.children.length>12) log.removeChild(log.lastChild);
+}
+
+// ── Status visual ──
+function setStatus(ok,txt){
+  wsConnected=ok;
+  const dot=document.getElementById('connDot');
+  const txt2=document.getElementById('connTxt');
+  dot.className='conn-dot '+(ok?'on':'off');
+  txt2.textContent=txt;
+  document.getElementById('reactorSub').textContent=ok?'SISTEMA ONLINE':'RECONECTANDO…';
+  const sdWs=document.getElementById('sd-ws');
+  if(sdWs){sdWs.className='status-dot '+(ok?'on':'off');document.getElementById('sv-ws').textContent=ok?'ACTIVE':'OFFLINE';}
+}
+
+function setCoreState(state){
+  // state: 'idle' | 'listening' | 'speaking'
+  const circle=document.getElementById('coreCircle');
+  const glow=document.getElementById('coreGlow');
+  const sound=document.getElementById('soundRing');
+  const sub=document.getElementById('reactorSub');
+  if(state==='listening'){
+    circle.setAttribute('fill','url(#coreOrange)');
+    glow.setAttribute('stroke','#ff8000');
+    if(sound) sound.classList.add('on');
+    sub.textContent='ESCUTANDO…';
+  } else if(state==='speaking'){
+    circle.setAttribute('fill','url(#coreOrange)');
+    glow.setAttribute('stroke','#ff8000');
+    if(sound) sound.classList.add('on');
+    sub.textContent='JARVIS FALANDO…';
+  } else {
+    circle.setAttribute('fill','url(#coreGrad)');
+    glow.setAttribute('stroke','#00e5ff');
+    if(sound) sound.classList.remove('on');
+    sub.textContent=wsConnected?'SISTEMA ONLINE':'NÚCLEO PRONTO';
+  }
+}
+
+// ── Login ──
 async function doLogin(){
-  serverBase = document.getElementById('server').value.replace(/\/$/,'');
-  const u=document.getElementById('user').value, p=document.getElementById('pass').value;
-  document.getElementById('loginErr').textContent='';
+  serverBase=document.getElementById('server').value.replace(/\/$/,'');
+  const u=document.getElementById('userInp').value;
+  const p=document.getElementById('passInp').value;
+  const errEl=document.getElementById('loginErr');
+  errEl.textContent='';
   try{
-    const r=await fetch(serverBase+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({username:u,passphrase:p})});
+    const r=await fetch(serverBase+'/api/auth/login',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,passphrase:p})});
     const d=await r.json();
-    if(!r.ok){document.getElementById('loginErr').textContent=d.detail||'Falha';return;}
+    if(!r.ok){errEl.textContent=d.detail||'Falha no login';return;}
     token=d.access_token;
-    document.getElementById('login').style.display='none';
-    document.getElementById('panel').style.display='flex';
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('chatPanel').style.display='flex';
     document.getElementById('bar').style.display='flex';
     document.getElementById('ttsBtn').style.display='block';
+    document.getElementById('engBtn').style.display='block';
     setupVoices();
     connectWs();
-    // Dica para quem não é programador: clique no microfone para ativar o "Jarvis".
-    micBtn.classList.add('hint');
-    appendSystem('Clique no 🎙️ (microfone) para ativar a escuta contínua. Depois é só dizer "Jarvis" + seu comando (ex.: "Jarvis, toque música").');
-  }catch(e){document.getElementById('loginErr').textContent='Erro: '+e.message;}
+    document.getElementById('mic').classList.add('hint');
+    appendSys('Diga "Jarvis" seguido do seu comando, ou use o microfone 🎙 para ativar a escuta contínua.');
+    addLog('Login OK — token recebido');
+  }catch(e){errEl.textContent='Erro de conexão: '+e.message;}
 }
 
-function setStatus(ok, txt){
-  document.getElementById('statusDot').className='dot '+(ok?'on':'off');
-  document.getElementById('statusTxt').textContent=txt;
-  document.getElementById('hudsub').textContent = ok ? 'SISTEMA ONLINE' : 'RECONECTANDO…';
-}
-
-function connectWs() {
+// ── WebSocket ──
+function connectWs(){
   const wb=serverBase.replace('http://','ws://').replace('https://','wss://');
   ws=new WebSocket(wb+'/api/ws/chat?token='+token);
-  ws.onopen=()=>setStatus(true,'online');
-  ws.onclose=()=>setStatus(false,'desconectado');
-  ws.onerror=()=>setStatus(false,'erro de conexão');
+  ws.onopen=()=>{setStatus(true,'online');addLog('WebSocket conectado')};
+  ws.onclose=()=>{setStatus(false,'desconectado');addLog('WebSocket desconectado');setTimeout(connectWs,5000)};
+  ws.onerror=()=>{setStatus(false,'erro');addLog('Erro de conexão')};
   ws.onmessage=(ev)=>{
-    const m=JSON.parse(ev.data);
-    if(m.type==='delta') appendBot(m.content);
-    else if(m.type==='done'){convId=m.conversation_id; speakIfOn(lastBot);}
-    else if(m.type==='error') appendSystem(m.message);
+    try{
+      const m=JSON.parse(ev.data);
+      if(m.type==='delta') appendBot(m.content);
+      else if(m.type==='done'){convId=m.conversation_id;finalizeBot();speakIfOn(lastBot);}
+      else if(m.type==='error') appendSys(m.message);
+    }catch(e){}
   };
 }
 
-let lastBot="";
+// ── Chat ──
+let _botEl=null;
 function appendBot(text){
-  let el=document.getElementById('bot-current');
-  if(!el){
-    const wrap=document.createElement('div'); wrap.className='row bot';
-    const who=document.createElement('div'); who.className='who'; who.textContent='JARVIS';
-    const b=document.createElement('div'); b.className='bubble'; b.id='bot-current';
-    wrap.appendChild(who); wrap.appendChild(b); document.getElementById('chat').appendChild(wrap); el=b;
+  if(!_botEl){
+    const row=document.createElement('div');row.className='msg-row bot';
+    const who=document.createElement('div');who.className='msg-who';who.textContent='JARVIS';
+    const b=document.createElement('div');b.className='bubble typing-cursor';
+    row.appendChild(who);row.appendChild(b);
+    document.getElementById('chat').appendChild(row);
+    _botEl=b;lastBot='';
   }
-  el.textContent+=text; lastBot=el.textContent;
-  const c=document.getElementById('chat'); c.scrollTop=c.scrollHeight;
+  _botEl.textContent+=text;lastBot=_botEl.textContent;
+  const c=document.getElementById('chat');c.scrollTop=c.scrollHeight;
+}
+function finalizeBot(){
+  if(_botEl){_botEl.classList.remove('typing-cursor');_botEl=null;}
 }
 function appendUser(text){
-  const wrap=document.createElement('div'); wrap.className='row user';
-  const who=document.createElement('div'); who.className='who'; who.textContent='Você';
-  const b=document.createElement('div'); b.className='bubble'; b.textContent=text;
-  wrap.appendChild(who); wrap.appendChild(b); document.getElementById('chat').appendChild(wrap);
-  document.getElementById('bot-current')?.removeAttribute('id');
-  const c=document.getElementById('chat'); c.scrollTop=c.scrollHeight;
+  const row=document.createElement('div');row.className='msg-row user';
+  const who=document.createElement('div');who.className='msg-who';who.textContent='VOCÊ';
+  const b=document.createElement('div');b.className='bubble';b.textContent=text;
+  row.appendChild(who);row.appendChild(b);
+  document.getElementById('chat').appendChild(row);
+  finalizeBot();
+  document.getElementById('chat').scrollTop=9999;
 }
-function appendSystem(text){
-  const w=document.createElement('div'); w.className='sys'; w.textContent=text;
+function appendSys(text){
+  const w=document.createElement('div');w.className='msg-sys';w.textContent=text;
   document.getElementById('chat').appendChild(w);
+  document.getElementById('chat').scrollTop=9999;
 }
 
-// ---------- Voz (TTS no PC) ----------
+// ── TTS (voz do JARVIS) ──
 function setupVoices(){
   const pick=()=>{
     const vs=speechSynthesis.getVoices();
     if(!vs.length)return;
     const score=v=>{
       let s=0;
-      if(/pt[-_]BR/i.test(v.lang))s+=100; else if(/pt/i.test(v.lang))s+=40;
+      if(/pt[-_]BR/i.test(v.lang))s+=100;else if(/pt/i.test(v.lang))s+=40;
       if(/male|ricardo|google/i.test(v.name))s+=50;
       if(/neural|premium|wavenet|natural|high/i.test(v.name))s+=30;
       return s;
     };
-    maleVoice = vs.slice().sort((a,b)=>score(b)-score(a))[0]||null;
+    maleVoice=vs.slice().sort((a,b)=>score(b)-score(a))[0]||null;
   };
-  pick(); speechSynthesis.onvoiceschanged=pick;
+  pick();speechSynthesis.onvoiceschanged=pick;
 }
+
 function speakIfOn(text){
-  if(!ttsOn||!text||!('speechSynthesis'in window))return;
-  const u=new SpeechSynthesisUtterance(text.replace(/\*+|#|`/g,''));
-  u.lang='pt-BR'; u.pitch=0.9; u.rate=1.0; if(maleVoice)u.voice=maleVoice;
-  speechSynthesis.cancel(); speechSynthesis.speak(u);
+  if(!ttsOn||!text||!('speechSynthesis' in window))return;
+  const clean=text.replace(/\*+|#|`|\[.*?\]/g,'').trim();
+  if(!clean)return;
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang='pt-BR';u.pitch=0.9;u.rate=1.0;
+  if(maleVoice)u.voice=maleVoice;
+  if(recognizing&&rec){try{isSpeakingTTS=true;rec.stop();}catch(e){}}
+  u.onstart=()=>{setCoreState('speaking');addLog('JARVIS falando...')};
+  const end=()=>{
+    isSpeakingTTS=false;
+    setCoreState(listenMode?'listening':'idle');
+    if(listenMode&&rec&&!recognizing){try{rec.start();}catch(e){}}
+  };
+  u.onend=end;u.onerror=end;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
 }
+
 document.getElementById('ttsBtn').onclick=function(){
-  ttsOn=!ttsOn; this.className='ttsbtn'+(ttsOn?' on':'');
-  this.textContent= ttsOn?'🔊 Voz do JARVIS: LIGADA':'🔇 Voz do JARVIS: DESLIGADA';
+  ttsOn=!ttsOn;
+  this.className='float-btn'+(ttsOn?' on':'');
+  this.textContent=ttsOn?'🔊 VOZ: LIGADA':'🔇 VOZ: DESLIGADA';
 };
 
-// ---------- Música ----------
-function maybePlayMusic(text){
-  if(/\b(tocar|toque|ouvir|play|m[úu]sica|som)\b/i.test(text)){
-    const q=text.replace(/.*\b(tocar|toque|ouvir|play|m[úu]sica|som)\b/i,'')
+// ── Envio ──
+function send(){
+  const inp=document.getElementById('msg');const text=inp.value.trim();
+  if(!text||!ws||ws.readyState!==1)return;
+  appendUser(text);
+  if(/\b(tocar|toque|ouvir|play|música|musica|som)\b/i.test(text)){
+    const q=text.replace(/.*\b(tocar|toque|ouvir|play|música|musica|som)\b/i,'')
                 .replace(/\b(no spotify|no youtube|youtube|spotify)\b/gi,'').trim()||text;
     window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(q),'_blank');
-    return true;
+    appendSys('▶ Abrindo YouTube: '+q);
   }
-  return false;
-}
-
-// ---------- Envio ----------
-function send(){
-  const inp=document.getElementById('msg'); const text=inp.value.trim();
-  if(!text||!ws)return;
-  appendUser(text);
-  if(maybePlayMusic(text)) appendSystem('▶ Abrindo música: '+text);
   ws.send(JSON.stringify({type:'message',content:text,conversation_id:convId}));
   inp.value='';
+  addLog('Mensagem enviada: '+text.substring(0,30));
 }
 
-// ---------- Reconhecimento de voz (Web Speech API) ----------
-const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+// ── Reconhecimento de Voz ──
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const micBtn=document.getElementById('mic');
-const core=document.getElementById('core'), wave=document.getElementById('wave');
 if(SR){
-  const rec=new SR();
-  rec.lang='pt-BR'; rec.interimResults=true; rec.continuous=true; rec.maxAlternatives=1;
-  rec.onstart=()=>{recognizing=true; micBtn.classList.add('active'); core.classList.add('listening'); wave.classList.add('on'); document.getElementById('hudsub').textContent='ESCUTANDO…';};
+  rec=new SR();
+  rec.lang='pt-BR';rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=1;
+  rec.onstart=()=>{
+    recognizing=true;
+    micBtn.classList.add('active');
+    setCoreState('listening');
+    document.getElementById('sv-voice').textContent='ACTIVE';
+    document.getElementById('sd-voice').className='status-dot on';
+    addLog('Escuta ativada');
+  };
   rec.onend=()=>{
-    recognizing=false; micBtn.classList.remove('active'); core.classList.remove('listening'); wave.classList.remove('on');
-    if(listenMode){ setTimeout(()=>{ try{ rec.start(); }catch(e){} }, 400); }
+    recognizing=false;
+    micBtn.classList.remove('active');
+    if(!isSpeakingTTS){setCoreState(listenMode?'listening':'idle');}
+    document.getElementById('sv-voice').textContent=listenMode?'ACTIVE':'STANDBY';
+    document.getElementById('sd-voice').className='status-dot '+(listenMode?'on':'warn');
+    if(listenMode&&!isSpeakingTTS){setTimeout(()=>{try{rec.start();}catch(e){}},400);}
   };
   rec.onerror=(e)=>{
     const err=(e&&e.error)?e.error:'';
     if(err==='not-allowed'||err==='service-not-allowed'){
       listenMode=false;
-      appendSystem('🎙️ Microfone bloqueado. Permita o uso do microfone no navegador (ícone de cadeado na barra) e recarregue a página.');
+      appendSys('🎙 Microfone bloqueado. Clique no cadeado da barra e permita o microfone.');
     } else if(err==='network'){
-      appendSystem('🎙️ Sem conexão com o serviço de voz (precisa de internet).');
+      appendSys('🎙 Sem acesso ao serviço de voz (precisa de internet).');
     }
-    // onend cuida de reiniciar se estiver em modo contínuo
   };
-  // JARVIS: correção do reenvio duplicado no modo contínuo.
-  // Usa e.resultIndex para processar CADA resultado final exatamente uma vez
-  // (no modo contínuo o array e.results acumula; sem isso, comandos antigos
-  // eram reenviados junto com os novos).
   function processVoice(t){
-    t=t.trim();
-    if(!t) return;
+    t=t.trim();if(!t)return;
     const low=t.toLowerCase();
     if(low.includes('jarvis')||low.includes('nexus')){
       const cmd=t.replace(/\b(jarvis|nexus)\b/gi,'').trim();
-      if(cmd){ expectingCmd=false; document.getElementById('msg').value=cmd; send(); }
-      else { expectingCmd=true; appendSystem('🎙️ JARVIS na escuta… fale seu comando.'); }
+      if(cmd){expectingCmd=false;document.getElementById('msg').value=cmd;send();}
+      else{expectingCmd=true;appendSys('🎙 JARVIS na escuta… fale seu comando.');}
     } else if(expectingCmd){
-      expectingCmd=false; document.getElementById('msg').value=t; send();
+      expectingCmd=false;document.getElementById('msg').value=t;send();
     } else if(!listenMode){
-      document.getElementById('msg').value=t; send();
+      document.getElementById('msg').value=t;send();
     }
   }
   rec.onresult=(e)=>{
@@ -382,39 +812,50 @@ if(SR){
   };
   micBtn.onclick=()=>{
     micBtn.classList.remove('hint');
-    if(!token){ alert('Faça login primeiro.'); return; }
-    if(listenMode){ listenMode=false; try{rec.stop();}catch(e){} appendSystem('🎙️ Escuta contínua desligada.'); return; }
-    listenMode=true; expectingCmd=false;
-    try{ rec.start(); appendSystem('🎙️ Escuta contínua ATIVADA: diga "Jarvis" e seu comando (ex.: "Jarvis, toque música").'); }
-    catch(err){ listenMode=false; appendSystem('🎙️ Não consegui iniciar o microfone: '+err.message); }
+    if(!token){alert('Faça login primeiro.');return;}
+    if(listenMode){
+      listenMode=false;try{rec.stop();}catch(e){}
+      appendSys('🎙 Escuta contínua desligada.');addLog('Escuta desativada');return;
+    }
+    listenMode=true;expectingCmd=false;
+    try{
+      rec.start();
+      appendSys('🎙 Escuta ATIVADA — diga "Jarvis" e seu comando (ex.: "Jarvis, que horas são?").');
+      addLog('Modo escuta contínua ligado');
+    }catch(err){
+      listenMode=false;appendSys('🎙 Erro ao iniciar microfone: '+err.message);
+    }
   };
 }else{
-  micBtn.title='Seu navegador não suporta reconhecimento de voz (use Chrome/Edge)';
-  micBtn.style.opacity=.4;
+  micBtn.title='Navegador não suporta voz (use Chrome ou Edge)';
+  micBtn.style.opacity='.4';micBtn.style.cursor='not-allowed';
 }
-document.getElementById('send').onclick=send;
-document.getElementById('eng').onclick=requestImprovement;
 
-// ---------- Pedir melhoria ao JARVIS (ele edita o código e se atualiza) ----------
-async function requestImprovement(){
+document.getElementById('sendBtn').onclick=send;
+
+// ── Auto-melhoria ──
+document.getElementById('engBtn').onclick=async function(){
   if(!token){alert('Faça login primeiro.');return;}
-  const txt=prompt('O que você quer que o JARVIS mude ou melhore no código?\\nEle edita, faz backup automático e se atualiza sozinho.\\nEx.: "deixe a voz mais grave", "adicione um botão de clima", "mude a cor do app".');
+  const txt=prompt('O que você quer que o JARVIS mude ou melhore?\n(Ex.: "mude a cor do núcleo para verde", "adicione botão de clima", "deixe a voz mais grave")');
   if(!txt||!txt.trim())return;
-  appendSystem('⚙️ Enviando pedido de melhoria: '+txt.trim());
+  appendSys('⚙️ Enviando pedido: '+txt.trim());
+  addLog('Auto-melhoria: '+txt.substring(0,25));
   try{
-    const r=await fetch(serverBase+'/api/agent/self_improve',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({request:txt.trim()})});
+    const r=await fetch(serverBase+'/api/agent/self_improve',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({request:txt.trim()})});
     const d=await r.json();
-    appendSystem(d.message||JSON.stringify(d));
-    pollImprovementStatus();
-  }catch(e){appendSystem('Erro: '+e.message);}
-}
-async function pollImprovementStatus(){
+    appendSys(d.message||JSON.stringify(d));
+    pollImprove();
+  }catch(e){appendSys('Erro: '+e.message);}
+};
+async function pollImprove(){
   for(let i=0;i<24;i++){
     await new Promise(r=>setTimeout(r,5000));
     try{
       const r=await fetch(serverBase+'/api/agent/self_improve/status',{headers:{'Authorization':'Bearer '+token}});
       const d=await r.json();
-      if(d&&d.message){appendSystem('⚙️ '+d.status+': '+d.message);}
+      if(d&&d.message){appendSys('⚙️ '+d.status+': '+d.message);addLog(d.status+': '+d.message.substring(0,30));}
       if(d&&(d.status==='success'||d.status==='reverted'||d.status==='manual_needed'))break;
     }catch(e){}
   }
