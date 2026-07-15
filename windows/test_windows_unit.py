@@ -21,6 +21,8 @@ def test_classify_stats():
 
 def test_classify_volume_and_reminder():
     assert classify_command("aumente o volume") == "volume"
+    assert classify_command("volume 50") == "volume"
+    assert classify_command("diminua o volume") == "volume"
     assert classify_command("crie um lembrete") == "reminder"
 
 

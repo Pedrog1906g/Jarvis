@@ -126,6 +126,7 @@ class App:
         self.conv_id = None
         self._bot_open = False
         self._bot_buf = ""
+        self._continuous = False
         self._build_ui()
         self.backend.on_text = self._bot_chunk
         self.backend.on_done = self._bot_finish
@@ -153,6 +154,7 @@ class App:
         bar.pack(fill=tk.X, padx=8, pady=(0, 8))
         tk.Button(bar, text="Enviar", command=self._send).pack(side=tk.LEFT)
         tk.Button(bar, text="🎙 Falar", command=self._push_to_talk).pack(side=tk.LEFT, padx=4)
+        tk.Button(bar, text="🎙 Jarvis", command=self.toggle_continuous).pack(side=tk.LEFT, padx=4)
         tk.Button(bar, text="⚙ Config", command=self._open_settings).pack(side=tk.LEFT, padx=4)
 
     def _set_status(self, ok):
@@ -202,6 +204,8 @@ class App:
             result = organize_folder(None)
         elif intent == "stats":
             result = system_stats()
+        elif intent == "volume":
+            result = self._handle_volume(text)
         else:
             result = None
 
@@ -222,6 +226,51 @@ class App:
             self.input.delete(0, tk.END)
             self.input.insert(0, text)
             self._send()
+
+    # ----- Wake word "Jarvis" contínuo -----
+    def toggle_continuous(self):
+        if self._continuous:
+            self.voice.stop_continuous()
+            self._continuous = False
+            self._append_bot_chunk("Modo contínuo 'Jarvis' desligado.")
+            self._bot_finish()
+            return
+        ok = self.voice.start_continuous(self._on_phrase)
+        self._continuous = ok
+        if ok:
+            self._append_bot_chunk("Modo 'Jarvis' ligado. Diga 'Jarvis' e seu comando a qualquer momento.")
+            self._bot_finish()
+        else:
+            self._append_bot_chunk("Não consegui iniciar o reconhecimento contínuo (verifique o microfone).")
+            self._bot_finish()
+
+    def _on_phrase(self, text):
+        t = (text or "").lower()
+        if "jarvis" in t or "nexus" in t:
+            cmd = re.sub(r"\b(jarvis|nexus)\b", "", t, flags=re.I).strip()
+            if cmd:
+                self.root.after(0, self._send_phrase, cmd)
+            else:
+                self.root.after(0, self._ack)
+
+    def _send_phrase(self, cmd):
+        self.input.delete(0, tk.END)
+        self.input.insert(0, cmd)
+        self._send()
+
+    def _ack(self):
+        self._append_bot_chunk("Às ordens. Diga seu comando.")
+        self._bot_finish()
+
+    def _handle_volume(self, text):
+        m = re.search(r"(\d+)\s*%", text)
+        if m:
+            return commands.set_volume(int(m.group(1)))
+        if "aument" in text or "sobe" in text or "suba" in text or "maior" in text:
+            return commands.change_volume(15)
+        if "diminu" in text or "baix" in text or "menor" in text:
+            return commands.change_volume(-15)
+        return commands.set_volume(50)
 
     def _auto_connect(self):
         if self.backend.login(self.cfg.get("server", DEFAULT_SERVER),
@@ -290,6 +339,10 @@ class App:
                 threading.Thread(target=self._push_to_talk, daemon=True).start()
 
             def quit_(ic, item):
+                try:
+                    self.voice.stop_continuous()
+                except Exception:
+                    pass
                 ic.stop()
                 self.root.after(0, self.root.destroy)
 

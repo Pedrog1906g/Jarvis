@@ -106,3 +106,32 @@ def system_stats() -> str:
                 f"Disco: {disk.percent:.0f}%")
     except Exception as e:
         return f"Não consegui ler o desempenho: {e}"
+
+
+def set_volume(percent: int) -> str:
+    """Define o volume mestre (0-100). Só funciona no Windows (pycaw)."""
+    percent = max(0, min(100, int(percent)))
+    try:
+        from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+        from comtypes import CLSCTX_ALL
+        devices = AudioUtilities.GetSpeakers()
+        interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+        volume = interface.QueryInterface(IAudioEndpointVolume)
+        volume.SetMasterVolumeLevelScalar(percent / 100.0, None)
+        return f"Volume em {percent}%."
+    except Exception as e:
+        return f"Não consegui ajustar o volume: {e}"
+
+
+def change_volume(delta: int) -> str:
+    """Aumenta/diminui o volume mestre em 'delta' pontos percentuais."""
+    try:
+        from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+        from comtypes import CLSCTX_ALL
+        devices = AudioUtilities.GetSpeakers()
+        interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+        volume = interface.QueryInterface(IAudioEndpointVolume)
+        cur = int(round(volume.GetMasterVolumeLevelScalar() * 100))
+        return set_volume(cur + delta)
+    except Exception as e:
+        return f"Não consegui ajustar o volume: {e}"

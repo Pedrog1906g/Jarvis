@@ -93,5 +93,5 @@ flowchart TD
 | Auto-atualização APK + auto-melhoria | ✅ funcionando (com backup) |
 | Obsidian (local + GitHub) | ✅ funcionando |
 | Supabase (estrutura pronta) | 🟡 pronto p/ plugar (sem tokens ainda) |
-| Windows app | 🟡 v1 criado (`windows/`, Python + bandeja) |
+| Windows app | 🟢 funcional (bandeja, voz, wake word "Jarvis", volume) |
 | Smart TV / Linux | 🟡 planejado |

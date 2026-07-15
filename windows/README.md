@@ -6,7 +6,8 @@ backend do celular e do PC web. Também executa comandos locais no Windows.
 
 ## Funcionalidades (v1)
 - 🔆 Ícone na bandeja (pystray) + janela de chat.
-- 🎙️ Conversa por voz: fale clicando em **🎙 Falar** (push-to-talk).
+- 🎙️ Conversa por voz: fale clicando em **🎙 Falar** (push-to-talk) ou ligue o **🎙 Jarvis** para escuta contínua (wake word "Jarvis").
+- 🔊 **Controle de volume**: "aumente o volume", "volume 50", "diminua o volume".
 - 💬 Chat em tempo real com o backend via WebSocket (`/api/ws/chat`).
 - 🖥️ Comandos locais: **abrir programas**, **organizar arquivos** (Downloads),
   **mostrar desempenho** (CPU/RAM/disco).
@@ -41,9 +42,10 @@ Pronto — ele sobe sozinho ao ligar o PC, na bandeja.
 - "Jarvis, abra o Chrome"
 - "Jarvis, organize meus arquivos"
 - "Jarvis, qual o desempenho?"
+- "Jarvis, aumente o volume"
 - "Jarvis, me explique o que é uma rede neural"
 
 ## Próximos passos (extensões)
-- Wake word "Jarvis" contínuo (escuta sempre ligada).
-- Controle de volume/periféricos (pycaw + pywin32).
-- Automações agendadas e sincronização com o Supabase (cross-device).
+- Automações agendadas no Windows.
+- Controle de periféricos (pywin32) e integrações extras.
+- Sincronização cross-device já ligada no backend (Supabase); o app reflete o contexto compartilhado.
