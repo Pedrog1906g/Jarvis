@@ -1,6 +1,7 @@
 package com.nexusai.app.ui.component
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,8 +17,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Stroke
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -57,18 +56,18 @@ fun JarvisReactor(
                     color = NexusPrimary.copy(alpha = if (major) 0.55f else 0.22f),
                     start = Offset(cx + (r) * cos(a).toFloat(), cy + (r) * sin(a).toFloat()),
                     end = Offset(cx + (r2) * cos(a).toFloat(), cy + (r2) * sin(a).toFloat()),
-                    strokeWidth = 1.dp.toPx()
+                    strokeWidth = 1.5f
                 )
             }
+            // varredura (fatia preenchida)
             rotate(rot1) {
                 drawArc(
-                    color = NexusPrimary.copy(alpha = 0.6f),
+                    color = NexusPrimary.copy(alpha = 0.35f),
                     startAngle = 0f,
-                    sweepAngle = 75f,
-                    useCenter = false,
+                    sweepAngle = 70f,
+                    useCenter = true,
                     topLeft = Offset(cx - r, cy - r),
-                    size = Size(r * 2f, r * 2f),
-                    style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
+                    size = Size(r * 2f, r * 2f)
                 )
             }
         }
