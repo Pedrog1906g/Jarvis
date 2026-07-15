@@ -41,6 +41,9 @@ def classify_command(text: str) -> str:
         return "volume"
     if "lembrete" in t or "lembretes" in t:
         return "reminder"
+    if re.search(r"\b(tocar|toque|ouvir|play|m[úu]sica|som)\b", t) or \
+       "spotify" in t or "youtube" in t or "deezer" in t:
+        return "music"
     return "chat"
 
 
@@ -135,3 +138,20 @@ def change_volume(delta: int) -> str:
         return set_volume(cur + delta)
     except Exception as e:
         return f"Não consegui ajustar o volume: {e}"
+
+
+def play_music(query: str) -> str:
+    """Abre o Spotify (se pedir) ou o YouTube com a música pedida. Windows."""
+    q = (query or "").strip()
+    try:
+        import webbrowser
+        if "spotify" in q.lower():
+            term = q.lower().replace("spotify", "").strip().replace(" ", "%20")
+            url = "https://open.spotify.com/search/" + term if term else "https://open.spotify.com"
+            webbrowser.open(url)
+            return "Abrindo no Spotify."
+        search = q if q else "música"
+        webbrowser.open("https://www.youtube.com/results?search_query=" + search.replace(" ", "%20"))
+        return f"Tocando {q} no YouTube." if q else "Tocando música no YouTube."
+    except Exception as e:
+        return f"Não consegui abrir o player de música: {e}"

@@ -50,6 +50,6 @@ class TokenStore(context: Context) {
 
     fun setServerUrl(url: String) = settingsPrefs.edit().putString("server_url", url).apply()
 
-    fun isWakeWordEnabled(): Boolean = settingsPrefs.getBoolean("wake_word", false)
+    fun isWakeWordEnabled(): Boolean = settingsPrefs.getBoolean("wake_word", true)
     fun setWakeWordEnabled(v: Boolean) = settingsPrefs.edit().putBoolean("wake_word", v).apply()
 }

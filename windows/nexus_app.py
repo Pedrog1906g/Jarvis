@@ -24,7 +24,7 @@ import requests
 import websocket  # pacote websocket-client
 
 from commands import (classify_command, open_program, organize_folder,
-                      system_stats, set_volume, change_volume)
+                      system_stats, set_volume, change_volume, play_music)
 from voice import WindowsVoice
 
 APP_NAME = "JARVIS"
@@ -156,10 +156,12 @@ class App:
         self.root.configure(bg="#02040a")
         self.root.protocol("WM_DELETE_WINDOW", lambda: self.root.withdraw())
 
-        hdr = tk.Label(self.root, text="⚡ JARVIS  •  NEXUS AI",
-                       bg="#02040a", fg="#5fe0ff",
-                       font=("Segoe UI", 14, "bold"))
+        hdr = tk.Frame(self.root, bg="#02040a")
         hdr.pack(fill=tk.X, padx=8, pady=(8, 0))
+        self._build_reactor(hdr)
+        tk.Label(hdr, text="⚡ JARVIS  •  NEXUS AI",
+                 bg="#02040a", fg="#5fe0ff",
+                 font=("Segoe UI", 14, "bold")).pack(side=tk.LEFT)
 
         self.chat = scrolledtext.ScrolledText(
             self.root, wrap=tk.WORD, state=tk.DISABLED,
@@ -182,6 +184,46 @@ class App:
         self.status = tk.Label(self.root, text="Iniciando...", bg="#02040a",
                                fg="#5fe0ff", font=("Segoe UI", 9), anchor="w")
         self.status.pack(fill=tk.X, padx=8, pady=(0, 6))
+        self._start_pulse()
+
+    def _build_reactor(self, parent):
+        try:
+            c = tk.Canvas(parent, width=34, height=34, bg="#02040a", highlightthickness=0)
+            c.pack(side=tk.LEFT, padx=(0, 8))
+            self._reactor = c
+            self._reactor_angle = 0
+
+            def draw():
+                try:
+                    c.delete("all")
+                    cx, cy, r = 17, 17, 14
+                    c.create_oval(cx - r, cy - r, cx + r, cy + r, outline="#0a6c8c", width=2)
+                    a = self._reactor_angle
+                    c.create_arc(cx - r, cy - r, cx + r, cy + r, start=a, extent=120,
+                                outline="#00e5ff", width=2, style="arc")
+                    c.create_oval(cx - 4, cy - 4, cx + 4, cy + 4, fill="#19f0ff", outline="")
+                    self._reactor_angle = (a + 8) % 360
+                except Exception:
+                    return
+                self.root.after(80, draw)
+            self.root.after(80, draw)
+        except Exception:
+            pass
+
+    def _start_pulse(self):
+        try:
+            state = {"on": False}
+
+            def tick():
+                try:
+                    state["on"] = not state["on"]
+                    self.status.configure(fg="#5fe0ff" if state["on"] else "#1b9fd6")
+                except Exception:
+                    return
+                self.root.after(900, tick)
+            self.root.after(900, tick)
+        except Exception:
+            pass
 
     def _set_status(self, ok):
         try:
@@ -243,6 +285,8 @@ class App:
             result = system_stats()
         elif intent == "volume":
             result = self._handle_volume(text)
+        elif intent == "music":
+            result = play_music(text)
         else:
             result = None
 
