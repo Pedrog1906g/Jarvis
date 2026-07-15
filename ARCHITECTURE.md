@@ -10,7 +10,7 @@ flowchart TD
     subgraph Dispositivos
         A[Celular Android<br/>Kotlin + Jetpack Compose]
         W[Navegador Web / PC<br/>HUD Iron Man]
-        P[Windows app<br/>futuro]
+        P[Windows app<br/>Python + bandeja]
     end
 
     subgraph Backend
@@ -30,7 +30,7 @@ flowchart TD
 
     A -- voz/texto/WS --> B
     W -- voz/texto/WS --> B
-    P -. futuro .-> B
+    P -- voz/texto/WS --> B
     B --> LLM
     B --> DB
     B --> MEM
@@ -93,5 +93,5 @@ flowchart TD
 | Auto-atualização APK + auto-melhoria | ✅ funcionando (com backup) |
 | Obsidian (local + GitHub) | ✅ funcionando |
 | Supabase (estrutura pronta) | 🟡 pronto p/ plugar (sem tokens ainda) |
-| Windows app | 🟡 planejado |
+| Windows app | 🟡 v1 criado (`windows/`, Python + bandeja) |
 | Smart TV / Linux | 🟡 planejado |

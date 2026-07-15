@@ -3,8 +3,8 @@
 Assistente pessoal inspirado no JARVIS do Homem de Ferro. O **JARVIS** é a
 personalidade (voz masculina, calma, elegante); o **NEXUS** é o sistema/backend.
 
-Funciona integrado entre **Android**, **Navegador Web (PC)**, **GitHub**,
-**Render** e **Supabase/Obsidian** (cross-device). Windows/Smart TV/Linux são
+Funciona integrado entre **Android**, **Navegador Web (PC)**, **Windows**,
+**GitHub**, **Render** e **Supabase/Obsidian** (cross-device). Smart TV/Linux são
 módulos planejados.
 
 ## O que funciona hoje

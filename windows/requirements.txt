@@ -1,0 +1,9 @@
+# App JARVIS para Windows — dependências
+pystray>=0.19          # ícone na bandeja
+Pillow>=10.0          # ícone/imagens
+pyttsx3>=2.90         # TTS (voz do Windows / SAPI)
+SpeechRecognition>=3.10  # STT (reconhecimento de voz)
+websocket-client>=1.6 # chat em tempo real com o backend
+requests>=2.31
+psutil>=5.9           # monitor de desempenho
+pywin32>=306; sys_platform == 'win32'   # controles do Windows (opcional)
