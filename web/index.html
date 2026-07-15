@@ -83,6 +83,8 @@
     background:radial-gradient(circle at 40% 35%,#19f0ff,#0a6c8c); color:#02121a; box-shadow:0 0 22px rgba(0,229,255,.5); transition:.2s}
   .mic{background:radial-gradient(circle at 40% 35%,#9fb4ff,#2742c9); box-shadow:0 0 22px rgba(60,90,255,.5)}
   .mic.active{background:radial-gradient(circle at 40% 35%,#ff9aa6,#c41f33); box-shadow:0 0 26px rgba(255,77,94,.6); animation:pulse .9s infinite}
+  .mic.hint{animation:hintpulse 1.4s ease-in-out infinite}
+  @keyframes hintpulse{0%,100%{box-shadow:0 0 22px rgba(60,90,255,.5)}50%{box-shadow:0 0 42px rgba(60,90,255,.95)}}
   .send:active,.mic:active{transform:scale(.94)}
   .ttsbtn{position:fixed; left:14px; bottom:80px; font-size:12px; color:var(--dim); background:var(--panel);
     border:1px solid rgba(0,229,255,.2); border-radius:20px; padding:6px 12px; cursor:pointer}
@@ -166,6 +168,9 @@ async function doLogin(){
     document.getElementById('ttsBtn').style.display='block';
     setupVoices();
     connectWs();
+    // Dica para quem não é programador: clique no microfone para ativar o "Jarvis".
+    micBtn.classList.add('hint');
+    appendSystem('Clique no 🎙️ (microfone) para ativar a escuta contínua. Depois é só dizer "Jarvis" + seu comando (ex.: "Jarvis, toque música").');
   }catch(e){document.getElementById('loginErr').textContent='Erro: '+e.message;}
 }
 
@@ -283,23 +288,31 @@ if(SR){
     }
     // onend cuida de reiniciar se estiver em modo contínuo
   };
-  rec.onresult=(e)=>{
-    let t='';
-    for(let i=0;i<e.results.length;i++){ if(e.results[i].isFinal) t+=e.results[i][0].transcript; }
+  // JARVIS: correção do reenvio duplicado no modo contínuo.
+  // Usa e.resultIndex para processar CADA resultado final exatamente uma vez
+  // (no modo contínuo o array e.results acumula; sem isso, comandos antigos
+  // eram reenviados junto com os novos).
+  function processVoice(t){
     t=t.trim();
     if(!t) return;
     const low=t.toLowerCase();
     if(low.includes('jarvis')||low.includes('nexus')){
       const cmd=t.replace(/\b(jarvis|nexus)\b/gi,'').trim();
-      if(cmd){ document.getElementById('msg').value=cmd; send(); expectingCmd=false; }
+      if(cmd){ expectingCmd=false; document.getElementById('msg').value=cmd; send(); }
       else { expectingCmd=true; appendSystem('🎙️ JARVIS na escuta… fale seu comando.'); }
     } else if(expectingCmd){
       expectingCmd=false; document.getElementById('msg').value=t; send();
     } else if(!listenMode){
       document.getElementById('msg').value=t; send();
     }
+  }
+  rec.onresult=(e)=>{
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) processVoice(e.results[i][0].transcript);
+    }
   };
   micBtn.onclick=()=>{
+    micBtn.classList.remove('hint');
     if(!token){ alert('Faça login primeiro.'); return; }
     if(listenMode){ listenMode=false; try{rec.stop();}catch(e){} appendSystem('🎙️ Escuta contínua desligada.'); return; }
     listenMode=true; expectingCmd=false;
