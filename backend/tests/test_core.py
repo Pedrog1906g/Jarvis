@@ -53,3 +53,12 @@ def test_jwt_token_roundtrip():
     payload = decode_token(tok)
     assert payload["sub"] == "1"
     assert payload["username"] == "owner"
+
+
+def test_supabase_sync_is_noop_when_unconfigured():
+    from app.services import supabase_sync
+    # Sem as env vars do Supabase, deve ser no-op e nunca lançar erro.
+    assert supabase_sync.sc.is_configured() is False
+    assert supabase_sync.sync_message("owner", 1, "user", "oi") is False
+    assert supabase_sync.sync_memory("owner", "gosta de pizza") is False
+    assert supabase_sync.sync_setting("k", "v") is False

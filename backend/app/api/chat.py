@@ -19,6 +19,16 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[int] = None
 
 
+def _sync_msg(owner_username: str, conversation_id, role: str, content: str):
+    """Espelha a mensagem no Supabase (cross-device). No-op se não configurado."""
+    try:
+        from app.services import supabase_sync
+        if supabase_sync.sc.is_configured():
+            supabase_sync.sync_message(owner_username, conversation_id, role, content)
+    except Exception:
+        pass
+
+
 @router.post("/chat")
 def chat(req: ChatRequest, db: Session = Depends(get_db),
          user: models.User = Depends(get_current_user)):
@@ -26,6 +36,7 @@ def chat(req: ChatRequest, db: Session = Depends(get_db),
     conv = _get_or_create_conversation(db, user.id, req.conversation_id)
     db.add(models.Message(conversation_id=conv.id, role="user", content=req.content))
     db.commit()
+    _sync_msg(user.username, conv.id, "user", req.content)
     extract_facts(db, user.id, req.content)
 
     messages = build_messages(db, user.id, conv.id, req.content)
@@ -35,6 +46,7 @@ def chat(req: ChatRequest, db: Session = Depends(get_db),
     reply = "".join(stream_chat(messages))
     db.add(models.Message(conversation_id=conv.id, role="assistant", content=reply))
     db.commit()
+    _sync_msg(user.username, conv.id, "assistant", reply)
     # Espelha no Firestore (best-effort) quando o Firebase está ativo.
     try:
         mirror_user(user)
@@ -115,6 +127,7 @@ async def ws_chat(websocket: WebSocket, token: str = ""):
             conv = _get_or_create_conversation(db, user.id, conversation_id)
             db.add(models.Message(conversation_id=conv.id, role="user", content=content))
             db.commit()
+            _sync_msg(user.username, conv.id, "user", content)
             extract_facts(db, user.id, content)
 
             # Gatilho de auto-melhoria via chat (somente o dono).
@@ -143,6 +156,7 @@ async def ws_chat(websocket: WebSocket, token: str = ""):
             reply = "".join(full)
             db.add(models.Message(conversation_id=conv.id, role="assistant", content=reply))
             db.commit()
+            _sync_msg(user.username, conv.id, "assistant", reply)
             await websocket.send_json({"type": "done", "conversation_id": conv.id})
     except WebSocketDisconnect:
         pass

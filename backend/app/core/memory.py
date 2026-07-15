@@ -71,20 +71,33 @@ def extract_facts(db: Session, owner_id: int, user_text: str):
             for f in db.query(models.MemoryFact)
             .filter(models.MemoryFact.owner_id == owner_id).all()
         }
-        added = 0
+        new_facts = []
         for item in data.get("facts", []):
             fact = item.get("fact")
             if fact and fact not in existing:
+                cat = item.get("category", "geral")
+                imp = int(item.get("importance", 1))
                 db.add(models.MemoryFact(
                     owner_id=owner_id,
                     fact=fact,
-                    category=item.get("category", "geral"),
-                    importance=int(item.get("importance", 1)),
+                    category=cat,
+                    importance=imp,
                 ))
                 existing.add(fact)
-                added += 1
-        if added:
+                new_facts.append((fact, cat, imp))
+        if new_facts:
             db.commit()
+            # Sincroniza com o Supabase (cross-device), se configurado.
+            try:
+                from app.services import supabase_sync
+                if supabase_sync.sc.is_configured():
+                    uname = db.query(models.User).filter(
+                        models.User.id == owner_id).first()
+                    uname = uname.username if uname else "owner"
+                    for f, c, i in new_facts:
+                        supabase_sync.sync_memory(uname, f, c, i)
+            except Exception:
+                pass
         else:
             db.rollback()
         # Espelha a memória de longo prazo no Firestore (best-effort).

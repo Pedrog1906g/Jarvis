@@ -1,27 +1,23 @@
 -- ============================================================================
 -- NEXUS AI — Esquema do Supabase (Postgres)
--- Como usar:
---   1. Supabase -> SQL Editor -> cole este arquivo -> Run.
---   2. Defina no Render as env vars: SUPABASE_URL, SUPABASE_ANON_KEY,
---      SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET (ver supabase/README.md).
--- Nenhuma senha/chave está fixada aqui.
+-- Rode no SQL Editor do Supabase. Nenhuma chave está fixada em código.
+-- Depois defina no Render: SUPABASE_URL, SUPABASE_ANON_KEY,
+-- SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET (ver supabase/README.md).
 -- ============================================================================
 
 create extension if not exists "uuid-ossp";
 create extension if not exists pgcrypto;
 
 -- ---------------------------------------------------------------------------
--- Perfil do usuário (espelha auth.users do Supabase Auth)
+-- Perfil (para usar o Auth nativo do Supabase no futuro)
 -- ---------------------------------------------------------------------------
 create table if not exists public.profiles (
     id uuid primary key references auth.users(id) on delete cascade,
-    username text unique not null,
+    username text unique,
     display_name text default 'Owner',
-    voiceprint text,
     created_at timestamptz default now()
 );
 
--- Trigger: cria um profile automaticamente quando um usuário se registra no Auth.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -43,16 +39,16 @@ create trigger on_auth_user_created
     for each row execute function public.handle_new_user();
 
 -- ---------------------------------------------------------------------------
--- Tabelas de dados (owner referencia profiles.id)
+-- Tabelas de dados — identificadas por owner_username (modelo atual do app)
 -- ---------------------------------------------------------------------------
 create table if not exists public.conversations (
     id bigserial primary key,
-    owner_id uuid not null references public.profiles(id) on delete cascade,
+    owner_username text not null,
     title text default 'Nova conversa',
     created_at timestamptz default now(),
     updated_at timestamptz default now()
 );
-create index if not exists idx_conversations_owner on public.conversations(owner_id);
+create index if not exists idx_conversations_owner on public.conversations(owner_username);
 
 create table if not exists public.messages (
     id bigserial primary key,
@@ -65,19 +61,19 @@ create index if not exists idx_messages_conv on public.messages(conversation_id)
 
 create table if not exists public.memory_facts (
     id bigserial primary key,
-    owner_id uuid not null references public.profiles(id) on delete cascade,
+    owner_username text not null,
     fact text not null,
     category text default 'geral',
     importance integer default 1,
     created_at timestamptz default now()
 );
-create index if not exists idx_memory_owner on public.memory_facts(owner_id);
+create index if not exists idx_memory_owner on public.memory_facts(owner_username);
 
 -- Memória vetorial (opcional). Para busca por similaridade, habilite o pgvector:
 --   create extension vector;  e troque embedding por vector(1536).
 create table if not exists public.memory_embeddings (
     id bigserial primary key,
-    owner_id uuid not null references public.profiles(id) on delete cascade,
+    owner_username text not null,
     fact_id bigint,
     content text,
     embedding float4[],
@@ -86,7 +82,7 @@ create table if not exists public.memory_embeddings (
 
 create table if not exists public.reminders (
     id bigserial primary key,
-    owner_id uuid not null references public.profiles(id) on delete cascade,
+    owner_username text not null,
     title text not null,
     note text,
     due_at timestamptz not null,
@@ -94,7 +90,7 @@ create table if not exists public.reminders (
     notified boolean default false,
     created_at timestamptz default now()
 );
-create index if not exists idx_reminders_owner on public.reminders(owner_id);
+create index if not exists idx_reminders_owner on public.reminders(owner_username);
 
 create table if not exists public.plugin_states (
     id bigserial primary key,
@@ -112,7 +108,7 @@ create table if not exists public.settings (
 
 create table if not exists public.scheduled_tasks (
     id bigserial primary key,
-    owner_id uuid not null references public.profiles(id) on delete cascade,
+    owner_username text not null,
     action text not null,
     payload jsonb default '{}'::jsonb,
     note text,
@@ -120,21 +116,20 @@ create table if not exists public.scheduled_tasks (
     done boolean default false,
     created_at timestamptz default now()
 );
-create index if not exists idx_tasks_owner on public.scheduled_tasks(owner_id);
+create index if not exists idx_tasks_owner on public.scheduled_tasks(owner_username);
 
--- Arquivos sincronizados (upload/download entre dispositivos).
 create table if not exists public.files (
     id bigserial primary key,
-    owner_id uuid not null references public.profiles(id) on delete cascade,
+    owner_username text not null,
     name text not null,
     path text,
     size_bytes bigint default 0,
     storage_key text,
     created_at timestamptz default now()
 );
-create index if not exists idx_files_owner on public.files(owner_id);
+create index if not exists idx_files_owner on public.files(owner_username);
 
--- Sync de mensagens entre celular e PC (identificado por nome de usuário).
+-- Sync de mensagens entre celular e PC (cross-device).
 create table if not exists public.sync_messages (
     id bigserial primary key,
     owner_username text not null,
@@ -146,7 +141,8 @@ create table if not exists public.sync_messages (
 create index if not exists idx_syncm_owner on public.sync_messages(owner_username);
 
 -- ---------------------------------------------------------------------------
--- Row Level Security: cada usuário só enxerga os próprios dados.
+-- Row Level Security: por padrão nada é visível; o backend escreve com
+-- service_role (que bypassa RLS). Anon não acessa nada.
 -- ---------------------------------------------------------------------------
 alter table public.profiles enable row level security;
 alter table public.conversations enable row level security;
@@ -157,40 +153,18 @@ alter table public.reminders enable row level security;
 alter table public.scheduled_tasks enable row level security;
 alter table public.files enable row level security;
 alter table public.sync_messages enable row level security;
--- settings/plugin_states são de servidor: sem política de anon; só service_role.
 alter table public.settings enable row level security;
 alter table public.plugin_states enable row level security;
 
-drop policy if exists profiles_select on public.profiles;
-create policy profiles_select on public.profiles for select using (auth.uid() = id);
-drop policy if exists profiles_update on public.profiles;
-create policy profiles_update on public.profiles for update using (auth.uid() = id);
-
-drop policy if exists conversations_rw on public.conversations;
-create policy conversations_rw on public.conversations for all
-    using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
-drop policy if exists messages_rw on public.messages;
-create policy messages_rw on public.messages for all
-    using (exists (select 1 from public.conversations c where c.id = conversation_id and auth.uid() = c.owner_id))
-    with check (exists (select 1 from public.conversations c where c.id = conversation_id and auth.uid() = c.owner_id));
-drop policy if exists memory_rw on public.memory_facts;
-create policy memory_rw on public.memory_facts for all
-    using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
-drop policy if exists embeddings_rw on public.memory_embeddings;
-create policy embeddings_rw on public.memory_embeddings for all
-    using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
-drop policy if exists reminders_rw on public.reminders;
-create policy reminders_rw on public.reminders for all
-    using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
-drop policy if exists tasks_rw on public.scheduled_tasks;
-create policy tasks_rw on public.scheduled_tasks for all
-    using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
-drop policy if exists files_rw on public.files;
-create policy files_rw on public.files for all
-    using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
-drop policy if exists syncm_svc on public.sync_messages;
-create policy syncm_svc on public.sync_messages for all to service_role using (true) with check (true);
-drop policy if exists settings_svc on public.settings;
-create policy settings_svc on public.settings for all to service_role using (true) with check (true);
-drop policy if exists plugins_svc on public.plugin_states;
-create policy plugins_svc on public.plugin_states for all to service_role using (true) with check (true);
+-- Política única: service_role (backend) pode tudo; anon bloqueado.
+do $$
+declare t text;
+begin
+  foreach t in array array['profiles','conversations','messages','memory_facts',
+    'memory_embeddings','reminders','scheduled_tasks','files','sync_messages',
+    'settings','plugin_states']
+  loop
+    execute format('drop policy if exists %1$s_svc on public.%1$s;', t);
+    execute format('create policy %1$s_svc on public.%1$s for all to service_role using (true) with check (true);', t);
+  end loop;
+end $$;
