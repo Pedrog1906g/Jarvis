@@ -44,6 +44,12 @@ class MainActivity : AppCompatActivity() {
         // bloqueia o reconhecimento de voz e o "Jarvis" nunca responde.
         requestNeededPermissions()
 
+        // Login automático: o app já entra com as credenciais padrão (owner/nexus),
+        // assim o JARVIS responde de imediato, sem precisar digitar nada.
+        if (prefs.getToken().isNullOrBlank()) {
+            authVm.login("owner", "nexus", prefs.getServerUrl())
+        }
+
         // Avisa sobre atualização disponível ao abrir o app.
         lifecycleScope.launch {
             val rel = UpdateChecker.fetchLatest()

@@ -157,7 +157,89 @@ object NexusController {
         return false
     }
 
-    /** Toca música de verdade: abre o app (Spotify) ou o vídeo do YouTube já tocando. */
+    // -------------------- Música: YouTube (melhor vídeo) + Spotify (tocar) --------------------
+
+    private val STOP = setOf(
+        "a", "o", "e", "de", "da", "do", "das", "dos", "em", "no", "na", "nos", "nas",
+        "um", "uma", "umas", "para", "com", "que", "seu", "sua", "seus", "su", "as", "os",
+        "ao", "aos", "pela", "pelas", "pelo", "the", "of", "to", "and"
+    )
+
+    private val YT_RE = Regex(
+        "\"videoId\":\"([A-Za-z0-9_-]{11})\".*?\"title\":\\{\"runs\":\\[\\{\"text\":\"(.*?)\"\\}\\]",
+        RegexOption.DOT_MATCHES_ALL
+    )
+
+    private fun norm(s: String): List<String> =
+        Regex("[a-z0-9]+").findAll(s.lowercase()).map { it.value }.toList()
+
+    private fun score(qtok: List<String>, ttok: List<String>): Double {
+        if (ttok.isEmpty()) return 0.0
+        val ts = ttok.filter { it !in STOP }.toSet()
+        val qs = qtok.filter { it !in STOP }.toSet()
+        if (qs.isEmpty()) return 0.0
+        val inter = qs.intersect(ts)
+        val j = inter.size.toDouble() / (qs.union(ts).size)
+        return j * 100 + inter.size * 5
+    }
+
+    private fun ytPairs(query: String): List<Pair<String, String>> {
+        return try {
+            val url = "https://www.youtube.com/results?search_query=" + URLEncoder.encode(query, "UTF-8")
+            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                setRequestProperty("User-Agent", "Mozilla/5.0")
+                connectTimeout = 8000
+                readTimeout = 8000
+            }
+            val html = conn.inputStream.bufferedReader().readText()
+            YT_RE.findAll(html).map { it.groupValues[1] to it.groupValues[2] }.toList()
+        } catch (_: Exception) { emptyList() }
+    }
+
+    /** Escolhe o vídeo que melhor combina com o pedido (não só o 1º da lista). */
+    private fun bestYouTubeId(query: String): String? {
+        val pairs = ytPairs(query)
+        if (pairs.isEmpty()) return null
+        val qtok = norm(query)
+        var best: String? = null
+        var bestSc = -1.0
+        for ((vid, rawTitle) in pairs) {
+            val title = rawTitle.replace("\\u0026", "&").replace("\\\"", "\"")
+            var sc = score(qtok, norm(title))
+            val low = title.lowercase()
+            if (low.contains("official") || low.contains("original")) sc += 12.0
+            if (low.contains("audio") || low.contains("álbum") || low.contains("album")) sc += 6.0
+            if (low.contains("live") || low.contains("ao vivo")) sc -= 6.0
+            if (low.contains("lyrics") || low.contains("letra") || low.contains("karaoke") ||
+                low.contains("instrumental") || low.contains("remix") || low.contains("cover") ||
+                low.contains("tutorial") || low.contains("reaction")) sc -= 10.0
+            if (qtok.isNotEmpty() && qtok.none { it in STOP } && qtok.all { it in low }) sc += 12.0
+            if (sc > bestSc) { bestSc = sc; best = vid }
+        }
+        return best
+    }
+
+    /** Tenta achar o ID da música no Spotify (precisa do app/site com o URI). */
+    private fun spotifyTrackId(query: String): String? {
+        return try {
+            val url = "https://open.spotify.com/search/" + URLEncoder.encode(query, "UTF-8")
+            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                setRequestProperty("User-Agent", "Mozilla/5.0")
+                connectTimeout = 8000
+                readTimeout = 8000
+            }
+            val html = conn.inputStream.bufferedReader().readText()
+            val m = Regex("spotify:track:([A-Za-z0-9]+)").find(html)
+                ?: Regex("\"uri\":\"spotify:track:([A-Za-z0-9]+)\"").find(html)
+            m?.groupValues?.get(1)
+        } catch (_: Exception) { null }
+    }
+
+    /** Toca música de verdade:
+     *  - Spotify: abre a música no app (spotify:track:ID) ou a busca dentro do app.
+     *  - YouTube: escolhe o vídeo que melhor combina e já abre tocando. */
     private fun playMusic(context: Context, command: String, voice: VoiceManager) {
         val q = command.lowercase()
             .replace(Regex("""(?i).*?\b(tocar|toque|ouvir|play|m[úu]sica|som)\b"""), "")
@@ -166,39 +248,26 @@ object NexusController {
         val useSpotify = command.lowercase().contains("spotify")
         Thread {
             try {
-                val videoId = if (useSpotify) null else resolveYouTubeVideoId(q)
-                val uri = if (useSpotify) {
-                    Uri.parse("https://open.spotify.com/search/" + Uri.encode(q))
-                } else if (!videoId.isNullOrBlank()) {
-                    Uri.parse("https://www.youtube.com/watch?v=$videoId")
+                if (useSpotify) {
+                    val tid = spotifyTrackId(q)
+                    val uri = if (!tid.isNullOrBlank()) "spotify:track:$tid"
+                              else "spotify:search:" + Uri.encode(q)
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uri)).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    })
+                    voice.speak(if (!tid.isNullOrBlank()) "Tocando $q no Spotify" else "Abrindo $q no Spotify")
                 } else {
-                    Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(q))
+                    val videoId = bestYouTubeId(q)
+                    val uri = if (!videoId.isNullOrBlank()) "https://www.youtube.com/watch?v=$videoId"
+                              else "https://www.youtube.com/results?search_query=" + Uri.encode(q)
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uri)).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    })
+                    voice.speak(if (!videoId.isNullOrBlank()) "Tocando $q" else "Abrindo música")
                 }
-                context.startActivity(Intent(Intent.ACTION_VIEW, uri).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                })
-                val label = if (useSpotify) "Abrindo no Spotify"
-                            else if (!videoId.isNullOrBlank()) "Tocando $q"
-                            else "Abrindo música"
-                voice.speak(label)
             } catch (_: Exception) {
                 voice.speak("Não consegui abrir o player de música.")
             }
         }.start()
-    }
-
-    /** Busca o 1º vídeo do YouTube para a query (para já começar a tocar). */
-    private fun resolveYouTubeVideoId(query: String): String? {
-        return try {
-            val url = "https://www.youtube.com/results?search_query=" + URLEncoder.encode(query, "UTF-8")
-            val conn = URL(url).openConnection() as HttpURLConnection
-            conn.requestMethod = "GET"
-            conn.setRequestProperty("User-Agent", "Mozilla/5.0")
-            conn.connectTimeout = 8000
-            conn.readTimeout = 8000
-            val html = conn.inputStream.bufferedReader().readText()
-            val m = Regex("\"videoId\":\"([A-Za-z0-9_-]{11})\"").find(html)
-            m?.groupValues?.get(1)
-        } catch (_: Exception) { null }
     }
 }

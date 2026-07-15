@@ -27,7 +27,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
 
     var serverUrl = mutableStateOf(repo.tokenStore.getServerUrl())
     var username = mutableStateOf("owner")
-    var passphrase = mutableStateOf("")
+    var passphrase = mutableStateOf("nexus")
     var status = mutableStateOf<AuthStatus>(AuthStatus.Idle)
     var error = mutableStateOf<String?>(null)
 

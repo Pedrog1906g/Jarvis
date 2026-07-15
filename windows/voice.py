@@ -68,11 +68,26 @@ class WindowsVoice:
     def voice_name(self):
         return getattr(self, "_voice_name", None)
 
+    def ensure_engine(self) -> bool:
+        """Tenta (re)criar o motor de voz se ele tiver sumido/travado."""
+        if self.engine:
+            return True
+        try:
+            if self._libs.get("tts"):
+                self.engine = self._libs["tts"].init()
+                self._apply_jarvis_voice()
+                return True
+        except Exception:
+            self.engine = None
+        return False
+
     def speak(self, text: str):
-        import re, time
+        import re, time, traceback
         clean = " ".join(str(text).split())
-        if not clean or not self.engine:
+        if not clean:
             return
+        if not self.engine and not self.ensure_engine():
+            return  # sem motor de voz disponível
         try:
             parts = [p.strip() for p in re.split(r"(?<=[.!?…])\s+", clean) if p.strip()]
             if not parts:
@@ -82,8 +97,19 @@ class WindowsVoice:
                 self.engine.runAndWait()
                 if i < len(parts) - 1:
                     time.sleep(0.14)  # pausa natural entre frases (mais humano)
-        except Exception:
-            pass
+        except Exception as e:
+            # tenta reanimar o motor UMA vez antes de desistir (não falha calado)
+            try:
+                self.engine = None
+                if self.ensure_engine() and self.engine:
+                    self.engine.say(clean)
+                    self.engine.runAndWait()
+            except Exception:
+                try:
+                    import logging
+                    logging.getLogger("jarvis").warning("TTS falhou: %s", traceback.format_exc())
+                except Exception:
+                    pass
 
     def listen_once(self, timeout: int = 6, phrase_time: int = 8) -> str:
         """Escuta uma frase (push-to-talk). Retorna o texto ou ''."""

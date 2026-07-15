@@ -5,6 +5,7 @@ import re
 import shutil
 import subprocess
 import webbrowser
+import urllib.parse
 
 # Mapa simples nome -> comando/URL. Expanda à vontade.
 KNOWN_APPS = {
@@ -140,39 +141,122 @@ def change_volume(delta: int) -> str:
         return f"Não consegui ajustar o volume: {e}"
 
 
-def _yt_first_video_id(query: str):
-    """Retorna o ID do 1º vídeo do YouTube para a busca (para já começar a tocar)."""
-    import requests, re
+# ----------------------------- YouTube (melhor vídeo) -----------------------------
+
+_STOP = set("a o e de da do das dos em no na nos nas um uma umas para com que seu sua seus su as os ao aos pela pelas pelo".split())
+
+
+def _norm(s: str):
+    return re.findall(r"[a-z0-9]+", (s or "").lower())
+
+
+def _score(qtok, ttok) -> float:
+    if not ttok:
+        return 0.0
+    ts = set(t for t in ttok if t not in _STOP)
+    qs = set(t for t in qtok if t not in _STOP)
+    if not qs:
+        return 0.0
+    inter = qs & ts
+    j = len(inter) / len(qs | ts)
+    return j * 100 + len(inter) * 5
+
+
+def _yt_pairs(query: str):
+    """Retorna lista de (videoId, titulo) extraídos do YouTube."""
+    import requests
     try:
         html = requests.get(
             "https://www.youtube.com/results",
             params={"search_query": query},
-            headers={"User-Agent": "Mozilla/5.0"},
-            timeout=10,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
+            timeout=12,
         ).text
-        m = re.search(r'"videoId":"([A-Za-z0-9_-]{11})"', html)
-        return m.group(1) if m else None
+    except Exception:
+        return []
+    found = re.findall(
+        r'"videoId":"([A-Za-z0-9_-]{11})".*?"title":\{"runs":\[\{"text":"(.*?)"\}\]',
+        html, re.DOTALL)
+    return found
+
+
+def best_youtube_video(query: str):
+    """Escolhe o vídeo que melhor combina com o pedido (não só o 1º)."""
+    pairs = _yt_pairs(query)
+    if not pairs:
+        return None
+    qtok = _norm(query)
+    best, best_sc = None, -1.0
+    for vid, raw in pairs:
+        title = raw.replace("\\u0026", "&").replace('\\"', '"')
+        sc = _score(qtok, _norm(title))
+        low = title.lower()
+        if "official" in low or "original" in low:
+            sc += 12
+        if "audio" in low or "álbum" in low or "album" in low:
+            sc += 6
+        if "live" in low or "ao vivo" in low:
+            sc -= 6
+        if any(k in low for k in ["lyrics", "letra", "karaoke", "instrumental",
+                                  "remix", "cover", "tutorial", "reaction"]):
+            sc -= 10
+        if qtok and all(w in low for w in qtok if w not in _STOP):
+            sc += 12
+        if sc > best_sc:
+            best_sc, best = sc, vid
+    return best
+
+
+# ----------------------------- Spotify (tocar de verdade) -----------------------------
+
+def _spotify_track_id(query: str):
+    """Tenta achar o ID da música no Spotify (precisa de app/website com o URI)."""
+    import requests
+    try:
+        html = requests.get(
+            "https://open.spotify.com/search/" + urllib.parse.quote(query),
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
+            timeout=12,
+        ).text
     except Exception:
         return None
+    m = re.search(r'spotify:track:([A-Za-z0-9]+)', html)
+    if m:
+        return m.group(1)
+    m = re.search(r'"uri":"spotify:track:([A-Za-z0-9]+)"', html)
+    return m.group(1) if m else None
 
+
+# ----------------------------- Play music -----------------------------
 
 def play_music(query: str) -> str:
-    """Abre o Spotify (se pedir) ou o YouTube JÁ TOCANDO a música (autoplay)."""
+    """Toca música de verdade:
+    - Spotify: abre a música no app (spotify:track:ID) ou a busca no app.
+    - YouTube: escolhe o vídeo que melhor combina e já abre tocando.
+    """
     q = (query or "").strip()
+    use_spotify = "spotify" in q.lower()
     try:
-        import webbrowser
-        if "spotify" in q.lower():
-            term = q.lower().replace("spotify", "").strip().replace(" ", "%20")
-            url = "https://open.spotify.com/search/" + term if term else "https://open.spotify.com"
-            webbrowser.open(url)
-            return "Abrindo no Spotify."
+        if use_spotify:
+            term = q.lower().replace("spotify", "").strip()
+            search = term if term else "lofi hip hop"
+            tid = _spotify_track_id(search)
+            if tid:
+                webbrowser.open("spotify:track:" + tid)
+                return f"Tocando {search} no Spotify."
+            # fallback: abre a busca DENTRO do app Spotify (não a tela do navegador)
+            enc = urllib.parse.quote(search)
+            if not webbrowser.open("spotify:search:" + enc):
+                webbrowser.open("https://open.spotify.com/search/" + enc)
+            return f"Abrindo {search} no Spotify."
+
         search = q if q else "lofi hip hop"
-        vid = _yt_first_video_id(search)
+        vid = best_youtube_video(search)
         if vid:
             webbrowser.open(f"https://www.youtube.com/watch?v={vid}&autoplay=1")
-            return f"Tocando {q} no YouTube." if q else "Tocando música no YouTube."
-        # fallback: página de busca
-        webbrowser.open("https://www.youtube.com/results?search_query=" + search.replace(" ", "%20"))
+            return f"Tocando {search} no YouTube."
+        webbrowser.open("https://www.youtube.com/results?search_query=" +
+                        urllib.parse.quote(search))
         return f"Abrindo música no YouTube: {search}."
     except Exception as e:
         return f"Não consegui abrir o player de música: {e}"

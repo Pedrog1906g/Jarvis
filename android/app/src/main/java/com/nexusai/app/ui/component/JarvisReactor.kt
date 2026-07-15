@@ -59,6 +59,18 @@ fun JarvisReactor(
                     strokeWidth = 1.5f
                 )
             }
+            // moldura hexagonal (estilo traje do Homem de Ferro)
+            val hr = r + 12.dp.toPx()
+            val hex = (0..6).map { i ->
+                val a = Math.PI / 180.0 * (60 * i - 90)
+                Offset(cx + hr * cos(a).toFloat(), cy + hr * sin(a).toFloat())
+            }
+            for (i in 0 until 6) {
+                drawLine(
+                    color = NexusPrimary.copy(alpha = 0.35f),
+                    start = hex[i], end = hex[i + 1], strokeWidth = 1.5f
+                )
+            }
             // varredura (fatia preenchida)
             rotate(rot1) {
                 drawArc(
