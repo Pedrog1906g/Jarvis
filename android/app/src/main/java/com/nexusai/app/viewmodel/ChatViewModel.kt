@@ -34,6 +34,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     val error: StateFlow<String?> = _error.asStateFlow()
 
     private var ws: NexusWebSocket? = null
+    private var wsOpen = false
+    private var pendingText: String? = null
     private var streamingIndex: Int? = null
 
     // Voz (TTS/STT) — instância única, com o contexto da Application.
@@ -62,9 +64,12 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     }
                 },
                 onError = { e ->
+                    wsOpen = false
                     _error.value = e
                     _isThinking.value = false
-                }
+                    pendingText?.let { fallbackRest(it) }
+                },
+                onOpen = { wsOpen = true }
             )
             ws?.connect()
         }
@@ -97,7 +102,12 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         _isThinking.value = true
         _error.value = null
         streamingIndex = null
-        ws?.send(t, _conversationId.value)
+        pendingText = t
+        if (ws != null && wsOpen) {
+            ws?.send(t, _conversationId.value)
+        } else {
+            fallbackRest(t)
+        }
     }
 
     fun loadConversation(cid: Int) {
@@ -123,6 +133,25 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     fun reportError(msg: String?) {
         _error.value = msg
         _isThinking.value = false
+    }
+
+    private fun fallbackRest(text: String) {
+        viewModelScope.launch {
+            _isThinking.value = true
+            try {
+                val resp = repo.chat(text, _conversationId.value)
+                _conversationId.value = resp.conversationId
+                _messages.value = _messages.value + ChatMessage(
+                    id = UUID.randomUUID().toString(), role = "assistant", content = resp.reply
+                )
+                voice.speak(resp.reply)
+            } catch (e: Exception) {
+                _error.value = e.localizedMessage ?: "Falha ao falar com o servidor"
+            } finally {
+                _isThinking.value = false
+                pendingText = null
+            }
+        }
     }
 
     override fun onCleared() {

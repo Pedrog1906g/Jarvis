@@ -406,7 +406,29 @@ class App:
             self._bot_chunk("Faça login nas configurações primeiro.")
             self._bot_finish()
             return
-        self.backend.send(text, self.conv_id)
+        self._chat_rest(text)
+
+    def _chat_rest(self, text):
+        # Chat via REST (mais confiavel que o WebSocket).
+        try:
+            import requests
+            r = requests.post(
+                self.backend.server + "/api/chat",
+                json={"content": text, "conversation_id": self.conv_id},
+                headers={"Authorization": "Bearer " + self.backend.token},
+                timeout=60,
+            )
+            if r.status_code == 200:
+                data = r.json()
+                self.conv_id = data.get("conversation_id", self.conv_id)
+                self._bot_chunk(data.get("reply", ""))
+                self._bot_finish()
+                return
+            self._bot_chunk("O servidor respondeu com erro (%d)." % r.status_code)
+        except Exception as e:
+            log.warning("chat rest erro: %s", e)
+            self._bot_chunk("Não consegui falar com o servidor agora. Tente de novo.")
+        self._bot_finish()
 
     def _push_to_talk(self):
         self._set_statusbar("Ouvindo... (fale agora)")
