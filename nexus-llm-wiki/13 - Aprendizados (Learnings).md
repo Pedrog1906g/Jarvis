@@ -103,3 +103,8 @@ Implementar um sistema de detecção de voz contínua e ajustar a sensibilidade 
 _2026-07-14 23:25 UTC_
 
 Implementar uma função de 'ouvir em segundo plano' para que o NEXUS AI possa responder a comandos de voz sem a necessidade de clicar no microfone, melhorando a experiência do usuário e reduzindo a necessidade de interações manuais. Isso pode ser alcançado por meio de algoritmos de processamento de linguagem natural avançados e integração com o sistema de áudio do dispositivo para detectar comandos de voz mesmo quando o aplicativo não está em foco.
+
+## Otimização da Ativação por Voz
+_2026-07-15 00:22 UTC_
+
+Implementar uma otimização na ativação por voz do NEXUS AI para que responda automaticamente ao ser chamado, sem a necessidade de clicar no microfone, melhorando a experiência do usuário e reduzindo a necessidade de interações manuais.
