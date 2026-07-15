@@ -29,6 +29,7 @@ from commands import (classify_command, open_program, organize_folder,
 from voice import WindowsVoice
 
 APP_NAME = "JARVIS"
+VERSION = "1.0.0"
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), "jarvis_windows_config.json")
 DEFAULT_SERVER = "https://nexus-api-2o1y.onrender.com"
 LOG_PATH = os.path.join(os.path.expanduser("~"), "jarvis_windows.log")
@@ -294,20 +295,6 @@ class App:
         except Exception:
             pass
 
-    def _start_pulse(self):
-        try:
-            state = {"on": False}
-
-            def tick():
-                try:
-                    state["on"] = not state["on"]
-                    self.status.configure(fg="#5fe0ff" if state["on"] else "#1b9fd6")
-                except Exception:
-                    return
-                self.root.after(900, tick)
-            self.root.after(900, tick)
-        except Exception:
-            pass
 
     def _set_status(self, ok):
         try:
@@ -486,6 +473,7 @@ class App:
             self._set_status(True)
             self._bot_chunk("JARVIS online. Diga 'Jarvis' para falar comigo, ou escreva abaixo.")
             self._bot_finish()
+            self.root.after(1500, self.check_for_update)
         else:
             self._set_status(False)
             self._bot_chunk("Sem conexão. Abra ⚙ Config e ajuste servidor/login.")
@@ -565,6 +553,33 @@ class App:
             threading.Thread(target=icon.run, daemon=True).start()
         except Exception as e:
             log.warning("tray erro: %s", e)
+
+    def check_for_update(self):
+        # AUTOATUALIZAÇÃO (notificação): verifica o lançamento mais novo no GitHub.
+        try:
+            import urllib.request, json
+            url = "https://api.github.com/repos/Pedrog1906g/Jarvis/releases/latest"
+            req = urllib.request.Request(url, headers={"User-Agent": "NEXUS-JARVIS"})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                data = json.loads(r.read().decode())
+            tag = data.get("tag_name", "")
+            link = ""
+            for a in data.get("assets", []):
+                if a.get("name") == "JARVIS.exe":
+                    link = a.get("browser_download_url", "")
+            m = re.search(r"(\d+)", tag)
+            latest = int(m.group(1)) if m else 0
+            seen = self.cfg.get("last_update_seen", 0)
+            if latest and latest != seen:
+                self.cfg["last_update_seen"] = latest
+                save_config(self.cfg)
+                msg = "Nova versão disponível (%s)." % tag
+                if link:
+                    msg += " Baixe em: " + link
+                self._append_bot_chunk(msg)
+                self._bot_finish()
+        except Exception:
+            pass
 
     def run(self):
         self._start_tray()

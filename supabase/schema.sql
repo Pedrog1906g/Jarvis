@@ -140,6 +140,29 @@ create table if not exists public.sync_messages (
 );
 create index if not exists idx_syncm_owner on public.sync_messages(owner_username);
 
+
+-- Dispositivos (PC, celular, etc.) para sincronização cross-device.
+create table if not exists public.devices (
+    id bigserial primary key,
+    owner_username text not null,
+    device_id text not null,
+    device_type text default 'unknown',
+    last_seen timestamptz default now(),
+    unique (owner_username, device_id)
+);
+create index if not exists idx_devices_owner on public.devices(owner_username);
+
+-- Backups automáticos antes de atualizações.
+create table if not exists public.backups (
+    id bigserial primary key,
+    owner_username text not null,
+    kind text default 'auto',
+    note text,
+    storage_key text,
+    created_at timestamptz default now()
+);
+create index if not exists idx_backups_owner on public.backups(owner_username);
+
 -- ---------------------------------------------------------------------------
 -- Row Level Security: por padrão nada é visível; o backend escreve com
 -- service_role (que bypassa RLS). Anon não acessa nada.
@@ -155,6 +178,8 @@ alter table public.files enable row level security;
 alter table public.sync_messages enable row level security;
 alter table public.settings enable row level security;
 alter table public.plugin_states enable row level security;
+alter table public.devices enable row level security;
+alter table public.backups enable row level security;
 
 -- Política única: service_role (backend) pode tudo; anon bloqueado.
 do $$
@@ -162,7 +187,7 @@ declare t text;
 begin
   foreach t in array array['profiles','conversations','messages','memory_facts',
     'memory_embeddings','reminders','scheduled_tasks','files','sync_messages',
-    'settings','plugin_states']
+    'settings','plugin_states','devices','backups']
   loop
     execute format('drop policy if exists %1$s_svc on public.%1$s;', t);
     execute format('create policy %1$s_svc on public.%1$s for all to service_role using (true) with check (true);', t);
