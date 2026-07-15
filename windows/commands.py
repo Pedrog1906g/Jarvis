@@ -140,8 +140,24 @@ def change_volume(delta: int) -> str:
         return f"Não consegui ajustar o volume: {e}"
 
 
+def _yt_first_video_id(query: str):
+    """Retorna o ID do 1º vídeo do YouTube para a busca (para já começar a tocar)."""
+    import requests, re
+    try:
+        html = requests.get(
+            "https://www.youtube.com/results",
+            params={"search_query": query},
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=10,
+        ).text
+        m = re.search(r'"videoId":"([A-Za-z0-9_-]{11})"', html)
+        return m.group(1) if m else None
+    except Exception:
+        return None
+
+
 def play_music(query: str) -> str:
-    """Abre o Spotify (se pedir) ou o YouTube com a música pedida. Windows."""
+    """Abre o Spotify (se pedir) ou o YouTube JÁ TOCANDO a música (autoplay)."""
     q = (query or "").strip()
     try:
         import webbrowser
@@ -150,8 +166,13 @@ def play_music(query: str) -> str:
             url = "https://open.spotify.com/search/" + term if term else "https://open.spotify.com"
             webbrowser.open(url)
             return "Abrindo no Spotify."
-        search = q if q else "música"
+        search = q if q else "lofi hip hop"
+        vid = _yt_first_video_id(search)
+        if vid:
+            webbrowser.open(f"https://www.youtube.com/watch?v={vid}&autoplay=1")
+            return f"Tocando {q} no YouTube." if q else "Tocando música no YouTube."
+        # fallback: página de busca
         webbrowser.open("https://www.youtube.com/results?search_query=" + search.replace(" ", "%20"))
-        return f"Tocando {q} no YouTube." if q else "Tocando música no YouTube."
+        return f"Abrindo música no YouTube: {search}."
     except Exception as e:
         return f"Não consegui abrir o player de música: {e}"

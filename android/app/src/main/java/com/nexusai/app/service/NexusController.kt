@@ -5,6 +5,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import com.nexusai.app.util.VoiceManager
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
 
 /**
  * Comandos de CONTROLE DO CELULAR tratados 100% no aparelho (acessibilidade /
@@ -67,30 +70,13 @@ object NexusController {
             return true
         }
 
-        // ---- Música / tocar ----
+                // ---- Música / tocar ----
         if (c.contains("tocar") || c.contains("toque") || c.contains("música") ||
             c.contains("musica") || c.contains("ouvir") || c.contains("som") ||
             c.contains("play") || c.contains("spotify") || c.contains("youtube") ||
             c.contains("youtube music") || c.contains("deezer")
         ) {
-            val q = c.replace(Regex("""(.*\b(tocar|toque|ouvir|play|m[úu]sica|som)\b)"""), "")
-                .replace(Regex("""\b(no spotify|no youtube|youtube music|youtube|spotify|deezer|app|da |do )"""), " ")
-                .trim().ifBlank { c }
-            val useSpotify = c.contains("spotify")
-            val uri = if (useSpotify) {
-                Uri.parse("https://open.spotify.com/search/" + Uri.encode(q))
-            } else {
-                Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(q))
-            }
-            try {
-                val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                context.startActivity(intent)
-                voice.speak(if (q.isBlank() || q == c) "Tocando música" else "Tocando $q")
-            } catch (_: Exception) {
-                voice.speak("Não consegui abrir o player de música.")
-            }
+            playMusic(context, command, voice)
             return true
         }
 
@@ -169,5 +155,50 @@ object NexusController {
             }
         }
         return false
+    }
+
+    /** Toca música de verdade: abre o app (Spotify) ou o vídeo do YouTube já tocando. */
+    private fun playMusic(context: Context, command: String, voice: VoiceManager) {
+        val q = command.lowercase()
+            .replace(Regex("""(?i).*?\b(tocar|toque|ouvir|play|m[úu]sica|som)\b"""), "")
+            .replace(Regex("""(?i)\b(no spotify|no youtube|youtube|spotify|deezer|app|da |do )\b"""), " ")
+            .trim().ifBlank { "lofi hip hop" }
+        val useSpotify = command.lowercase().contains("spotify")
+        Thread {
+            try {
+                val videoId = if (useSpotify) null else resolveYouTubeVideoId(q)
+                val uri = if (useSpotify) {
+                    Uri.parse("https://open.spotify.com/search/" + Uri.encode(q))
+                } else if (!videoId.isNullOrBlank()) {
+                    Uri.parse("https://www.youtube.com/watch?v=$videoId")
+                } else {
+                    Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(q))
+                }
+                context.startActivity(Intent(Intent.ACTION_VIEW, uri).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                })
+                val label = if (useSpotify) "Abrindo no Spotify"
+                            else if (!videoId.isNullOrBlank()) "Tocando $q"
+                            else "Abrindo música"
+                voice.speak(label)
+            } catch (_: Exception) {
+                voice.speak("Não consegui abrir o player de música.")
+            }
+        }.start()
+    }
+
+    /** Busca o 1º vídeo do YouTube para a query (para já começar a tocar). */
+    private fun resolveYouTubeVideoId(query: String): String? {
+        return try {
+            val url = "https://www.youtube.com/results?search_query=" + URLEncoder.encode(query, "UTF-8")
+            val conn = URL(url).openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0")
+            conn.connectTimeout = 8000
+            conn.readTimeout = 8000
+            val html = conn.inputStream.bufferedReader().readText()
+            val m = Regex("\"videoId\":\"([A-Za-z0-9_-]{11})\"").find(html)
+            m?.groupValues?.get(1)
+        } catch (_: Exception) { null }
     }
 }
