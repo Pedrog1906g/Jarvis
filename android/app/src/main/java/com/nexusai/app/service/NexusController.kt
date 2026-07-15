@@ -272,12 +272,26 @@ object NexusController {
             try {
                 if (useSpotify) {
                     val tid = spotifyTrackId(q)
-                    val uri = if (!tid.isNullOrBlank()) "spotify:track:$tid"
-                              else "spotify:search:" + Uri.encode(q)
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uri)).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    })
-                    voice.speak(if (!tid.isNullOrBlank()) "Tocando $q no Spotify" else "Abrindo $q no Spotify")
+                    if (!tid.isNullOrBlank()) {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("spotify:track:$tid")).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        })
+                        voice.speak("Tocando $q no Spotify")
+                    } else {
+                        // Sem Premium/ID: garante que você OUVE a música (vídeo exato no YouTube)
+                        val vid = bestYouTubeId(q)
+                        if (!vid.isNullOrBlank()) {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=$vid")).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            })
+                            voice.speak("Spotify exige Premium para tocar exato; tocando $q no YouTube")
+                        } else {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("spotify:search:" + Uri.encode(q))).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            })
+                            voice.speak("Abrindo $q no Spotify")
+                        }
+                    }
                 } else {
                     val videoId = bestYouTubeId(q)
                     val uri = if (!videoId.isNullOrBlank()) "https://www.youtube.com/watch?v=$videoId"

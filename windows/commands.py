@@ -253,7 +253,11 @@ def play_music(query: str) -> str:
             if tid:
                 webbrowser.open("spotify:track:" + tid)
                 return f"Tocando {label} no Spotify."
-            # fallback: abre a busca DENTRO do app Spotify (não a tela do navegador)
+            # Sem Premium/ID do Spotify: garante que você OUVE a música (vídeo exato no YouTube)
+            vid = best_youtube_video(search)
+            if vid:
+                webbrowser.open(f"https://www.youtube.com/watch?v={vid}&autoplay=1")
+                return f"Spotify exige Premium p/ tocar exato; tocando {search} no YouTube."
             enc = urllib.parse.quote(search)
             if not webbrowser.open("spotify:search:" + enc):
                 webbrowser.open("https://open.spotify.com/search/" + enc)
