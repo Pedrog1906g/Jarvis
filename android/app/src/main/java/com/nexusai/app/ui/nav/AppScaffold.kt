@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.dp
 import com.nexusai.app.ui.screen.*
 import com.nexusai.app.ui.theme.*
 import com.nexusai.app.viewmodel.AuthViewModel
-import com.nexusai.app.viewmodel.MemoryViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +67,7 @@ fun AppScaffold(authVm: AuthViewModel) {
                     "chat"      -> ChatScreen()
                     "history"   -> HistoryScreen()
                     "reminders" -> RemindersScreen()
-                    "memory"    -> MemoryScreen(viewModel = MemoryViewModel(androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application))
+                    "memory"    -> MemoryScreen()
                     "devices"   -> DevicesScreen()
                     "controle"  -> ControlScreen()
                     "auto"      -> AutoImproveScreen()

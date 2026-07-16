@@ -4,6 +4,7 @@ import com.nexusai.app.data.model.*
 import com.nexusai.app.data.remote.NexusApi
 import com.nexusai.app.data.remote.RetrofitClient
 import com.nexusai.app.data.store.TokenStore
+import okhttp3.ResponseBody
 
 class NexusRepository(val tokenStore: TokenStore) {
 
@@ -58,6 +59,6 @@ class NexusRepository(val tokenStore: TokenStore) {
 
     // ---- Voz / TTS ----
     suspend fun voiceInfo(): VoiceInfo = api.voiceInfo(auth())
-    suspend fun synthesizeSpeech(text: String): okhttp3.ResponseBody =
+    suspend fun synthesizeSpeech(text: String): ResponseBody =
         api.synthesizeSpeech(auth(), mapOf("text" to text))
 }

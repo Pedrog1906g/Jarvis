@@ -1,6 +1,7 @@
 package com.nexusai.app.data.remote
 
 import com.nexusai.app.data.model.*
+import okhttp3.ResponseBody
 import retrofit2.http.*
 
 interface NexusApi {
@@ -85,5 +86,5 @@ interface NexusApi {
     suspend fun voiceInfo(@Header("Authorization") auth: String): VoiceInfo
 
     @POST("/api/voice/synthesize")
-    suspend fun synthesizeSpeech(@Header("Authorization") auth: String, @Body body: Map<String, String>): okhttp3.ResponseBody
+    suspend fun synthesizeSpeech(@Header("Authorization") auth: String, @Body body: Map<String, String>): ResponseBody
 }
