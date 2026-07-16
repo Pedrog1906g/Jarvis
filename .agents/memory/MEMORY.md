@@ -1,0 +1,7 @@
+- [WS Manager](ws-manager.md) — singleton `app/core/ws_manager.py`; threads de background usam `push_sync`, endpoints usam `push` async
+- [Reminder delivery](reminder-delivery.md) — scheduler entrega via WS + tenta FCM; marca `notified=True` no banco após entrega
+- [Spotify OAuth2](spotify-oauth2.md) — PKCE flow completo em `app/plugins/spotify.py`; tokens criptografados com crypto.py; state dict em memória (single-instance)
+- [Piper TTS](piper-tts.md) — subprocess para binário `piper` ou pacote Python `piper-tts`; PCM→WAV manual; fallback gracioso
+- [Memory facts API](memory-api.md) — CRUD em `/api/memory/facts`; router registrado em `main.py`; sincroniza Supabase best-effort
+- [Auto title](auto-title.md) — conversa ganha título automático via LLM após a 3ª mensagem; roda em thread daemon
+- [Test count](test-count.md) — 43 testes passando (test_api + test_core + test_extended); rodar `pytest tests/ -v` do diretório `backend/`

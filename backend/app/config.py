@@ -51,6 +51,16 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./nexus.db")
 TTS_PROVIDER = os.getenv("TTS_PROVIDER", "android")  # android | openai | piper
 OPENAI_TTS_API_KEY = os.getenv("OPENAI_TTS_API_KEY", "")
 
+# Piper TTS offline (https://github.com/rhasspy/piper)
+# Modelo recomendado para PT-BR: pt_BR-faber-medium (baixar de https://huggingface.co/rhasspy/piper-voices)
+PIPER_MODEL_PATH = os.getenv("PIPER_MODEL_PATH", "")
+PIPER_EXECUTABLE = os.getenv("PIPER_EXECUTABLE", "piper")  # caminho para o binário piper
+
+# Spotify OAuth2 (https://developer.spotify.com/dashboard)
+SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")
+SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET", "")
+SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "")
+
 # --- Rede ---
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))

@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db import models
 from app.core.security import get_current_user, ws_user
-from app.core.llm import stream_chat, is_available
+from app.core.llm import stream_chat, complete_chat, is_available
 from app.core.memory import build_messages, extract_facts, maybe_compress_history
 from app.core.firebase import mirror_user, mirror_message
+from app.core.ws_manager import manager
 from app.services import obsidian as _obs
 
 router = APIRouter(prefix="/api", tags=["chat"])
@@ -47,6 +48,7 @@ def chat(req: ChatRequest, db: Session = Depends(get_db),
     db.add(models.Message(conversation_id=conv.id, role="assistant", content=reply))
     db.commit()
     _sync_msg(user.username, conv.id, "assistant", reply)
+    _auto_title(db, user.id, conv)
     # Espelha no Firestore (best-effort) quando o Firebase está ativo.
     try:
         mirror_user(user)
@@ -91,6 +93,54 @@ def conversation_messages(cid: int, db: Session = Depends(get_db),
     return [{"id": m.id, "role": m.role, "content": m.content} for m in msgs]
 
 
+@router.delete("/conversations/{cid}")
+def delete_conversation(cid: int, db: Session = Depends(get_db),
+                        user: models.User = Depends(get_current_user)):
+    """Apaga uma conversa e todas as suas mensagens."""
+    conv = db.query(models.Conversation).filter(
+        models.Conversation.id == cid, models.Conversation.owner_id == user.id).first()
+    if not conv:
+        return {"ok": False, "message": "Conversa não encontrada"}
+    db.delete(conv)
+    db.commit()
+    return {"ok": True}
+
+
+def _auto_title(db: Session, owner_id: int, conv: models.Conversation):
+    """Gera título automático da conversa após a 3ª mensagem (best-effort, via LLM)."""
+    if conv.title != "Conversa":
+        return  # Já tem título personalizado
+    count = db.query(models.Message).filter_by(conversation_id=conv.id).count()
+    if count != 3:
+        return  # Gera o título apenas na 3ª mensagem
+    import threading
+    def _gen():
+        try:
+            from app.db.database import SessionLocal
+            s = SessionLocal()
+            try:
+                msgs = s.query(models.Message).filter_by(conversation_id=conv.id).order_by(
+                    models.Message.id).limit(3).all()
+                snippet = " | ".join(m.content[:80] for m in msgs)
+                prompt = [
+                    {"role": "system", "content":
+                     "Gere um TÍTULO CURTO (máx 5 palavras, sem aspas) para esta conversa. "
+                     "Responda APENAS o título, nada mais."},
+                    {"role": "user", "content": snippet},
+                ]
+                title = complete_chat(prompt, temperature=0.3).strip().strip('"\'').strip()
+                if title and len(title) <= 60:
+                    c = s.query(models.Conversation).filter_by(id=conv.id).first()
+                    if c and c.title == "Conversa":
+                        c.title = title
+                        s.commit()
+            finally:
+                s.close()
+        except Exception:
+            pass
+    threading.Thread(target=_gen, daemon=True).start()
+
+
 def _get_or_create_conversation(db, owner_id, conversation_id):
     if conversation_id:
         conv = db.query(models.Conversation).filter(
@@ -116,6 +166,7 @@ async def ws_chat(websocket: WebSocket, token: str = ""):
         await websocket.close()
         return
 
+    manager.connect(user.id, websocket)
     try:
         while True:
             raw = await websocket.receive_text()
@@ -168,7 +219,9 @@ async def ws_chat(websocket: WebSocket, token: str = ""):
             except Exception:
                 pass
             await websocket.send_json({"type": "done", "conversation_id": conv.id})
+            _auto_title(db, user.id, conv)
     except WebSocketDisconnect:
         pass
     finally:
+        manager.disconnect(user.id, websocket)
         db.close()

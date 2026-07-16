@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
 from app.db import models  # registra os modelos
-from app.api import auth, chat, voice, reminders, plugins, system, agent, scheduled_tasks, obsidian, metrics
+from app.api import auth, chat, voice, reminders, plugins, system, agent, scheduled_tasks, obsidian, metrics, memory
 from app.services.reminder_scheduler import start_scheduler
 from app.services.scheduled_tasks import start_scheduled_tasks
 from app.services.learning_loop import start_learning_loop
@@ -47,6 +47,7 @@ app.include_router(agent.router)
 app.include_router(scheduled_tasks.router)
 app.include_router(obsidian.router)
 app.include_router(metrics.router)
+app.include_router(memory.router)
 
 
 # Diretório do frontend web (HUD do JARVIS para PC).

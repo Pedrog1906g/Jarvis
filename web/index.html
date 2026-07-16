@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>JARVIS — NEXUS AI</title>
 <meta name="description" content="JARVIS — Assistente Pessoal IA estilo Iron Man. Powered by NEXUS AI e Groq." />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23010610' stroke='%2300e5ff' stroke-width='1.5'/><circle cx='16' cy='16' r='7' fill='%2300e5ff' opacity='.9'/><circle cx='16' cy='16' r='3' fill='%23fff'/></svg>"/>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -289,6 +290,8 @@
   .float-btn.on{color:var(--cyan);border-color:var(--cyan)}
   #ttsBtn{right:22px;bottom:100px}
   #engBtn{right:22px;bottom:136px}
+  #memBtn{right:22px;bottom:172px}
+  #spBtn{right:22px;bottom:208px}
 
   /* ─── LOGIN ─── */
   .login{
@@ -322,6 +325,88 @@
   .login-btn:hover{opacity:.92;box-shadow:0 0 30px rgba(0,229,255,.4)}
   .login-err{color:var(--red);font-size:11px;margin-top:8px;min-height:16px;letter-spacing:.5px}
   .login-hint{font-size:10px;color:var(--dim);margin-top:12px;line-height:1.5;letter-spacing:.3px}
+
+  /* ─── BANNER DE LEMBRETE ─── */
+  .reminder-banner{
+    position:fixed;top:22px;left:50%;transform:translateX(-50%);
+    background:rgba(6,18,38,.96);border:1px solid var(--gold);border-radius:10px;
+    padding:14px 22px;display:flex;align-items:center;gap:14px;z-index:100;
+    box-shadow:0 0 40px rgba(255,209,90,.25),inset 0 0 0 1px rgba(255,255,255,.05);
+    backdrop-filter:blur(20px);min-width:280px;max-width:500px;
+    animation:bannerIn .35s cubic-bezier(.3,1.4,.5,1);
+  }
+  @keyframes bannerIn{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+  .reminder-icon{font-size:22px;animation:bellRing .6s ease-in-out 3}
+  @keyframes bellRing{0%,100%{transform:rotate(0)}25%{transform:rotate(-20deg)}75%{transform:rotate(20deg)}}
+  .reminder-body{flex:1}
+  .reminder-title{font-family:"Orbitron",sans-serif;font-size:12px;letter-spacing:3px;color:var(--gold);margin-bottom:3px}
+  .reminder-note{font-size:11px;color:var(--dim);letter-spacing:.5px}
+  .reminder-close{background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:0 4px;
+    transition:color .2s}
+  .reminder-close:hover{color:var(--gold)}
+
+  /* ─── PAINEL DE MEMÓRIA ─── */
+  .memory-panel{
+    position:fixed;top:20px;left:20px;bottom:105px;width:min(310px,28vw);
+    background:var(--panel);border:1px solid var(--panel-border);border-radius:12px;
+    backdrop-filter:blur(18px);display:none;flex-direction:column;overflow:hidden;
+    box-shadow:0 0 50px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.04),0 0 20px rgba(140,77,255,.1);
+    z-index:6;
+  }
+  .memory-panel.open{display:flex}
+  .memory-fact{
+    padding:8px 0;border-bottom:1px solid rgba(0,229,255,.07);
+    display:flex;align-items:flex-start;gap:8px;
+  }
+  .memory-fact:last-child{border-bottom:none}
+  .memory-fact-text{font-size:10.5px;color:var(--text);flex:1;line-height:1.5;letter-spacing:.3px}
+  .memory-fact-cat{font-size:8px;color:var(--violet);letter-spacing:1px;margin-top:2px}
+  .memory-del{background:none;border:none;color:rgba(255,58,88,.4);cursor:pointer;font-size:12px;padding:0 2px;
+    transition:color .2s;flex-shrink:0;line-height:1}
+  .memory-del:hover{color:var(--red)}
+  .memory-add{display:flex;gap:6px;padding-top:8px}
+  .memory-add input{flex:1;background:rgba(0,20,40,.6);border:1px solid rgba(0,229,255,.15);
+    border-radius:6px;padding:7px 10px;color:var(--text);font-family:"Share Tech Mono",monospace;
+    font-size:11px;outline:none;transition:border-color .2s}
+  .memory-add input:focus{border-color:var(--violet)}
+  .memory-add button{background:rgba(140,77,255,.2);border:1px solid rgba(140,77,255,.3);
+    border-radius:6px;padding:7px 12px;color:var(--violet);cursor:pointer;font-family:"Share Tech Mono",monospace;
+    font-size:10px;transition:all .2s}
+  .memory-add button:hover{background:rgba(140,77,255,.35);border-color:var(--violet)}
+
+  /* ─── WIDGET SPOTIFY ─── */
+  .spotify-widget{
+    position:fixed;bottom:108px;left:22px;
+    background:var(--panel);border:1px solid rgba(30,215,96,.2);border-radius:12px;
+    padding:12px 16px;display:none;flex-direction:column;gap:8px;z-index:7;
+    min-width:260px;backdrop-filter:blur(16px);
+    box-shadow:0 0 30px rgba(30,215,96,.1),inset 0 0 0 1px rgba(255,255,255,.03);
+  }
+  .spotify-widget.open{display:flex}
+  .spotify-head{display:flex;align-items:center;gap:8px;font-family:"Orbitron",sans-serif;font-size:10px;letter-spacing:3px;color:#1ed760}
+  .spotify-track{font-size:11px;color:var(--text);letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .spotify-artist{font-size:10px;color:var(--dim);letter-spacing:.5px}
+  .spotify-controls{display:flex;gap:8px;justify-content:center;margin-top:4px}
+  .sp-btn{background:rgba(30,215,96,.12);border:1px solid rgba(30,215,96,.2);border-radius:20px;
+    padding:6px 14px;color:#1ed760;cursor:pointer;font-size:12px;transition:all .2s;letter-spacing:.5px}
+  .sp-btn:hover{background:rgba(30,215,96,.25);border-color:#1ed760;box-shadow:0 0 10px rgba(30,215,96,.2)}
+  .spotify-cmd{display:flex;gap:6px}
+  .spotify-cmd input{flex:1;background:rgba(0,20,40,.6);border:1px solid rgba(30,215,96,.15);border-radius:6px;
+    padding:6px 10px;color:var(--text);font-family:"Share Tech Mono",monospace;font-size:11px;outline:none;
+    transition:border-color .2s}
+  .spotify-cmd input:focus{border-color:#1ed760}
+  .spotify-cmd button{background:rgba(30,215,96,.15);border:1px solid rgba(30,215,96,.2);border-radius:6px;
+    padding:6px 12px;color:#1ed760;cursor:pointer;font-size:11px;transition:all .2s}
+  .spotify-cmd button:hover{background:rgba(30,215,96,.3)}
+
+  /* ─── BADGE DE ATUALIZAÇÃO ─── */
+  .update-badge{
+    position:fixed;top:22px;right:130px;background:rgba(0,229,255,.1);
+    border:1px solid var(--cyan);border-radius:20px;padding:5px 14px;
+    font-size:9px;letter-spacing:2px;color:var(--cyan);cursor:pointer;z-index:9;
+    display:none;animation:badgePulse 2s ease-in-out infinite;backdrop-filter:blur(10px);
+  }
+  @keyframes badgePulse{0%,100%{box-shadow:0 0 6px rgba(0,229,255,.2)}50%{box-shadow:0 0 16px rgba(0,229,255,.5)}}
 
   /* ─── RESPONSIVO ─── */
   @media(max-width:1000px){
@@ -541,9 +626,60 @@
     <div id="chat"></div>
   </div>
 
+  <!-- Banner de lembrete (oculto por padrão, ativado via WebSocket) -->
+  <div class="reminder-banner" id="reminderBanner" style="display:none">
+    <span class="reminder-icon">🔔</span>
+    <div class="reminder-body">
+      <div class="reminder-title" id="reminderTitle">LEMBRETE</div>
+      <div class="reminder-note" id="reminderNote"></div>
+    </div>
+    <button class="reminder-close" onclick="document.getElementById('reminderBanner').style.display='none'">✕</button>
+  </div>
+
+  <!-- Badge de atualização disponível -->
+  <div class="update-badge" id="updateBadge" onclick="appendSys('⚙️ Nova versão disponível! Use auto-melhoria para atualizar.')">
+    ↑ UPDATE
+  </div>
+
+  <!-- Painel de memória (substitui o painel de diagnósticos quando aberto) -->
+  <div class="memory-panel" id="memoryPanel">
+    <div class="panel-head">
+      <div class="panel-head-icon" style="background:var(--violet);box-shadow:0 0 10px var(--violet)"></div>
+      <span class="panel-head-title" style="color:var(--violet)">MEMÓRIA LONGA</span>
+      <button onclick="toggleMemory()" style="margin-left:auto;background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px">✕</button>
+    </div>
+    <div class="panel-body">
+      <div id="memoryList" style="display:flex;flex-direction:column;gap:0"></div>
+      <div class="memory-add">
+        <input id="memInput" placeholder="Adicionar fato..." onkeydown="if(event.key==='Enter')addMemoryFact()"/>
+        <button onclick="addMemoryFact()">+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Widget Spotify -->
+  <div class="spotify-widget" id="spotifyWidget">
+    <div class="spotify-head">🎵 SPOTIFY</div>
+    <div class="spotify-track" id="spTrack">—</div>
+    <div class="spotify-artist" id="spArtist"></div>
+    <div class="spotify-controls">
+      <button class="sp-btn" onclick="spCmd('anterior')">⏮</button>
+      <button class="sp-btn" onclick="spCmd('pausar')">⏸</button>
+      <button class="sp-btn" onclick="spCmd('tocar')">▶</button>
+      <button class="sp-btn" onclick="spCmd('próxima')">⏭</button>
+    </div>
+    <div class="spotify-cmd">
+      <input id="spInput" placeholder="Tocar, buscar música..." onkeydown="if(event.key==='Enter')spCmd(this.value)"/>
+      <button onclick="spCmd(document.getElementById('spInput').value)">→</button>
+    </div>
+    <button onclick="toggleSpotify()" style="background:none;border:none;color:var(--dim);font-size:9px;cursor:pointer;letter-spacing:1px;align-self:flex-end">FECHAR</button>
+  </div>
+
   <!-- Botões flutuantes -->
   <button class="float-btn on" id="ttsBtn" style="display:none">🔊 VOZ: LIGADA</button>
   <button class="float-btn" id="engBtn" style="display:none">⚙ AUTO-MELHORIA</button>
+  <button class="float-btn" id="memBtn" style="display:none;bottom:172px">🧠 MEMÓRIA</button>
+  <button class="float-btn" id="spBtn" style="display:none;bottom:208px">🎵 SPOTIFY</button>
 
   <!-- Barra de entrada -->
   <div class="bar" id="bar" style="display:none">
@@ -574,9 +710,11 @@ let token=null,ws=null,convId=null,serverBase="";
 let ttsOn=true,recognizing=false,maleVoice=null,listenMode=false,expectingCmd=false;
 let rec=null,isSpeakingTTS=false,lastBot="";
 let wsConnected=false;
+let ttsProvider='android'; // atualizado após login via /api/plugins/voice/info
 
-// Preenche servidor padrão (Render)
-document.getElementById('server').value = "https://nexus-api-2o1y.onrender.com";
+// Preenche servidor padrão (mesma origem se hospedado junto; Render como fallback)
+const _origin = window.location.origin;
+document.getElementById('server').value = (_origin && !_origin.includes('null')) ? _origin : "https://nexus-api-2o1y.onrender.com";
 
 // ── Ticks SVG do reator ──
 (function buildTicks(){
@@ -723,6 +861,23 @@ async function doLogin(){
     setupVoices();
     connectWs();
     startMetricsPolling();
+    // Busca info do sistema (update_available, tts_provider)
+    fetch(serverBase+'/api/system/info',{headers:{'Authorization':'Bearer '+token}})
+      .then(r=>r.json()).then(d=>{
+        if(d.update_available) document.getElementById('updateBadge').style.display='block';
+        // Atualiza status LLM
+        const llmDot=document.getElementById('sd-llm');
+        const llmVal=document.getElementById('sv-llm');
+        if(llmDot&&llmVal){
+          llmDot.className='status-dot '+(d.llm_available?'on':'warn');
+          llmVal.textContent=d.llm_available?'ONLINE':'DEMO';
+        }
+      }).catch(()=>{});
+    // Detecta provedor TTS
+    fetch(serverBase+'/api/plugins/voice/info',{headers:{'Authorization':'Bearer '+token}})
+      .then(r=>r.json()).then(d=>{ttsProvider=d.provider||'android';}).catch(()=>{});
+    // Exibe botões extras
+    ['memBtn','spBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});
     document.getElementById('mic').classList.add('hint');
     appendSys('Diga "Jarvis" seguido do seu comando, ou use o microfone 🎙 para ativar a escuta contínua.');
     addLog('Login OK — token recebido');
@@ -742,6 +897,10 @@ function connectWs(){
       if(m.type==='delta') appendBot(m.content);
       else if(m.type==='done'){convId=m.conversation_id;finalizeBot();speakIfOn(lastBot);}
       else if(m.type==='error') appendSys(m.message);
+      else if(m.type==='reminder') showReminderBanner(m);
+      else if(m.type==='title_update' && m.conversation_id===convId){
+        // título gerado automaticamente pela IA — nada a fazer no HUD por ora
+      }
     }catch(e){}
   };
 }
@@ -795,10 +954,44 @@ function setupVoices(){
   pick();speechSynthesis.onvoiceschanged=pick;
 }
 
-function speakIfOn(text){
-  if(!ttsOn||!text||!('speechSynthesis' in window))return;
+async function speakIfOn(text){
+  if(!ttsOn||!text)return;
   const clean=text.replace(/\*+|#|`|\[.*?\]/g,'').trim();
   if(!clean)return;
+
+  // ── Provedor openai/piper: usa /api/voice/synthesize (áudio real do servidor) ──
+  if(ttsProvider==='openai'||ttsProvider==='piper'){
+    try{
+      if(recognizing&&rec){try{isSpeakingTTS=true;rec.stop();}catch(e){}}
+      setCoreState('speaking');addLog('JARVIS falando (síntese)...');
+      const r=await fetch(serverBase+'/api/voice/synthesize',{
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({text:clean})
+      });
+      if(r.ok&&r.status!==204){
+        const blob=await r.blob();
+        const url=URL.createObjectURL(blob);
+        const audio=new Audio(url);
+        audio.onended=()=>{
+          isSpeakingTTS=false;URL.revokeObjectURL(url);
+          setCoreState(listenMode?'listening':'idle');
+          if(listenMode&&rec&&!recognizing){try{rec.start();}catch(e){}}
+        };
+        audio.onerror=()=>{isSpeakingTTS=false;setCoreState('idle');_webSpeechFallback(clean);}
+        return audio.play();
+      }
+    }catch(e){/* fallback abaixo */}
+    // fallback para Web Speech API se o servidor falhar
+    _webSpeechFallback(clean);
+    return;
+  }
+
+  // ── Provider android / padrão: Web Speech API do navegador ──
+  _webSpeechFallback(clean);
+}
+
+function _webSpeechFallback(clean){
+  if(!('speechSynthesis' in window))return;
   const u=new SpeechSynthesisUtterance(clean);
   u.lang='pt-BR';u.pitch=0.9;u.rate=1.0;
   if(maleVoice)u.voice=maleVoice;
@@ -926,6 +1119,118 @@ if(SR){
 }
 
 document.getElementById('sendBtn').onclick=send;
+
+// ── Lembrete (via WebSocket push) ─────────────────────────────────────────
+function showReminderBanner(m){
+  document.getElementById('reminderTitle').textContent=(m.title||'LEMBRETE').toUpperCase();
+  document.getElementById('reminderNote').textContent=m.note||'';
+  const banner=document.getElementById('reminderBanner');
+  banner.style.display='flex';
+  addLog('🔔 Lembrete: '+m.title);
+  speakIfOn('Lembrete: '+(m.title||'')+(m.note?' — '+m.note:''));
+  // Oculta automaticamente após 12 segundos
+  clearTimeout(banner._timeout);
+  banner._timeout=setTimeout(()=>{banner.style.display='none';},12000);
+}
+
+// ── Painel de memória ────────────────────────────────────────────────────
+function toggleMemory(){
+  const panel=document.getElementById('memoryPanel');
+  const diag=document.getElementById('diagPanel');
+  const open=panel.classList.toggle('open');
+  if(diag) diag.style.display=open?'none':'flex';
+  if(open) loadMemoryFacts();
+}
+async function loadMemoryFacts(){
+  if(!token)return;
+  try{
+    const r=await fetch(serverBase+'/api/memory/facts',{headers:{'Authorization':'Bearer '+token}});
+    const facts=await r.json();
+    const list=document.getElementById('memoryList');
+    list.innerHTML='';
+    if(!facts.length){
+      list.innerHTML='<div style="font-size:10px;color:var(--dim);padding:8px 0">Nenhuma memória ainda.</div>';
+      return;
+    }
+    facts.forEach(f=>{
+      const row=document.createElement('div');row.className='memory-fact';
+      row.innerHTML=`<div style="flex:1"><div class="memory-fact-text">${f.fact}</div><div class="memory-fact-cat">${f.category} · imp:${f.importance}</div></div>`+
+        `<button class="memory-del" onclick="deleteMemoryFact(${f.id},this)" title="Remover">✕</button>`;
+      list.appendChild(row);
+    });
+  }catch(e){console.error('loadMemory:',e);}
+}
+async function deleteMemoryFact(fid,btn){
+  if(!token)return;
+  btn.disabled=true;
+  try{
+    await fetch(serverBase+'/api/memory/facts/'+fid,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});
+    btn.closest('.memory-fact').remove();
+    addLog('Fato de memória removido');
+  }catch(e){btn.disabled=false;}
+}
+async function addMemoryFact(){
+  const inp=document.getElementById('memInput');
+  const text=(inp.value||'').trim();
+  if(!text||!token)return;
+  try{
+    const r=await fetch(serverBase+'/api/memory/facts',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({fact:text,category:'manual',importance:2})
+    });
+    const d=await r.json();
+    if(d.status==='ok'||d.status==='exists'){inp.value='';loadMemoryFacts();addLog('Fato adicionado');}
+  }catch(e){}
+}
+
+// ── Widget Spotify ───────────────────────────────────────────────────────
+let _spPollInterval=null;
+function toggleSpotify(){
+  const w=document.getElementById('spotifyWidget');
+  const open=w.classList.toggle('open');
+  if(open){spRefreshNowPlaying();_spPollInterval=setInterval(spRefreshNowPlaying,10000);}
+  else{clearInterval(_spPollInterval);}
+}
+async function spRefreshNowPlaying(){
+  if(!token)return;
+  try{
+    const r=await fetch(serverBase+'/api/plugins/spotify/now-playing',{headers:{'Authorization':'Bearer '+token}});
+    const d=await r.json();
+    if(d.action==='current'&&d.track){
+      document.getElementById('spTrack').textContent=d.track+(d.is_playing?' ▶':'⏸');
+      document.getElementById('spArtist').textContent=d.artist||'';
+    } else if(d.action==='current'&&d.status==='nothing_playing'){
+      document.getElementById('spTrack').textContent='Nada tocando';
+      document.getElementById('spArtist').textContent='';
+    }
+  }catch(e){}
+}
+async function spCmd(cmd){
+  const inp=document.getElementById('spInput');
+  const text=(typeof cmd==='string'&&cmd.trim())?cmd.trim():'tocar';
+  if(inp&&text===inp.value.trim())inp.value='';
+  if(!token)return;
+  addLog('Spotify: '+text.substring(0,20));
+  try{
+    const r=await fetch(serverBase+'/api/plugins/spotify/command',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({command:text})
+    });
+    const d=await r.json();
+    if(d.status==='intent_classified'){
+      // Sem OAuth: redireciona para o chat como fallback
+      document.getElementById('msg').value=text;send();
+    } else if(d.track){
+      document.getElementById('spTrack').textContent=d.track+' ▶';
+      document.getElementById('spArtist').textContent=d.artist||'';
+      addLog('Tocando: '+d.track);
+    }
+  }catch(e){}
+}
+
+// Wiring dos botões flutuantes
+document.getElementById('memBtn').onclick=toggleMemory;
+document.getElementById('spBtn').onclick=toggleSpotify;
 
 // ── Auto-melhoria ──
 document.getElementById('engBtn').onclick=async function(){
