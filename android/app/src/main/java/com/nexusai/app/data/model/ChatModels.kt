@@ -48,3 +48,55 @@ data class PluginState(val name: String, val enabled: Boolean)
 
 // Modelo de UI (não serializado)
 data class ChatMessage(val id: String, val role: String, val content: String)
+
+// ── Memória de longo prazo ────────────────────────────────────────────────────
+data class MemoryFact(
+    val id: Int,
+    val fact: String,
+    val category: String,
+    val importance: Int,
+    @SerializedName("created_at") val createdAt: String?
+)
+data class MemoryFactRequest(val fact: String, val category: String = "geral", val importance: Int = 1)
+data class MemorySummary(
+    val total: Int,
+    @SerializedName("by_category") val byCategory: Map<String, Int>,
+    @SerializedName("top_facts") val topFacts: List<MemoryFact>
+)
+
+// ── Spotify ───────────────────────────────────────────────────────────────────
+data class SpotifyAuthUrl(
+    @SerializedName("auth_url") val authUrl: String,
+    val state: String
+)
+data class SpotifyCommandResult(
+    val action: String,
+    val status: String,
+    val track: String?,
+    val artist: String?,
+    val album: String?,
+    @SerializedName("is_playing") val isPlaying: Boolean?,
+    val volume: Int?,
+    val uri: String?,
+    val name: String?,
+    val message: String?,
+    val error: String?
+)
+data class SpotifyStatus(
+    val name: String,
+    val enabled: Boolean,
+    val authenticated: Boolean,
+    @SerializedName("oauth_configured") val oauthConfigured: Boolean,
+    val note: String
+)
+
+// ── Voz / TTS ─────────────────────────────────────────────────────────────────
+data class VoiceInfo(
+    val provider: String,
+    val available: Boolean,
+    val note: String,
+    val voice: String?
+)
+
+// ── Conversas (delete) ────────────────────────────────────────────────────────
+data class DeleteResult(val ok: Boolean, val message: String?)

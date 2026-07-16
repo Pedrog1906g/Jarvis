@@ -6,6 +6,7 @@ SpeechRecognition>=3.10  # STT (reconhecimento de voz)
 websocket-client>=1.6 # chat em tempo real com o backend
 requests>=2.31
 psutil>=5.9           # monitor de desempenho
+pygame>=2.5.0         # reprodução de áudio do TTS via API (openai/piper)
 pywin32>=306; sys_platform == 'win32'   # controles do Windows (opcional)
 pycaw>=0.6.0; sys_platform == 'win32'   # controle de volume (Windows)
 comtypes>=1.2.0; sys_platform == 'win32'

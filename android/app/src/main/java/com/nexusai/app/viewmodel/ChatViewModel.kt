@@ -8,6 +8,7 @@ import com.nexusai.app.data.model.ChatMessage
 import com.nexusai.app.data.repository.NexusRepository
 import com.nexusai.app.service.NexusController
 import com.nexusai.app.util.NexusWebSocket
+import com.nexusai.app.util.ReminderPush
 import com.nexusai.app.util.VoiceManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +33,12 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    /** Lembrete recebido via push WebSocket — consumido pela UI para exibir notificação. */
+    private val _reminderPush = MutableStateFlow<ReminderPush?>(null)
+    val reminderPush: StateFlow<ReminderPush?> = _reminderPush.asStateFlow()
+
+    fun consumeReminderPush() { _reminderPush.value = null }
 
     private var ws: NexusWebSocket? = null
     private var wsOpen = false
@@ -58,6 +65,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 onDone = { cid ->
                     if (cid > 0) _conversationId.value = cid
                     _isThinking.value = false
+                    streamingIndex = null
+                    pendingText = null
                     // Fala a resposta do assistente automaticamente.
                     _messages.value.lastOrNull()?.let {
                         if (it.role == "assistant") voice.speak(it.content)
@@ -67,9 +76,14 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     wsOpen = false
                     _error.value = e
                     _isThinking.value = false
-                    pendingText?.let { fallbackRest(it) }
+                    pendingText?.let { txt -> fallbackRest(txt) }
                 },
-                onOpen = { wsOpen = true }
+                onOpen = { wsOpen = true },
+                onReminder = { push ->
+                    // Lembrete entregue pelo servidor via push WebSocket
+                    _reminderPush.value = push
+                    voice.speak("Lembrete: ${push.title}${if (push.note.isNotBlank()) " — ${push.note}" else ""}")
+                }
             )
             ws?.connect()
         }

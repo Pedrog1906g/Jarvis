@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import com.nexusai.app.ui.screen.*
 import com.nexusai.app.ui.theme.*
 import com.nexusai.app.viewmodel.AuthViewModel
+import com.nexusai.app.viewmodel.MemoryViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,13 +29,14 @@ fun AppScaffold(authVm: AuthViewModel) {
                 Text("JARVIS", modifier = Modifier.padding(16.dp),
                     color = NexusPrimary, style = MaterialTheme.typography.titleLarge)
                 val items = listOf(
-                    "chat" to "Chat",
-                    "history" to "Histórico",
+                    "chat"      to "Chat",
+                    "history"   to "Histórico",
                     "reminders" to "Lembretes",
-                    "devices" to "Dispositivos",
-                    "controle" to "Controle",
-                    "auto" to "Auto-melhoria",
-                    "settings" to "Ajustes"
+                    "memory"    to "🧠 Memória",
+                    "devices"   to "Dispositivos",
+                    "controle"  to "Controle",
+                    "auto"      to "Auto-melhoria",
+                    "settings"  to "Ajustes"
                 )
                 items.forEach { (key, label) ->
                     NavigationDrawerItem(
@@ -63,13 +65,14 @@ fun AppScaffold(authVm: AuthViewModel) {
         ) { padding ->
             Box(Modifier.fillMaxSize().padding(padding)) {
                 when (screen) {
-                    "chat" -> ChatScreen()
-                    "history" -> HistoryScreen()
+                    "chat"      -> ChatScreen()
+                    "history"   -> HistoryScreen()
                     "reminders" -> RemindersScreen()
-                    "devices" -> DevicesScreen()
-                    "controle" -> ControlScreen()
-                    "auto" -> AutoImproveScreen()
-                    "settings" -> SettingsScreen(authVm)
+                    "memory"    -> MemoryScreen(viewModel = MemoryViewModel(androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application))
+                    "devices"   -> DevicesScreen()
+                    "controle"  -> ControlScreen()
+                    "auto"      -> AutoImproveScreen()
+                    "settings"  -> SettingsScreen(authVm)
                 }
             }
         }

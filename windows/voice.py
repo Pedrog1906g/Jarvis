@@ -1,12 +1,25 @@
-"""Voz no Windows: TTS (SAPI, voz masculina) + STT (reconhecimento de voz).
+"""Voz no Windows: TTS (SAPI via pyttsx3 / voz masculina) + STT (SpeechRecognition).
 
-As bibliotecas são importadas de forma preguiçosa para que o módulo possa ser
-compilado/importado mesmo onde elas não estejam instaladas.
+Novidades v1.1:
+  - speak_via_api(): usa o endpoint /api/voice/synthesize do backend quando o
+    servidor tem TTS_PROVIDER=openai ou piper configurado. Reproduz o áudio via
+    pygame (instalado como dependência opcional). Fallback automático para SAPI.
+  - voz masculina PT-BR com prioridade aumentada.
 """
+from __future__ import annotations
+import logging
+import os
+import re
+import sys
+import threading
+import time
+import traceback
+
+log = logging.getLogger("jarvis")
 
 
 def _load():
-    out = {}
+    out: dict = {}
     try:
         import pyttsx3
         out["tts"] = pyttsx3
@@ -17,22 +30,41 @@ def _load():
         out["sr"] = sr
     except Exception:
         out["sr"] = None
+    try:
+        import pygame
+        out["pygame"] = pygame
+    except Exception:
+        out["pygame"] = None
     return out
 
 
 class WindowsVoice:
-    def __init__(self):
+    def __init__(self, server_url: str = "", token: str = ""):
         self._libs = _load()
         self.engine = None
         self._listen_thread = None
         self._stop = None
-        self._voice_name = None
+        self._voice_name: str | None = None
+        self.server_url = server_url.rstrip("/")
+        self.token = token
+        self._tts_provider: str | None = None  # detectado via /api/plugins/voice/info
+
         if self._libs.get("tts"):
             try:
                 self.engine = self._libs["tts"].init()
                 self._apply_jarvis_voice()
             except Exception:
                 self.engine = None
+
+        # Inicializa pygame mixer (para reprodução de áudio da API)
+        pg = self._libs.get("pygame")
+        if pg:
+            try:
+                pg.mixer.init()
+            except Exception:
+                pass
+
+    # ── SAPI (voz local) ─────────────────────────────────────────────────────
 
     def _apply_jarvis_voice(self):
         try:
@@ -41,35 +73,29 @@ class WindowsVoice:
             male_keys = ["male", "homem", "ricardo", "daniel", "antonio",
                          "antônio", "gustavo", "felipe", "marcos", "bruno",
                          "rafael", "lucas", "diego", "pedro"]
-            # 1) voz masculina (preferencialmente PT-BR)
             for v in voices:
                 n = (v.name or "").lower()
                 if any(k in n for k in male_keys):
-                    picked = v
-                    break
-            # 2) qualquer voz em português
+                    picked = v; break
             if not picked:
                 for v in voices:
                     n = (v.name or "").lower()
                     if any(k in n for k in ["portug", "brazil", "brasil", "português"]):
-                        picked = v
-                        break
-            # 3) primeira disponível
+                        picked = v; break
             if not picked and voices:
                 picked = voices[0]
             if picked:
                 self.engine.setProperty("voice", picked.id)
                 self._voice_name = picked.name
-            self.engine.setProperty("rate", 150)   # tom mais grave/lento (estilo JARVIS)
+            self.engine.setProperty("rate", 150)
             self.engine.setProperty("volume", 1.0)
         except Exception:
             self._voice_name = None
 
-    def voice_name(self):
-        return getattr(self, "_voice_name", None)
+    def voice_name(self) -> str | None:
+        return self._voice_name
 
     def ensure_engine(self) -> bool:
-        """Tenta (re)criar o motor de voz se ele tiver sumido/travado."""
         if self.engine:
             return True
         try:
@@ -81,92 +107,138 @@ class WindowsVoice:
             self.engine = None
         return False
 
-    def speak(self, text: str):
-        import re, time, traceback
-        clean = " ".join(str(text).split())
-        if not clean:
+    def _sapi_speak(self, text: str):
+        if not text.strip():
             return
         if not self.engine and not self.ensure_engine():
-            return  # sem motor de voz disponível
+            return
         try:
-            parts = [p.strip() for p in re.split(r"(?<=[.!?…])\s+", clean) if p.strip()]
+            parts = [p.strip() for p in re.split(r"(?<=[.!?…])\s+", text) if p.strip()]
             if not parts:
-                parts = [clean]
+                parts = [text]
             for i, part in enumerate(parts):
                 self.engine.say(part)
                 self.engine.runAndWait()
                 if i < len(parts) - 1:
-                    time.sleep(0.14)  # pausa natural entre frases (mais humano)
-        except Exception as e:
-            # tenta reanimar o motor UMA vez antes de desistir (não falha calado)
+                    time.sleep(0.14)
+        except Exception:
             try:
                 self.engine = None
                 if self.ensure_engine() and self.engine:
-                    self.engine.say(clean)
+                    self.engine.say(text)
                     self.engine.runAndWait()
             except Exception:
-                try:
-                    import logging
-                    logging.getLogger("jarvis").warning("TTS falhou: %s", traceback.format_exc())
-                except Exception:
-                    pass
+                log.warning("TTS falhou: %s", traceback.format_exc())
 
-    def listen_once(self, timeout: int = 6, phrase_time: int = 8) -> str:
-        """Escuta uma frase (push-to-talk). Retorna o texto ou ''."""
+    # ── API TTS (servidor) ────────────────────────────────────────────────────
+
+    def fetch_tts_provider(self):
+        """Detecta o provedor TTS do servidor (openai / piper / android)."""
+        if not self.server_url or not self.token:
+            self._tts_provider = "android"
+            return
+        try:
+            import requests
+            r = requests.get(
+                self.server_url + "/api/plugins/voice/info",
+                headers={"Authorization": "Bearer " + self.token},
+                timeout=8,
+            )
+            if r.ok:
+                self._tts_provider = r.json().get("provider", "android")
+                log.info("TTS provider do servidor: %s", self._tts_provider)
+        except Exception:
+            self._tts_provider = "android"
+
+    def speak_via_api(self, text: str) -> bool:
+        """Sintetiza texto via /api/voice/synthesize e reproduz com pygame.
+        Retorna True se conseguiu reproduzir, False caso contrário (use SAPI como fallback)."""
+        if not self.server_url or not self.token:
+            return False
+        if self._tts_provider not in ("openai", "piper"):
+            return False
+        pg = self._libs.get("pygame")
+        if not pg:
+            return False
+        try:
+            import requests, io
+            r = requests.post(
+                self.server_url + "/api/voice/synthesize",
+                headers={"Authorization": "Bearer " + self.token,
+                         "Content-Type": "application/json"},
+                json={"text": text},
+                timeout=30,
+            )
+            if r.status_code == 204:
+                return False  # servidor sinalizou: usar TTS local
+            if not r.ok:
+                return False
+            audio_bytes = r.content
+            if len(audio_bytes) < 100:
+                return False
+            buf = io.BytesIO(audio_bytes)
+            pg.mixer.music.load(buf)
+            pg.mixer.music.play()
+            while pg.mixer.music.get_busy():
+                time.sleep(0.05)
+            return True
+        except Exception as e:
+            log.warning("speak_via_api falhou: %s", e)
+            return False
+
+    # ── Falar (método público) ────────────────────────────────────────────────
+
+    def speak(self, text: str):
+        clean = " ".join(str(text).split())
+        if not clean:
+            return
+        # Tenta API primeiro se o servidor tiver TTS configurado
+        if self.speak_via_api(clean):
+            return
+        self._sapi_speak(clean)
+
+    # ── STT ──────────────────────────────────────────────────────────────────
+
+    def listen_once(self, timeout: int = 5) -> str:
         sr = self._libs.get("sr")
         if not sr:
             return ""
-        r = sr.Recognizer()
         try:
-            with sr.Microphone() as src:
-                r.adjust_for_ambient_noise(src, 0.5)
-                audio = r.listen(src, timeout=timeout, phrase_time_limit=phrase_time)
-        except Exception:
-            return ""
-        try:
-            return r.recognize_google(audio, language="pt-BR")
+            recognizer = sr.Recognizer()
+            with sr.Microphone() as mic:
+                recognizer.adjust_for_ambient_noise(mic, duration=0.4)
+                audio = recognizer.listen(mic, timeout=timeout, phrase_time_limit=12)
+            return recognizer.recognize_google(audio, language="pt-BR")
         except Exception:
             return ""
 
-    def start_continuous(self, on_phrase):
-        """Escuta sempre ligado; chama on_phrase(texto) a cada frase reconhecida.
-        Retorna True se iniciou."""
+    def start_continuous(self, on_phrase: "callable[[str], None]") -> threading.Event:
+        """Inicia escuta contínua em thread daemon. Retorna Event de parada."""
         sr = self._libs.get("sr")
-        if not sr or self._listen_thread:
-            return False
-        import threading
-        r = sr.Recognizer()
-        self._stop = threading.Event()
+        if not sr:
+            return threading.Event()
+        stop = threading.Event()
+        self._stop = stop
 
-        def loop():
-            try:
-                with sr.Microphone() as src:
-                    r.adjust_for_ambient_noise(src, 0.5)
-                    while not self._stop.is_set():
-                        try:
-                            audio = r.listen(src, timeout=2, phrase_time_limit=9)
-                        except Exception:
-                            continue
-                        try:
-                            text = r.recognize_google(audio, language="pt-BR")
-                        except Exception:
-                            continue
-                        if text:
-                            try:
-                                on_phrase(text)
-                            except Exception:
-                                pass
-            except Exception:
-                pass
+        def _loop():
+            recognizer = sr.Recognizer()
+            while not stop.is_set():
+                try:
+                    with sr.Microphone() as mic:
+                        recognizer.adjust_for_ambient_noise(mic, duration=0.3)
+                        audio = recognizer.listen(mic, timeout=4, phrase_time_limit=14)
+                    text = recognizer.recognize_google(audio, language="pt-BR")
+                    if text:
+                        on_phrase(text)
+                except sr.WaitTimeoutError:
+                    continue
+                except Exception:
+                    time.sleep(0.5)
 
-        self._listen_thread = threading.Thread(target=loop, daemon=True)
-        self._listen_thread.start()
-        return True
+        threading.Thread(target=_loop, daemon=True).start()
+        return stop
 
     def stop_continuous(self):
-        if self._listen_thread:
-            try:
-                self._stop.set()
-            except Exception:
-                pass
-            self._listen_thread = None
+        if self._stop:
+            self._stop.set()
+            self._stop = None

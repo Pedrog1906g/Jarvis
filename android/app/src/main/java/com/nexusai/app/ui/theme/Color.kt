@@ -12,3 +12,9 @@ val NexusTextDim = Color(0xFF7E8BA3)
 val NexusUserBubble = Color(0xFF10303A)
 val NexusBotBubble = Color(0xFF111A2B)
 val NexusDanger = Color(0xFFFF5252)
+
+// Aliases convenientes usados em novas telas
+val NexusCyan   = NexusPrimary   // #00E5FF
+val NexusViolet = NexusAccent    // #7C4DFF
+val NexusGreen  = Color(0xFF00F0A0)
+val NexusGold   = Color(0xFFFFD15A)

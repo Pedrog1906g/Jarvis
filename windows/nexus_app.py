@@ -66,6 +66,7 @@ class Backend:
         self.on_text = None
         self.on_done = None
         self.on_status = None
+        self.on_reminder = None
 
     def login(self, server, username, passphrase):
         self.server = server.rstrip("/")
@@ -108,10 +109,15 @@ class Backend:
             m = json.loads(raw)
         except Exception:
             return
-        if m.get("type") == "delta" and self.on_text:
+        t = m.get("type")
+        if t == "delta" and self.on_text:
             self.on_text(m.get("content", ""))
-        elif m.get("type") == "done" and self.on_done:
+        elif t == "done" and self.on_done:
             self.on_done()
+        elif t == "reminder" and self.on_reminder:
+            self.on_reminder(m)  # {"type":"reminder","title":...,"note":...}
+        elif t == "error" and self.on_text:
+            self.on_text("[ERRO] " + m.get("message", ""))
 
     def _on_error(self, ws, e):
         log.warning("ws on_error: %s", e)
@@ -592,18 +598,48 @@ class App:
             log.warning("tray erro: %s", e)
 
     def check_for_update(self):
-        # AUTOATUALIZAÇÃO (notificação): verifica o lançamento mais novo no GitHub.
+        """Verifica atualizações via /api/system/info (backend) e, como fallback, GitHub."""
+        if not self.backend.token:
+            return
         try:
-            import urllib.request, json
-            url = "https://api.github.com/repos/Pedrog1906g/Jarvis/releases/latest"
-            req = urllib.request.Request(url, headers={"User-Agent": "NEXUS-JARVIS"})
-            with urllib.request.urlopen(req, timeout=10) as r:
-                data = json.loads(r.read().decode())
+            r = requests.get(
+                self.backend.server + "/api/system/info",
+                headers={"Authorization": "Bearer " + self.backend.token},
+                timeout=10,
+            )
+            if r.status_code == 200:
+                data = r.json()
+                if data.get("update_available"):
+                    # Busca link de download do EXE no GitHub Releases
+                    link = ""
+                    try:
+                        rel = requests.get(
+                            "https://api.github.com/repos/Pedrog1906g/Jarvis/releases/latest",
+                            headers={"User-Agent": "NEXUS-JARVIS"},
+                            timeout=8,
+                        ).json()
+                        for a in rel.get("assets", []):
+                            if a.get("name", "").endswith(".exe"):
+                                link = a.get("browser_download_url", "")
+                                break
+                    except Exception:
+                        pass
+                    msg = ("Nova versão disponível! " +
+                           ("Baixe em: " + link if link else "Acesse o GitHub para o novo EXE."))
+                    self._append_bot_chunk(msg)
+                    self._bot_finish()
+                return
+        except Exception:
+            pass
+        # Fallback: verifica direto no GitHub
+        try:
+            data = requests.get(
+                "https://api.github.com/repos/Pedrog1906g/Jarvis/releases/latest",
+                headers={"User-Agent": "NEXUS-JARVIS"}, timeout=10,
+            ).json()
             tag = data.get("tag_name", "")
-            link = ""
-            for a in data.get("assets", []):
-                if a.get("name") == "JARVIS.exe":
-                    link = a.get("browser_download_url", "")
+            link = next((a["browser_download_url"] for a in data.get("assets", [])
+                         if a.get("name", "").endswith(".exe")), "")
             m = re.search(r"(\d+)", tag)
             latest = int(m.group(1)) if m else 0
             seen = self.cfg.get("last_update_seen", 0)
