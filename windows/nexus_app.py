@@ -32,7 +32,7 @@ from voice import WindowsVoice
 APP_NAME = "JARVIS"
 VERSION = "1.0.0"
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), "jarvis_windows_config.json")
-DEFAULT_SERVER = "https://nexus-api-2o1y.onrender.com"
+DEFAULT_SERVER = "https://161dee62-a84c-408c-ba3c-2b669539214a-00-26filiy1lkinq.kirk.replit.dev"
 LOG_PATH = os.path.join(os.path.expanduser("~"), "jarvis_windows.log")
 
 logging.basicConfig(filename=LOG_PATH, level=logging.INFO,

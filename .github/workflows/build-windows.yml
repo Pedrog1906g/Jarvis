@@ -1,6 +1,5 @@
-name: Build NEXUS AI Windows EXE
+name: Build JARVIS Windows EXE
 
-# Gera o JARVIS para Windows como um .exe pronto (baixar e clicar, sem instalar).
 on:
   push:
     branches: [main, master]
@@ -27,7 +26,7 @@ jobs:
           pip install -r windows/requirements.txt
           pip install pyinstaller
 
-      - name: Inject Spotify keys (só no build, não vai para o repo)
+      - name: Inject Spotify keys
         shell: bash
         run: |
           if [ -n "${{ secrets.SPOTIFY_CLIENT_ID }}" ]; then
@@ -35,7 +34,7 @@ jobs:
             sed -i "s/__SPOTIFY_CLIENT_SECRET__/${{ secrets.SPOTIFY_CLIENT_SECRET }}/" windows/spotify_auth.py
           fi
 
-      - name: Build executable (onefile, sem console)
+      - name: Build EXE
         working-directory: windows
         run: |
           pyinstaller --noconsole --onefile --name JARVIS `
@@ -46,15 +45,28 @@ jobs:
             --hidden-import=comtypes `
             --hidden-import=pystray `
             --hidden-import=spotify_auth `
+            --hidden-import=commands `
+            --hidden-import=voice `
             --collect-all pyaudio `
             --collect-all pycaw `
             nexus_app.py
 
-      - name: Publish Windows release
+      - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: nexus-pc-${{ github.run_number }}
-          name: NEXUS AI (Windows)
+          name: "JARVIS Windows v2 #${{ github.run_number }}"
+          body: |
+            ## JARVIS para Windows
+
+            ✅ App de bandeja — fica minimizado e responde com a wake word "Jarvis"
+            ✅ Voz masculina SAPI (PT-BR) + integração com TTS do servidor
+            ✅ Conecta ao backend NEXUS na nuvem automaticamente
+            ✅ Comandos locais: abrir programas, capturar tela, clima, volume
+            ✅ Chat por voz e texto em streaming
+
+            **Como usar:** Baixe o JARVIS.exe, execute (pode pedir permissão do Windows),
+            configure o servidor se necessário (padrão: backend na nuvem).
           files: windows/dist/JARVIS.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

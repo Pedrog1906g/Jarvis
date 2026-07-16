@@ -39,7 +39,7 @@ has_google = bool(GOOGLE_API_KEY)
 DEMO_MODE = not (has_groq or has_openai or has_anthropic or has_google)
 
 # --- Segurança ---
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
+JWT_SECRET = os.getenv("JWT_SECRET") or os.getenv("SESSION_SECRET", "nexus-jarvis-secret-2024")
 JWT_ALGORITHM = "HS256"
 OWNER_PASSPHRASE = os.getenv("OWNER_PASSPHRASE", "nexus")
 TOKEN_EXPIRE_HOURS = 24 * 30  # 30 dias

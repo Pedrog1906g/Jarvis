@@ -3,53 +3,75 @@ on:
   push:
     branches: [main, master]
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Stamp versionCode (igual ao número da release)
+
+      - name: Stamp versionCode
         run: |
           sed -i "s/versionCode [0-9]*/versionCode ${{ github.run_number }}/" android/app/build.gradle
           grep versionCode android/app/build.gradle
-      - name: Inject Spotify keys (só no build, não vai para o repo)
+
+      - name: Inject Spotify keys
         run: |
           if [ -n "${{ secrets.SPOTIFY_CLIENT_ID }}" ]; then
             sed -i "s/__SPOTIFY_CLIENT_ID__/${{ secrets.SPOTIFY_CLIENT_ID }}/" android/gradle.properties
             sed -i "s/__SPOTIFY_CLIENT_SECRET__/${{ secrets.SPOTIFY_CLIENT_SECRET }}/" android/gradle.properties
           fi
+
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+
       - name: Install SDK packages & accept licenses
         run: |
           yes | sdkmanager --licenses
           sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
       - name: Setup Gradle 8.9
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: 8.9
-      - name: Build debug APK
+
+      - name: Build RELEASE APK (sem banner "Teste")
         working-directory: android
-        run: gradle assembleDebug --no-daemon
+        run: gradle assembleRelease --no-daemon
+
       - name: Upload APK (artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: nexus-ai-debug-apk
-          path: android/app/build/outputs/apk/debug/*.apk
-      - name: Release APK
+          name: JARVIS-release-apk
+          path: android/app/build/outputs/apk/release/*.apk
+
+      - name: Publish Release
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: nexus-ai-${{ github.run_number }}
-          name: NEXUS AI APK #${{ github.run_number }}
-          files: android/app/build/outputs/apk/debug/*.apk
+          name: "JARVIS Android v2 #${{ github.run_number }}"
+          body: |
+            ## JARVIS Android — Release Build
+
+            ✅ APK de release (sem banner "Teste")
+            ✅ Conecta ao backend NEXUS na nuvem automaticamente
+            ✅ Chat por voz e texto com JARVIS
+            ✅ Lembretes com push em tempo real
+            ✅ Memória de longo prazo
+            ✅ Controle Spotify (requer configuração OAuth2)
+
+            **Instalação:** Baixe o APK, habilite "Fontes desconhecidas" em Ajustes > Segurança e instale.
+          files: android/app/build/outputs/apk/release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

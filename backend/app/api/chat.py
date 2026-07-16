@@ -8,6 +8,7 @@ from app.db import models
 from app.core.security import get_current_user, ws_user
 from app.core.llm import stream_chat, complete_chat, is_available
 from app.core.memory import build_messages, extract_facts, maybe_compress_history
+from app.core import web_search as _ws
 from app.core.firebase import mirror_user, mirror_message
 from app.core.ws_manager import manager
 from app.services import obsidian as _obs
@@ -44,6 +45,15 @@ def chat(req: ChatRequest, db: Session = Depends(get_db),
     _vctx = _obs.chat_context_message()
     if _vctx:
         messages.insert(1, _vctx)
+    # Busca na internet (endpoint REST síncrono)
+    if _ws.needs_web_search(req.content):
+        try:
+            query = _ws.extract_query(req.content)
+            results = _ws.search(query)
+            if results:
+                messages.insert(-1, {"role": "system", "content": _ws.format_for_llm(query, results)})
+        except Exception:
+            pass
     reply = "".join(stream_chat(messages))
     db.add(models.Message(conversation_id=conv.id, role="assistant", content=reply))
     db.commit()
@@ -199,6 +209,19 @@ async def ws_chat(websocket: WebSocket, token: str = ""):
             _vctx = _obs.chat_context_message()
             if _vctx:
                 messages.insert(1, _vctx)
+
+            # Busca na internet quando o usuário pede informações em tempo real
+            if _ws.needs_web_search(content):
+                try:
+                    import asyncio
+                    query = _ws.extract_query(content)
+                    results = await asyncio.to_thread(_ws.search, query)
+                    if results:
+                        ctx = _ws.format_for_llm(query, results)
+                        messages.insert(-1, {"role": "system", "content": ctx})
+                except Exception:
+                    pass
+
             await websocket.send_json({"type": "start", "conversation_id": conv.id})
             full = []
             for delta in stream_chat(messages):

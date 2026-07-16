@@ -12,7 +12,7 @@ android {
         minSdk 26
         targetSdk 34
         versionCode 5
-        versionName "1.0.0"
+        versionName "2.0.0"
 
         // Chaves do Spotify (lidas do gradle.properties / injetadas no build).
         def spotifyCid = project.findProperty('SPOTIFY_CLIENT_ID') ?: ''
@@ -29,11 +29,23 @@ android {
             keyPassword "android"
             storeType "PKCS12"
         }
+        release {
+            // Usa o mesmo keystore para builds pessoais — remove o banner "Teste"
+            // sem precisar de keystore externo. Para distribuição na Play Store,
+            // substitua por um keystore de produção via GitHub Secrets.
+            storeFile file("../debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+            storeType "PKCS12"
+        }
     }
 
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
+            debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
