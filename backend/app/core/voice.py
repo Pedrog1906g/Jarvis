@@ -29,13 +29,36 @@ def transcribe_audio(audio_bytes: bytes, filename: str = "audio.webm") -> str:
 
 
 def synthesize_speech(text: str) -> Optional[bytes]:
-    """TTS. Se TTS_PROVIDER='android', o app cuida da fala (retorna None)."""
+    """TTS. Retorna bytes de áudio (mp3) ou None.
+
+    Provedores suportados:
+      - android (padrão): o app Android cuida da síntese de voz — o backend
+        retorna None (204 No Content) e o app usa o TTS nativo do dispositivo.
+      - openai: usa a API TTS da OpenAI (tts-1, voz masculina 'echo').
+        Requer OPENAI_TTS_API_KEY no .env.
+      - piper: provedor offline ainda não integrado neste servidor. Configure
+        TTS_PROVIDER=openai para obter TTS real na web.
+    """
     if TTS_PROVIDER == "android":
+        # Comportamento esperado: o app Android usa TTS nativo (offline, PT-BR).
+        # O HUD web usa a Web Speech API do próprio navegador (sem chamada ao backend).
         return None
     if TTS_PROVIDER == "openai" and OPENAI_TTS_API_KEY:
         from openai import OpenAI
         c = OpenAI(api_key=OPENAI_TTS_API_KEY)
-        resp = c.audio.speech.create(model="tts-1", voice="nova", input=text)
+        # Voz 'echo' é masculina e natural em PT-BR (melhor opção disponível na API).
+        resp = c.audio.speech.create(model="tts-1", voice="echo", input=text)
         return resp.content
-    # Piper ou outros: implementar depois. Por ora, None.
+    if TTS_PROVIDER == "piper":
+        # Piper é um TTS offline de alta qualidade. Para ativá-lo:
+        # 1. Instale piper-tts no sistema (pip install piper-tts ou binário).
+        # 2. Defina PIPER_MODEL_PATH no .env apontando para o modelo .onnx PT-BR.
+        # 3. O backend chamará piper via subprocess e retornará o audio/wav.
+        # Por ora, retorna None para não quebrar o fluxo.
+        import logging
+        logging.getLogger("nexus.voice").warning(
+            "TTS_PROVIDER=piper configurado mas piper não está integrado neste servidor. "
+            "Configure TTS_PROVIDER=openai com OPENAI_TTS_API_KEY para TTS real via web."
+        )
+        return None
     return None

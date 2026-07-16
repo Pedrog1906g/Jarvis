@@ -12,6 +12,21 @@ router = APIRouter(prefix="/api/system", tags=["system"])
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
+def _check_update_available() -> bool:
+    """Verifica se há uma versão mais recente comparando APP_VERSION com o
+    arquivo VERSION na raiz do repositório (atualizado pelo agente a cada deploy).
+    Retorna True somente quando a versão no arquivo difere da versão em execução."""
+    try:
+        version_file = os.path.join(ROOT, "..", "VERSION")
+        if not os.path.isfile(version_file):
+            return False
+        with open(version_file, encoding="utf-8") as f:
+            file_version = f.read().strip()
+        return file_version != APP_VERSION
+    except Exception:
+        return False
+
+
 @router.get("/info")
 def info(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     changelog = ""
@@ -27,7 +42,7 @@ def info(db: Session = Depends(get_db), user: models.User = Depends(get_current_
         "demo_mode": DEMO_MODE,
         "user": {"id": user.id, "username": user.username, "display_name": user.display_name},
         "changelog": changelog,
-        "update_available": False,  # o agente atualiza a versão conforme evolução
+        "update_available": _check_update_available(),
     }
 
 

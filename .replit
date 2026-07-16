@@ -4,3 +4,27 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Backend NEXUS AI"
+
+[[workflows.workflow]]
+name = "Backend NEXUS AI"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && pip install -r requirements.txt -q && uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload"
+
+[[ports]]
+localPort = 5000
+externalPort = 80

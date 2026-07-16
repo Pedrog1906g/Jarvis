@@ -599,20 +599,59 @@ document.getElementById('server').value = "https://nexus-api-2o1y.onrender.com";
   }
 })();
 
-// ── Métricas dinâmicas (simuladas) ──
-function updateMetrics(){
-  const cpu=(18+Math.random()*22).toFixed(1);
-  const mem=(38+Math.random()*14).toFixed(0);
-  const lat=(22+Math.random()*30).toFixed(0);
-  document.getElementById('cpuVal').textContent=cpu+'%';
-  document.getElementById('memVal').textContent=mem+'%';
-  document.getElementById('latVal').textContent=lat+'ms';
-  document.getElementById('cpuBar').style.width=cpu+'%';
-  document.getElementById('memBar').style.width=mem+'%';
-  document.getElementById('latBar').style.width=Math.min(lat/2,100)+'%';
+// ── Métricas dinâmicas (reais — /api/metrics/system + /api/metrics/ping) ──
+async function updateMetrics(){
+  // Sem token ainda (antes do login): não chama a API.
+  if(!token || !serverBase) return;
+
+  // Mede latência real via /api/metrics/ping (RTT round-trip)
+  let lat = '--';
+  try{
+    const t0 = performance.now();
+    await fetch(serverBase+'/api/metrics/ping');
+    lat = Math.round(performance.now()-t0);
+  }catch(e){}
+
+  // Métricas do servidor via /api/metrics/system
+  try{
+    const r = await fetch(serverBase+'/api/metrics/system',{
+      headers:{'Authorization':'Bearer '+token}
+    });
+    if(r.ok){
+      const d = await r.json();
+      const cpu = (d.cpu_percent||0).toFixed(1);
+      const mem = (d.memory_percent||0).toFixed(0);
+      const latStr = (lat==='--')?'--':lat;
+      document.getElementById('cpuVal').textContent=cpu+'%';
+      document.getElementById('memVal').textContent=mem+'%';
+      document.getElementById('latVal').textContent=latStr+'ms';
+      document.getElementById('cpuBar').style.width=Math.min(cpu,100)+'%';
+      document.getElementById('memBar').style.width=Math.min(mem,100)+'%';
+      document.getElementById('latBar').style.width=Math.min((lat==='--'?0:lat)/2,100)+'%';
+      // Indicador de qualidade das métricas (real vs estimado)
+      if(!d.real){
+        document.getElementById('cpuVal').title='Estimado (instale psutil no servidor para métricas reais)';
+        document.getElementById('memVal').title='Estimado';
+      } else {
+        document.getElementById('cpuVal').title='CPU real do servidor';
+        document.getElementById('memVal').title='RAM real do servidor';
+      }
+      return;
+    }
+  }catch(e){}
+
+  // Fallback: exibe '--' se a API falhar (token expirado, etc.)
+  document.getElementById('cpuVal').textContent='--';
+  document.getElementById('memVal').textContent='--';
+  document.getElementById('latVal').textContent=(lat==='--'?'--':lat+'ms');
 }
-setInterval(updateMetrics,2800);
-updateMetrics();
+// Só começa a buscar métricas após o login (token é definido em doLogin).
+// O intervalo é iniciado lá também; aqui apenas definimos a função.
+let _metricsInterval = null;
+function startMetricsPolling(){
+  updateMetrics();
+  if(!_metricsInterval) _metricsInterval = setInterval(updateMetrics, 5000);
+}
 
 // ── Log de atividade ──
 function addLog(msg){
@@ -683,6 +722,7 @@ async function doLogin(){
     document.getElementById('engBtn').style.display='block';
     setupVoices();
     connectWs();
+    startMetricsPolling();
     document.getElementById('mic').classList.add('hint');
     appendSys('Diga "Jarvis" seguido do seu comando, ou use o microfone 🎙 para ativar a escuta contínua.');
     addLog('Login OK — token recebido');
