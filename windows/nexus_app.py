@@ -157,6 +157,7 @@ class App:
         self.backend.on_text = self._bot_chunk
         self.backend.on_done = self._bot_finish
         self.backend.on_status = self._set_status
+        self.backend.on_reminder = self._on_reminder
         log.info("voz selecionada: %s", self.voice.voice_name())
         self._auto_connect()
 
@@ -220,9 +221,10 @@ class App:
                   activebackground="#103a47",
                   font=("Segoe UI", 10, "bold")).pack(side=tk.LEFT, padx=4)
 
-        self.status = tk.Label(self.root, text="Iniciando...", bg="#02040a",
-                               fg="#5fe0ff", font=("Segoe UI", 9), anchor="w")
-        self.status.pack(fill=tk.X, padx=14, pady=(0, 8))
+        self.status = tk.Label(self.root, text="  Iniciando NEXUS...", bg="#020c14",
+                               fg="#00e5ff", font=("Courier New", 9), anchor="w",
+                               relief="flat", padx=6, pady=4)
+        self.status.pack(fill=tk.X, padx=0, pady=(0, 8))
 
         self._draw_bg()
         self._pump_tts()  # inicia a fila de fala na thread principal
@@ -498,6 +500,55 @@ class App:
         self._append_bot_chunk("Às ordens. Diga seu comando.")
         self._bot_finish()
 
+    def _on_reminder(self, m):
+        """Recebeu um lembrete via WebSocket — mostra popup e fala."""
+        title = m.get("title", "Lembrete")
+        note = m.get("note", "")
+        self.root.after(0, self._show_reminder_popup, title, note)
+        self._speak("Lembrete: " + title + (". " + note if note else "."))
+
+    def _show_reminder_popup(self, title, note):
+        win = tk.Toplevel(self.root)
+        win.title("🔔 JARVIS — Lembrete")
+        win.geometry("380x160")
+        win.configure(bg="#02040a")
+        win.attributes("-topmost", True)
+        win.grab_set()
+
+        # faixa topo
+        top = tk.Frame(win, bg="#003333", height=4)
+        top.pack(fill=tk.X)
+
+        tk.Label(win, text="🔔  L E M B R E T E", bg="#02040a", fg="#00e5ff",
+                 font=("Segoe UI", 13, "bold")).pack(pady=(14, 4))
+        tk.Label(win, text=title, bg="#02040a", fg="#ffffff",
+                 font=("Segoe UI", 11)).pack()
+        if note:
+            tk.Label(win, text=note, bg="#02040a", fg="#8899aa",
+                     font=("Segoe UI", 9), wraplength=340).pack(pady=(2, 0))
+
+        tk.Button(win, text="OK — Entendido", bg="#003040", fg="#00e5ff",
+                  font=("Segoe UI", 9, "bold"), relief="flat",
+                  command=win.destroy).pack(pady=12)
+        win.after(15000, lambda: (win.destroy() if win.winfo_exists() else None))
+
+    def _refresh_metrics(self):
+        """Atualiza barra de status com CPU/RAM/hora a cada 5 s."""
+        try:
+            import psutil, datetime
+            cpu = psutil.cpu_percent(interval=None)
+            mem = psutil.virtual_memory().percent
+            now = datetime.datetime.now().strftime("%H:%M")
+            conn = "● ONLINE" if self.backend.token else "○ OFFLINE"
+            self.status.configure(
+                text=f"  {conn}   CPU {cpu:.0f}%   RAM {mem:.0f}%   {now}")
+        except Exception:
+            pass
+        try:
+            self.root.after(5000, self._refresh_metrics)
+        except Exception:
+            pass
+
     def _handle_volume(self, text):
         m = re.search(r"(\d+)\s*%", text)
         if m:
@@ -521,6 +572,8 @@ class App:
             self._set_status(False)
             self._bot_chunk("Sem conexão. Abra ⚙ Config e ajuste servidor/login.")
             self._bot_finish()
+        # Métricas de sistema — refresh a cada 5 s
+        self.root.after(2000, self._refresh_metrics)
 
     def _open_settings(self):
         win = tk.Toplevel(self.root)

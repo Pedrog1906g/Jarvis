@@ -215,6 +215,10 @@ async def ws_chat(websocket: WebSocket, token: str = ""):
                 try:
                     import asyncio
                     query = _ws.extract_query(content)
+                    await websocket.send_json({
+                        "type": "searching",
+                        "message": f"🔍 Pesquisando na internet: \"{query}\"…"
+                    })
                     results = await asyncio.to_thread(_ws.search, query)
                     if results:
                         ctx = _ws.format_for_llm(query, results)

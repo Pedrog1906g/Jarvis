@@ -718,7 +718,7 @@
       <input class="login-field" id="server" placeholder="Servidor (URL do backend)" />
       <input class="login-field" id="userInp" placeholder="Usuário" value="owner" />
       <input class="login-field" id="passInp" placeholder="Frase de acesso" type="password" value="nexus" />
-      <button class="login-btn" onclick="doLogin()">INICIALIZAR SISTEMA</button>
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">INICIALIZAR SISTEMA</button>
       <div class="login-err" id="loginErr"></div>
       <div class="login-hint">Servidor padrão: endereço desta página. Deixe como está se estiver acessando pelo PC ou celular conectado ao NEXUS.</div>
     </div>
@@ -861,7 +861,15 @@ function setCoreState(state){
 }
 
 // ── Login ──
+// Enter nos campos de login
+['server','userInp','passInp'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doLogin();}});
+});
+
 async function doLogin(){
+  const btn=document.getElementById('loginBtn');
+  if(btn){btn.disabled=true;btn.textContent='INICIANDO…';}
   serverBase=document.getElementById('server').value.replace(/\/$/,'');
   const u=document.getElementById('userInp').value;
   const p=document.getElementById('passInp').value;
@@ -871,7 +879,7 @@ async function doLogin(){
     const r=await fetch(serverBase+'/api/auth/login',{method:'POST',
       headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,passphrase:p})});
     const d=await r.json();
-    if(!r.ok){errEl.textContent=d.detail||'Falha no login';return;}
+    if(!r.ok){errEl.textContent=d.detail||'Falha no login';if(btn){btn.disabled=false;btn.textContent='INICIALIZAR SISTEMA';}return;}
     token=d.access_token;
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('chatPanel').style.display='flex';
@@ -901,7 +909,7 @@ async function doLogin(){
     document.getElementById('mic').classList.add('hint');
     appendSys('Diga "Jarvis" seguido do seu comando, ou use o microfone 🎙 para ativar a escuta contínua.');
     addLog('Login OK — token recebido');
-  }catch(e){errEl.textContent='Erro de conexão: '+e.message;}
+  }catch(e){errEl.textContent='Erro de conexão: '+e.message;if(btn){btn.disabled=false;btn.textContent='INICIALIZAR SISTEMA';}}
 }
 
 // ── WebSocket ──
@@ -915,6 +923,7 @@ function connectWs(){
     try{
       const m=JSON.parse(ev.data);
       if(m.type==='delta') appendBot(m.content);
+      else if(m.type==='searching'){appendSys(m.message);addLog(m.message);}
       else if(m.type==='done'){convId=m.conversation_id;finalizeBot();speakIfOn(lastBot);}
       else if(m.type==='error') appendSys(m.message);
       else if(m.type==='reminder') showReminderBanner(m);
