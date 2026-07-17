@@ -9,23 +9,88 @@ import urllib.parse
 
 # Mapa simples nome -> comando/URL. Expanda à vontade.
 KNOWN_APPS = {
+    # Navegadores
     "chrome": "chrome",
     "google chrome": "chrome",
     "edge": "msedge",
+    "microsoft edge": "msedge",
     "firefox": "firefox",
+    "brave": "brave",
+    "opera": "opera",
+
+    # Editores de texto / notas
     "notepad": "notepad",
     "bloco de notas": "notepad",
+    "notepad++": "notepad++",
+    "wordpad": "wordpad",
+    "word": "winword",
+    "microsoft word": "winword",
+    "excel": "excel",
+    "powerpoint": "powerpnt",
+    "outlook": "outlook",
+    "onenote": "onenote",
+    "visual studio code": "code",
+    "vscode": "code",
+    "vs code": "code",
+    "sublime": "subl",
+
+    # Sistema
     "calculadora": "calc",
     "calculator": "calc",
     "explorador": "explorer",
+    "explorador de arquivos": "explorer",
     "explorer": "explorer",
-    "cmd": "cmd",
+    "arquivos": "explorer",
+    "gerenciador de tarefas": "taskmgr",
+    "task manager": "taskmgr",
+    "painel de controle": "control",
+    "configurações": "ms-settings:",
     "prompt": "cmd",
+    "cmd": "cmd",
+    "terminal": "wt",
+    "powershell": "powershell",
+    "registro": "regedit",
+    "pintura": "mspaint",
+    "paint": "mspaint",
+    "snipping tool": "snippingtool",
+
+    # Comunicação
+    "whatsapp": "whatsapp",
+    "discord": "discord",
+    "telegram": "telegram",
+    "slack": "slack",
+    "teams": "teams",
+    "zoom": "zoom",
+    "skype": "skype",
+
+    # Mídia
     "spotify": "spotify",
+    "vlc": "vlc",
+    "media player": "wmplayer",
+    "fotos": "ms-photos:",
+    "camera": "microsoft.windows.camera:",
+
+    # Web (abre no navegador)
     "youtube": "https://youtube.com",
+    "gmail": "https://mail.google.com",
+    "google": "https://google.com",
+    "github": "https://github.com",
+    "netflix": "https://netflix.com",
+    "instagram": "https://instagram.com",
+    "twitter": "https://twitter.com",
+    "x": "https://x.com",
+    "linkedin": "https://linkedin.com",
+    "reddit": "https://reddit.com",
+    "twitch": "https://twitch.tv",
+    "chat gpt": "https://chatgpt.com",
+    "chatgpt": "https://chatgpt.com",
+
+    # Aliases PT-BR
     "música": "spotify",
     "musica": "spotify",
-    "arquivos": "explorer",
+    "navegador": "msedge",
+    "email": "outlook",
+    "e-mail": "outlook",
 }
 
 

@@ -8,9 +8,13 @@ import httpx
 _NEEDS_SEARCH_RE = re.compile(
     r'\b(pesquise|busque|google|procure|encontre|pesquisar|buscar|me diz|me conte|me fala|'
     r'o que é|quem é|qual é|quando foi|quando é|onde fica|onde é|quantos|quanto custa|'
-    r'como funciona|o que aconteceu|notícias|novidades|preço|cotação|temperatura|'
-    r'clima hoje|previsão|câmbio|dólar|bitcoin|cripto|resultado|placar|'
-    r'who is|what is|when is|where is|how much|latest|news|search)\b',
+    r'como funciona|como se faz|o que aconteceu|notícias|novidades|últimas notícias|'
+    r'preço|cotação|temperatura|clima hoje|clima em|previsão do tempo|câmbio|'
+    r'dólar|euro|bitcoin|ethereum|cripto|criptomoeda|resultado|placar|score|'
+    r'quem ganhou|quem venceu|última hora|acontecendo|lançamento|estreia|'
+    r'quem é o presidente|quem é o dono|qual a capital|qual a população|'
+    r'who is|what is|when is|where is|how much|how many|latest|news|search|'
+    r'tell me about|explain|define|definition|meaning|translate)\b',
     re.IGNORECASE
 )
 

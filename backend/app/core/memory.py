@@ -122,6 +122,19 @@ def build_messages(db: Session, owner_id: int, conversation_id: int, user_text: 
 
     system = JARVIS_SYSTEM_PROMPT
 
+    # Contexto temporal — JARVIS sabe o dia/hora/fuso atual
+    import datetime
+    _now = datetime.datetime.now()
+    _weekdays_pt = ["segunda-feira", "terça-feira", "quarta-feira",
+                    "quinta-feira", "sexta-feira", "sábado", "domingo"]
+    _weekday = _weekdays_pt[_now.weekday()]
+    system += (
+        f"\n\nCONTEXTO TEMPORAL (atualizado a cada mensagem):\n"
+        f"Data: {_now.strftime('%d/%m/%Y')} ({_weekday}) | "
+        f"Hora: {_now.strftime('%H:%M')} (UTC) | "
+        f"Use para saudações e respostas sobre data/hora."
+    )
+
     # Injeta memória de longo prazo (fatos)
     if facts:
         facts_block = "\n".join(f"- {f}" for f in facts)
