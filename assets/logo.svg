@@ -1,84 +1,97 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="NEXUS AI - Cérebro cibernético em falha">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 520" width="360" height="520" role="img" aria-label="NEXUS AI">
+
   <defs>
-    <radialGradient id="bg" cx="50%" cy="44%" r="62%">
-      <stop offset="0%" stop-color="#062033"/>
-      <stop offset="100%" stop-color="#01060c"/>
-    </radialGradient>
-    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#a8f6ff"/>
-      <stop offset="50%" stop-color="#00e5ff"/>
-      <stop offset="100%" stop-color="#0a7cff"/>
+    <linearGradient id="brainFill" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#13283b"/>
+      <stop offset="55%" stop-color="#0c1827"/>
+      <stop offset="100%" stop-color="#08111c"/>
     </linearGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="2.6" result="b"/>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#cfe8f5"/>
+      <stop offset="35%" stop-color="#5b7c8e"/>
+      <stop offset="60%" stop-color="#9fb9c6"/>
+      <stop offset="100%" stop-color="#3a4d59"/>
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f2feff"/>
+      <stop offset="30%" stop-color="#7df9ff"/>
+      <stop offset="70%" stop-color="#00aef0"/>
+      <stop offset="100%" stop-color="#063a55" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="trace" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0a7cff"/>
+      <stop offset="50%" stop-color="#00aef0"/>
+      <stop offset="100%" stop-color="#2dd4ff"/>
+    </linearGradient>
+    <radialGradient id="spark" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#aef6ff"/>
+      <stop offset="100%" stop-color="#00aef0" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
+    <filter id="soft" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="2.2"/>
+    </filter>
+    <clipPath id="brainClip"><path d="M 120.0 26.0 C 126.0 26.0 132.7 26.7 138.0 28.0 C 143.3 29.3 147.3 32.7 152.0 34.0 C 156.7 35.3 161.0 33.3 166.0 36.0 C 171.0 38.7 177.3 44.7 182.0 50.0 C 186.7 55.3 191.3 61.3 194.0 68.0 C 196.7 74.7 197.7 82.7 198.0 90.0 C 198.3 97.3 197.7 105.0 196.0 112.0 C 194.3 119.0 189.0 125.7 188.0 132.0 C 187.0 138.3 192.0 144.0 190.0 150.0 C 188.0 156.0 182.7 163.0 176.0 168.0 C 169.3 173.0 158.3 177.0 150.0 180.0 C 141.7 183.0 131.0 184.7 126.0 186.0 C 121.0 187.3 122.0 188.0 120.0 188.0 C 118.0 188.0 119.0 187.3 114.0 186.0 C 109.0 184.7 98.3 183.0 90.0 180.0 C 81.7 177.0 70.7 173.0 64.0 168.0 C 57.3 163.0 52.0 156.0 50.0 150.0 C 48.0 144.0 53.0 138.3 52.0 132.0 C 51.0 125.7 45.7 119.0 44.0 112.0 C 42.3 105.0 41.7 97.3 42.0 90.0 C 42.3 82.7 43.3 74.7 46.0 68.0 C 48.7 61.3 53.3 55.3 58.0 50.0 C 62.7 44.7 69.0 38.7 74.0 36.0 C 79.0 33.3 83.3 35.3 88.0 34.0 C 92.7 32.7 96.7 29.3 102.0 28.0 C 107.3 26.7 114.0 26.0 120.0 26.0 Z"/></clipPath>
   </defs>
-
-  <rect width="240" height="240" rx="40" fill="url(#bg)"/>
-
-  <!-- anel externo -->
-  <g filter="url(#glow)" fill="none" stroke="url(#neon)">
-    <circle cx="120" cy="120" r="100" stroke-width="2.5" opacity=".55"/>
-    <circle cx="120" cy="120" r="88" stroke-width="1.5" stroke-dasharray="2 8" opacity=".7"/>
-  </g>
-
-  <!-- parafusos fixos no anel -->
-  <g fill="#08283b" stroke="#00e5ff" stroke-width="1.4">
-    <g transform="translate(220,120)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
-    <g transform="translate(190.7,190.7)"><circle r="6"/><line x1="-3" y1="-3" x2="3" y2="3" stroke="#9bf3ff"/></g>
-    <g transform="translate(120,220)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
-    <g transform="translate(49.3,190.7)"><circle r="6"/><line x1="-3" y1="-3" x2="3" y2="3" stroke="#9bf3ff"/></g>
-    <g transform="translate(20,120)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
-    <g transform="translate(49.3,49.3)"><circle r="6"/><line x1="-3" y1="-3" x2="3" y2="3" stroke="#9bf3ff"/></g>
-    <g transform="translate(120,20)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
-    <g transform="translate(190.7,49.3)"><circle r="6"/><line x1="-3" y1="-3" x2="3" y2="3" stroke="#9bf3ff"/></g>
-  </g>
-
-  <!-- núcleo (cérebro / reator) -->
-  <circle cx="120" cy="120" r="66" fill="#04141f" stroke="url(#neon)" stroke-width="3" filter="url(#glow)"/>
-
-  <!-- dobras / circuitos do cérebro -->
-  <g fill="none" stroke="#39d8ff" stroke-width="1.4" opacity=".85" filter="url(#glow)">
-    <path d="M120,66 q-9,20 0,38 q9,18 0,38 q-9,18 0,36"/>
-    <path d="M82,98 q20,-9 40,0"/>
-    <path d="M76,118 q22,-7 46,0"/>
-    <path d="M82,138 q20,8 40,0"/>
-    <path d="M92,156 q16,5 30,0"/>
-  </g>
-
-  <!-- traços de circuito saindo do núcleo -->
-  <g stroke="#00e5ff" stroke-width="1.3" fill="none" opacity=".7" filter="url(#glow)">
-    <path d="M120,54 V34"/><path d="M120,186 V206"/>
-    <path d="M62,92 L40,80"/><path d="M178,92 L200,80"/>
-    <path d="M62,150 L40,162"/><path d="M178,150 L200,162"/>
-    <rect x="36" y="76" width="8" height="8" fill="#00e5ff" stroke="none"/>
-    <rect x="196" y="76" width="8" height="8" fill="#00e5ff" stroke="none"/>
-    <rect x="36" y="158" width="8" height="8" fill="#00e5ff" stroke="none"/>
-    <rect x="196" y="158" width="8" height="8" fill="#00e5ff" stroke="none"/>
-  </g>
-
-  <!-- RACHA (falha) vermelho neon -->
-  <polyline points="88,86 102,104 94,120 112,138 102,156 122,170" fill="none" stroke="#ff3a58" stroke-width="2.6" filter="url(#glow)"/>
-
-  <!-- FAIXAS (spark) elétrica -->
-  <polyline points="102,104 109,97 104,92 113,85" fill="none" stroke="#ffe14d" stroke-width="2.2" filter="url(#glow)"/>
-  <polyline points="112,138 119,131 114,126 123,119" fill="none" stroke="#ffe14d" stroke-width="1.8" opacity=".9" filter="url(#glow)"/>
-
-  <!-- parafuso VOANDO (com rastro) -->
-  <path d="M168,52 q14,-12 30,-10" fill="none" stroke="#9bf3ff" stroke-width="1.2" opacity=".8"/>
-  <g transform="translate(200,38)" filter="url(#glow)">
-    <circle r="6" fill="#08283b" stroke="#00e5ff" stroke-width="1.6"/>
-    <line x1="-4" y1="-4" x2="4" y2="4" stroke="#9bf3ff"/>
-  </g>
-
-  <!-- peças metálicas voando -->
-  <g fill="#08283b" stroke="#00e5ff" stroke-width="1.2">
-    <rect x="58" y="56" width="9" height="9" transform="rotate(18 62 60)"/>
-    <circle cx="178" cy="178" r="3.6"/>
-    <circle cx="64" cy="180" r="3"/>
-  </g>
-
-  <!-- efeito glitch (deslocamento vermelho) -->
-  <circle cx="125" cy="120" r="66" fill="none" stroke="#ff3a58" stroke-width="1.6" opacity=".22" filter="url(#glow)"/>
+<style>@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&amp;family=Exo+2:wght@600;800&amp;display=swap');</style>
+<g transform="translate(60,18) scale(1.0)"><g>
+<path d="M 120.0 26.0 C 126.0 26.0 132.7 26.7 138.0 28.0 C 143.3 29.3 147.3 32.7 152.0 34.0 C 156.7 35.3 161.0 33.3 166.0 36.0 C 171.0 38.7 177.3 44.7 182.0 50.0 C 186.7 55.3 191.3 61.3 194.0 68.0 C 196.7 74.7 197.7 82.7 198.0 90.0 C 198.3 97.3 197.7 105.0 196.0 112.0 C 194.3 119.0 189.0 125.7 188.0 132.0 C 187.0 138.3 192.0 144.0 190.0 150.0 C 188.0 156.0 182.7 163.0 176.0 168.0 C 169.3 173.0 158.3 177.0 150.0 180.0 C 141.7 183.0 131.0 184.7 126.0 186.0 C 121.0 187.3 122.0 188.0 120.0 188.0 C 118.0 188.0 119.0 187.3 114.0 186.0 C 109.0 184.7 98.3 183.0 90.0 180.0 C 81.7 177.0 70.7 173.0 64.0 168.0 C 57.3 163.0 52.0 156.0 50.0 150.0 C 48.0 144.0 53.0 138.3 52.0 132.0 C 51.0 125.7 45.7 119.0 44.0 112.0 C 42.3 105.0 41.7 97.3 42.0 90.0 C 42.3 82.7 43.3 74.7 46.0 68.0 C 48.7 61.3 53.3 55.3 58.0 50.0 C 62.7 44.7 69.0 38.7 74.0 36.0 C 79.0 33.3 83.3 35.3 88.0 34.0 C 92.7 32.7 96.7 29.3 102.0 28.0 C 107.3 26.7 114.0 26.0 120.0 26.0 Z" fill="url(#brainFill)" stroke="#2dd4ff" stroke-width="2.6" stroke-linejoin="round"/>
+<g clip-path="url(#brainClip)">
+<path d="M150 52 C 170 74, 172 104, 154 134" fill="none" stroke="#1d4a63" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/>
+<path d="M168 60 C 186 86, 184 120, 166 146" fill="none" stroke="#1d4a63" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/>
+<path d="M134 70 C 120 92, 120 120, 136 150" fill="none" stroke="#1d4a63" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/>
+<path d="M112 60 C 96 86, 98 120, 116 146" fill="none" stroke="#1d4a63" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/>
+<path d="M120 30 C 113 64, 127 96, 120 122 S 113 158, 120 186" fill="none" stroke="#37e0ff" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M70 66 L176 66" fill="none" stroke="url(#trace)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+<path d="M70 92 L176 92" fill="none" stroke="url(#trace)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+<path d="M70 118 L176 118" fill="none" stroke="url(#trace)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+<path d="M70 144 L176 144" fill="none" stroke="url(#trace)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+<path d="M120 40 L120 170" fill="none" stroke="url(#trace)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+<path d="M120 92 L150 92" fill="none" stroke="url(#trace)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+<path d="M120 118 L96 118" fill="none" stroke="url(#trace)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+<path d="M90 66 L90 144" fill="none" stroke="url(#trace)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+<path d="M150 66 L150 144" fill="none" stroke="url(#trace)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+<circle cx="120" cy="40" r="2.6" fill="#aef6ff"/>
+<circle cx="120" cy="92" r="2.6" fill="#aef6ff"/>
+<circle cx="120" cy="118" r="2.6" fill="#aef6ff"/>
+<circle cx="120" cy="170" r="2.6" fill="#aef6ff"/>
+<circle cx="150" cy="92" r="2.6" fill="#aef6ff"/>
+<circle cx="96" cy="118" r="2.6" fill="#aef6ff"/>
+<circle cx="90" cy="66" r="2.6" fill="#aef6ff"/>
+<circle cx="90" cy="144" r="2.6" fill="#aef6ff"/>
+<circle cx="150" cy="66" r="2.6" fill="#aef6ff"/>
+<circle cx="150" cy="144" r="2.6" fill="#aef6ff"/>
+<circle cx="70" cy="66" r="2.6" fill="#aef6ff"/>
+<circle cx="176" cy="144" r="2.6" fill="#aef6ff"/>
+<circle cx="70" cy="118" r="2.6" fill="#aef6ff"/>
+<circle cx="176" cy="92" r="2.6" fill="#aef6ff"/>
+</g>
+<ellipse cx="120" cy="108" rx="30" ry="34" fill="url(#coreGlow)" opacity="0.95" filter="url(#glow)"/>
+<ellipse cx="120" cy="108" rx="13" ry="15" fill="url(#coreGlow)" opacity="0.95"/>
+<polygon points="82.0,49.0 88.1,52.5 88.1,59.5 82.0,63.0 75.9,59.5 75.9,52.5" fill="url(#metal)" stroke="#0a2230" stroke-width="1.2"/>
+<line x1="82" y1="52" x2="82" y2="60" stroke="#0a2230" stroke-width="1.4"/>
+<polygon points="158.0,49.0 164.1,52.5 164.1,59.5 158.0,63.0 151.9,59.5 151.9,52.5" fill="url(#metal)" stroke="#0a2230" stroke-width="1.2"/>
+<line x1="158" y1="52" x2="158" y2="60" stroke="#0a2230" stroke-width="1.4"/>
+<polygon points="131.0,178.0 128.9,184.5 123.4,188.5 116.6,188.5 111.1,184.5 109.0,178.0 111.1,171.5 116.6,167.5 123.4,167.5 128.9,171.5" fill="none" stroke="url(#metal)" stroke-width="1.3" opacity="0.8"/>
+<circle cx="120" cy="178" r="5" fill="none" stroke="url(#metal)" stroke-width="1.3" opacity="0.8"/>
+<path d="M196 92 L206 104 L200 112 L210 124 L202 134" fill="none" stroke="#2dd4ff" stroke-width="1.4" opacity="0.9" stroke-linejoin="round"/>
+<polygon points="208.0,93.0 212.3,95.5 212.3,100.5 208.0,103.0 203.7,100.5 203.7,95.5" fill="url(#metal)" stroke="#0a2230" stroke-width="1" opacity="0.95"/>
+<line x1="205" y1="98" x2="211" y2="98" stroke="#0a2230" stroke-width="1"/>
+<polygon points="214.0,115.0 218.3,117.5 218.3,122.5 214.0,125.0 209.7,122.5 209.7,117.5" fill="url(#metal)" stroke="#0a2230" stroke-width="1" opacity="0.95"/>
+<line x1="211" y1="120" x2="217" y2="120" stroke="#0a2230" stroke-width="1"/>
+<polygon points="202,96 210,100 206,108 199,105" fill="url(#metal)" stroke="#0a2230" stroke-width="0.8" opacity="0.92"/>
+<polygon points="212,126 220,124 218,132 211,133" fill="url(#metal)" stroke="#0a2230" stroke-width="0.8" opacity="0.92"/>
+<polygon points="206,140 213,138 211,146 204,147" fill="url(#metal)" stroke="#0a2230" stroke-width="0.8" opacity="0.92"/>
+<circle cx="204" cy="106" r="9" fill="url(#spark)" filter="url(#soft)"/>
+<path d="M203 108 l3 -5 l-2 4 l3 -3" fill="none" stroke="#aef6ff" stroke-width="1.4" stroke-linecap="round"/>
+<circle cx="211" cy="122" r="9" fill="url(#spark)" filter="url(#soft)"/>
+<path d="M210 124 l3 -5 l-2 4 l3 -3" fill="none" stroke="#aef6ff" stroke-width="1.4" stroke-linecap="round"/>
+</g></g>
+<text x="180" y="330" text-anchor="middle" font-family="'Orbitron','Exo 2','Bank Gothic','Eurostile','Arial Narrow',sans-serif" font-size="54" font-weight="800" letter-spacing="8" fill="#eaf6ff">NEXUS AI</text>
+<text x="180" y="366" text-anchor="middle" font-family="'Orbitron','Exo 2','Bank Gothic','Eurostile','Arial Narrow',sans-serif" font-size="13" font-weight="600" letter-spacing="4" fill="#2dd4ff">INTELIGÊNCIA • AUTOMAÇÃO • INOVAÇÃO</text>
+<text x="180" y="470" text-anchor="middle" font-family="'Orbitron','Exo 2','Bank Gothic','Eurostile','Arial Narrow',sans-serif" font-size="12" font-weight="500" letter-spacing="1" fill="#7e8ba3">Designed &amp; Developed by Pedrog1906g</text>
 </svg>

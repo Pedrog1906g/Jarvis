@@ -31,9 +31,13 @@
   .wrap{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:28px 20px 60px}
 
   .hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:18px 0 6px}
-  .brandimg{width:180px;height:180px;border-radius:50%;object-fit:cover;
-    border:2px solid var(--cyan);box-shadow:0 0 28px rgba(0,229,255,.5),inset 0 0 16px rgba(0,229,255,.25);
-    animation:float 6s ease-in-out infinite;background:#02060c}
+  .brandimg{width:300px;max-width:78vw;height:auto;
+    filter:drop-shadow(0 0 22px rgba(0,229,255,.45));
+    animation:float 6s ease-in-out infinite}
+  .creator{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px}
+  .creator img{width:44px;height:44px;border-radius:50%;object-fit:cover;
+    border:2px solid var(--cyan);box-shadow:0 0 14px rgba(0,229,255,.5)}
+  .creator span{color:var(--dim);font-size:12px;letter-spacing:1px}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
   .title{font-family:"Orbitron","Segoe UI",sans-serif;font-weight:900;font-size:clamp(38px,7vw,72px);
     letter-spacing:12px;margin-top:14px;
@@ -83,11 +87,12 @@
 
 <div class="wrap">
   <section class="hero">
-    <img class="brandimg" src="../assets/brand.png" alt="NEXUS AI" />
+    <img class="brandimg" src="../assets/logo-symbol.svg" alt="NEXUS AI" />
     <div class="title">NEXUS AI</div>
     <div class="sub">ASSISTENTE PESSOAL DE IA · ESTILO J.A.R.V.I.S / F.R.I.D.A.Y</div>
     <div class="first">🌟 O <b>primeiro de muitos projetos de IA</b> que virão da NEXUS AI e de seu criador, <b>Pedrog1906g</b>.</div>
     <div class="sig">Designed &amp; Developed by Pedrog1906g</div>
+    <div class="creator"><img src="../assets/brand.png" alt="Pedrog1906g" /><span>Criado por Pedrog1906g</span></div>
   </section>
 
   <section class="status" id="status"></section>

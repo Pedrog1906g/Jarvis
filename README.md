@@ -3,6 +3,10 @@
 </p>
 
 <p align="center">
+  <img src="assets/logo.svg" alt="NEXUS AI Logo" width="320" />
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" />
   <img src="https://img.shields.io/badge/platform-Android%20%7C%20Web%20%7C%20Windows-00e5ff.svg" alt="Platforms" />
   <img src="https://img.shields.io/badge/AI-Groq%20%2F%20LLM-0a7cff.svg" alt="AI" />
@@ -113,7 +117,8 @@ Detalhes em [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ```
 NEXUS-AI/
-├── assets/            # Identidade visual (logo.svg, banner.svg)
+├── assets/            # Identidade visual completa (logo, símbolo, variações, ícone, favicon, avatares, banner)
+├── brand/             # Guia de marca (guide.html)
 ├── demo/              # Página de apresentação (demo/index.html)
 ├── backend/           # API FastAPI (servidor / cérebro)
 ├── web/               # HUD web (index.html)

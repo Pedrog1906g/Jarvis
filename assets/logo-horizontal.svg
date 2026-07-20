@@ -1,5 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 500" width="1500" height="500" role="img" aria-label="NEXUS AI Banner">
-<defs><linearGradient id="bBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#020910"/><stop offset="55%" stop-color="#061826"/><stop offset="100%" stop-color="#01060d"/></linearGradient><radialGradient id="bGlow" cx="32%" cy="50%" r="55%"><stop offset="0%" stop-color="#0a3a55" stop-opacity="0.9"/><stop offset="100%" stop-color="#0a3a55" stop-opacity="0"/></radialGradient>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" width="600" height="220" role="img" aria-label="NEXUS AI">
+
+  <defs>
     <linearGradient id="brainFill" x1="0" y1="0" x2="0.4" y2="1">
       <stop offset="0%" stop-color="#13283b"/>
       <stop offset="55%" stop-color="#0c1827"/>
@@ -36,36 +37,8 @@
     </filter>
     <clipPath id="brainClip"><path d="M 120.0 26.0 C 126.0 26.0 132.7 26.7 138.0 28.0 C 143.3 29.3 147.3 32.7 152.0 34.0 C 156.7 35.3 161.0 33.3 166.0 36.0 C 171.0 38.7 177.3 44.7 182.0 50.0 C 186.7 55.3 191.3 61.3 194.0 68.0 C 196.7 74.7 197.7 82.7 198.0 90.0 C 198.3 97.3 197.7 105.0 196.0 112.0 C 194.3 119.0 189.0 125.7 188.0 132.0 C 187.0 138.3 192.0 144.0 190.0 150.0 C 188.0 156.0 182.7 163.0 176.0 168.0 C 169.3 173.0 158.3 177.0 150.0 180.0 C 141.7 183.0 131.0 184.7 126.0 186.0 C 121.0 187.3 122.0 188.0 120.0 188.0 C 118.0 188.0 119.0 187.3 114.0 186.0 C 109.0 184.7 98.3 183.0 90.0 180.0 C 81.7 177.0 70.7 173.0 64.0 168.0 C 57.3 163.0 52.0 156.0 50.0 150.0 C 48.0 144.0 53.0 138.3 52.0 132.0 C 51.0 125.7 45.7 119.0 44.0 112.0 C 42.3 105.0 41.7 97.3 42.0 90.0 C 42.3 82.7 43.3 74.7 46.0 68.0 C 48.7 61.3 53.3 55.3 58.0 50.0 C 62.7 44.7 69.0 38.7 74.0 36.0 C 79.0 33.3 83.3 35.3 88.0 34.0 C 92.7 32.7 96.7 29.3 102.0 28.0 C 107.3 26.7 114.0 26.0 120.0 26.0 Z"/></clipPath>
   </defs>
-<rect width="1500" height="500" fill="url(#bBg)"/>
-<g stroke="#0e3550" stroke-width="1" opacity="0.5">
-<line x1="0" y1="40" x2="1500" y2="40"/>
-<line x1="0" y1="96" x2="1500" y2="96"/>
-<line x1="0" y1="152" x2="1500" y2="152"/>
-<line x1="0" y1="208" x2="1500" y2="208"/>
-<line x1="0" y1="264" x2="1500" y2="264"/>
-<line x1="0" y1="320" x2="1500" y2="320"/>
-<line x1="0" y1="376" x2="1500" y2="376"/>
-<line x1="0" y1="432" x2="1500" y2="432"/>
-<line x1="0" y1="488" x2="1500" y2="488"/>
-<line x1="60" y1="0" x2="60" y2="500"/>
-<line x1="150" y1="0" x2="150" y2="500"/>
-<line x1="240" y1="0" x2="240" y2="500"/>
-<line x1="330" y1="0" x2="330" y2="500"/>
-<line x1="420" y1="0" x2="420" y2="500"/>
-<line x1="510" y1="0" x2="510" y2="500"/>
-<line x1="600" y1="0" x2="600" y2="500"/>
-<line x1="690" y1="0" x2="690" y2="500"/>
-<line x1="780" y1="0" x2="780" y2="500"/>
-<line x1="870" y1="0" x2="870" y2="500"/>
-<line x1="960" y1="0" x2="960" y2="500"/>
-<line x1="1050" y1="0" x2="1050" y2="500"/>
-<line x1="1140" y1="0" x2="1140" y2="500"/>
-<line x1="1230" y1="0" x2="1230" y2="500"/>
-<line x1="1320" y1="0" x2="1320" y2="500"/>
-<line x1="1410" y1="0" x2="1410" y2="500"/>
-</g>
-<rect width="1500" height="500" fill="url(#bGlow)"/>
-<g transform="translate(250,150)"><g>
+<style>@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&amp;family=Exo+2:wght@600;800&amp;display=swap');</style>
+<g transform="translate(20,30)"><g>
 <path d="M 120.0 26.0 C 126.0 26.0 132.7 26.7 138.0 28.0 C 143.3 29.3 147.3 32.7 152.0 34.0 C 156.7 35.3 161.0 33.3 166.0 36.0 C 171.0 38.7 177.3 44.7 182.0 50.0 C 186.7 55.3 191.3 61.3 194.0 68.0 C 196.7 74.7 197.7 82.7 198.0 90.0 C 198.3 97.3 197.7 105.0 196.0 112.0 C 194.3 119.0 189.0 125.7 188.0 132.0 C 187.0 138.3 192.0 144.0 190.0 150.0 C 188.0 156.0 182.7 163.0 176.0 168.0 C 169.3 173.0 158.3 177.0 150.0 180.0 C 141.7 183.0 131.0 184.7 126.0 186.0 C 121.0 187.3 122.0 188.0 120.0 188.0 C 118.0 188.0 119.0 187.3 114.0 186.0 C 109.0 184.7 98.3 183.0 90.0 180.0 C 81.7 177.0 70.7 173.0 64.0 168.0 C 57.3 163.0 52.0 156.0 50.0 150.0 C 48.0 144.0 53.0 138.3 52.0 132.0 C 51.0 125.7 45.7 119.0 44.0 112.0 C 42.3 105.0 41.7 97.3 42.0 90.0 C 42.3 82.7 43.3 74.7 46.0 68.0 C 48.7 61.3 53.3 55.3 58.0 50.0 C 62.7 44.7 69.0 38.7 74.0 36.0 C 79.0 33.3 83.3 35.3 88.0 34.0 C 92.7 32.7 96.7 29.3 102.0 28.0 C 107.3 26.7 114.0 26.0 120.0 26.0 Z" fill="url(#brainFill)" stroke="#2dd4ff" stroke-width="2.6" stroke-linejoin="round"/>
 <g clip-path="url(#brainClip)">
 <path d="M150 52 C 170 74, 172 104, 154 134" fill="none" stroke="#1d4a63" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/>
@@ -118,9 +91,7 @@
 <circle cx="211" cy="122" r="9" fill="url(#spark)" filter="url(#soft)"/>
 <path d="M210 124 l3 -5 l-2 4 l3 -3" fill="none" stroke="#aef6ff" stroke-width="1.4" stroke-linecap="round"/>
 </g></g>
-<text x="640" y="235" font-family="'Orbitron','Exo 2','Bank Gothic','Eurostile','Arial Narrow',sans-serif" font-size="92" font-weight="900" letter-spacing="10" fill="#eaf6ff">NEXUS AI</text>
-<text x="642" y="285" font-family="'Orbitron','Exo 2','Bank Gothic','Eurostile','Arial Narrow',sans-serif" font-size="22" font-weight="600" letter-spacing="6" fill="#2dd4ff">INTELIGÊNCIA • AUTOMAÇÃO • INOVAÇÃO</text>
-<text x="642" y="400" font-family="'Orbitron','Exo 2','Bank Gothic','Eurostile','Arial Narrow',sans-serif" font-size="18" font-weight="500" letter-spacing="2" fill="#7e8ba3">Designed &amp; Developed by Pedrog1906g</text>
-<line x1="642" y1="330" x2="1380" y2="330" stroke="#12384f" stroke-width="2"/>
-<g stroke="#00aef0" stroke-width="2" opacity="0.7" fill="none"><path d="M642 350 H1380"/><circle cx="642" cy="350" r="4" fill="#00aef0"/><path d="M1380 350 l-14 -7 v14 z" fill="#00aef0"/></g>
+<text x="410" y="110" text-anchor="middle" font-family="'Orbitron','Exo 2','Bank Gothic','Eurostile','Arial Narrow',sans-serif" font-size="52" font-weight="800" letter-spacing="8" fill="#eaf6ff">NEXUS AI</text>
+<text x="410" y="142" text-anchor="middle" font-family="'Orbitron','Exo 2','Bank Gothic','Eurostile','Arial Narrow',sans-serif" font-size="13" font-weight="600" letter-spacing="4" fill="#2dd4ff">INTELIGÊNCIA • AUTOMAÇÃO • INOVAÇÃO</text>
+<text x="410" y="188" text-anchor="middle" font-family="'Orbitron','Exo 2','Bank Gothic','Eurostile','Arial Narrow',sans-serif" font-size="12" font-weight="500" letter-spacing="1" fill="#7e8ba3">Designed &amp; Developed by Pedrog1906g</text>
 </svg>
