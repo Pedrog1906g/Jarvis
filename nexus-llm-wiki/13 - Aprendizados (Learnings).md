@@ -153,3 +153,8 @@ Uma lição útil e não-óbvia para o NEXUS AI é aprender a extrair informaç�
 _2026-07-20 18:40 UTC_
 
 O NEXUS AI deve aprender a distinguir entre informações relevantes e irrelevantes para tomar decisões eficazes. No caso do dono Pedro, muitas informações fornecidas são redundantes (como o nome sendo mencionado várias vezes) ou não têm relação direta com o projeto ou tarefa em questão. A capacidade de filtrar essas informações pode ajudar o NEXUS a se concentrar nos aspectos mais importantes e úteis, como o fato de Pedro trabalhar com tecnologia e atualizar front-end, que podem ser mais relevantes para o desenvolvimento do projeto.
+
+## Teste Pedro
+_2026-07-20 19:19 UTC_
+
+Integracao Obsidian ativada via NEXUS.
