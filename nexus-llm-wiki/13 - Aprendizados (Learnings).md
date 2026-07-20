@@ -108,3 +108,8 @@ Implementar uma função de 'ouvir em segundo plano' para que o NEXUS AI possa r
 _2026-07-15 00:22 UTC_
 
 Implementar uma otimização na ativação por voz do NEXUS AI para que responda automaticamente ao ser chamado, sem a necessidade de clicar no microfone, melhorando a experiência do usuário e reduzindo a necessidade de interações manuais.
+
+## Aprendizado Contínuo e Personalização
+_2026-07-20 13:05 UTC_
+
+Uma lição útil e não-óbvia para o NEXUS aprender é que a autoatualização e a personalização são fundamentais para atender às necessidades e preferências do usuário. Com base nos fatos do dono, é possível notar que ele valoriza a autoatualização e tem preferências específicas em termos de música, filmes e nível de volume. Portanto, o NEXUS deve ser capaz de aprender e se adaptar às preferências do usuário ao longo do tempo, oferecendo respostas e serviços personalizados e atualizados, como recomendar músicas de filmes de super-heróis ou atualizar o front-end e o programa de voz para melhor atender às necessidades do usuário.
