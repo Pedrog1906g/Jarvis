@@ -48,3 +48,17 @@ services:
         sync: false
       - key: GITHUB_REPO
         value: "Pedrog1906g/Jarvis"
+      # E-mail (SMTP). Preencha no painel do Render para o JARVIS enviar e-mails.
+      # Para Gmail use uma "senha de aplicativo" (não a senha normal).
+      - key: EMAIL_SMTP_HOST
+        sync: false
+      - key: EMAIL_SMTP_PORT
+        value: "587"
+      - key: EMAIL_ADDRESS
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+      - key: EMAIL_SMTP_SSL
+        value: "false"
+      - key: EMAIL_FROM_NAME
+        value: "NEXUS AI"

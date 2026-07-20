@@ -57,7 +57,6 @@ KNOWN_APPS = {
     # Comunicação
     "whatsapp": "whatsapp",
     "discord": "discord",
-    "telegram": "telegram",
     "slack": "slack",
     "teams": "teams",
     "zoom": "zoom",

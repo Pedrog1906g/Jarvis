@@ -1,7 +1,10 @@
 """Envio de e-mails pelo NEXUS AI / JARVIS (SMTP).
 
-Ativa SOZINHO quando as variáveis EMAIL_SMTP_HOST + EMAIL_ADDRESS estiverem
-definidas no servidor (ex.: no painel do Render). Sem elas, `send_email`
+Ordem de prioridade da configuração:
+  1. Configuração salva em tempo de execução (via /api/email/set_config ou banco).
+  2. Variáveis de ambiente (EMAIL_SMTP_HOST, EMAIL_ADDRESS, ...).
+
+Ativa quando houver EMAIL_ADDRESS + EMAIL_SMTP_HOST. Sem isso, `send_email`
 retorna (False, "não configurado") e o resto do sistema segue normalmente.
 """
 
@@ -13,22 +16,38 @@ from email.message import EmailMessage
 
 log = logging.getLogger("nexus.email")
 
+# Cache de configuração em tempo de execução (prioridade sobre as env vars).
+_RT = {}
+
+
+def set_runtime(key: str, value: str):
+    """Define uma config de e-mail em tempo de execução (e no ambiente)."""
+    key = str(key).upper()
+    _RT[key] = value or ""
+    os.environ[key] = value or ""
+
+
+def get_cfg(key: str, default: str = "") -> str:
+    """Lê a config: primeiro o cache de runtime, depois a env var."""
+    return _RT.get(key) or os.getenv(key, default)
+
 
 def is_configured() -> bool:
-    return bool(os.getenv("EMAIL_ADDRESS") and os.getenv("EMAIL_SMTP_HOST"))
+    return bool(get_cfg("EMAIL_ADDRESS") and get_cfg("EMAIL_SMTP_HOST"))
 
 
 def send_email(to: str, subject: str, body: str):
     """Envia um e-mail via SMTP. Retorna (ok: bool, mensagem: str)."""
-    host = os.getenv("EMAIL_SMTP_HOST")
-    addr = os.getenv("EMAIL_ADDRESS")
-    pwd = os.getenv("EMAIL_PASSWORD", "")
-    port = int(os.getenv("EMAIL_SMTP_PORT", "587"))
-    from_name = os.getenv("EMAIL_FROM_NAME", "NEXUS AI")
-    use_ssl = os.getenv("EMAIL_SMTP_SSL", "false").lower() in ("1", "true", "yes")
+    host = get_cfg("EMAIL_SMTP_HOST")
+    addr = get_cfg("EMAIL_ADDRESS")
+    pwd = get_cfg("EMAIL_PASSWORD", "")
+    port = int(get_cfg("EMAIL_SMTP_PORT", "587") or "587")
+    from_name = get_cfg("EMAIL_FROM_NAME", "NEXUS AI")
+    use_ssl = get_cfg("EMAIL_SMTP_SSL", "false").lower() in ("1", "true", "yes", "on")
 
     if not (host and addr):
-        return False, "e-mail não configurado no servidor (defina EMAIL_SMTP_HOST/EMAIL_ADDRESS/EMAIL_PASSWORD)"
+        return False, ("e-mail não configurado (use /api/email/set_config "
+                       "ou defina as variáveis EMAIL_* no servidor)")
 
     try:
         msg = EmailMessage()

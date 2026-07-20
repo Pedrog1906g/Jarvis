@@ -8,7 +8,6 @@ from app.db.database import engine, Base
 from app.db import models  # registra os modelos
 from app.api import auth, chat, voice, reminders, plugins, system, agent, scheduled_tasks, obsidian, metrics, memory
 from app.api import email
-from app.services.telegram_bot import start_telegram_bot
 from app.services.reminder_scheduler import start_scheduler
 from app.services.scheduled_tasks import start_scheduled_tasks
 from app.services.learning_loop import start_learning_loop
@@ -19,6 +18,44 @@ from app.config import APP_NAME, APP_VERSION
 Base.metadata.create_all(bind=engine)
 
 
+def _load_email_config():
+    """Carrega a config de SMTP salva no banco (senha criptografada) para a
+    memória/ambiente, para o envio de e-mails funcionar sem reiniciar."""
+    try:
+        from app.services import email_service as _esvc
+        from app.db.database import SessionLocal
+        from app.db import models as _models
+        from app.core.crypto import decrypt
+        _db = SessionLocal()
+        try:
+            def _get(k):
+                row = _db.query(_models.Setting).filter_by(key=k).first()
+                return row.value if row and row.value else ""
+
+            host = _get("EMAIL_SMTP_HOST")
+            port = _get("EMAIL_SMTP_PORT")
+            addr = _get("EMAIL_ADDRESS")
+            pwd = decrypt(_get("EMAIL_PASSWORD"))
+            sslv = _get("EMAIL_SMTP_SSL")
+            fn = _get("EMAIL_FROM_NAME")
+            if host:
+                _esvc.set_runtime("EMAIL_SMTP_HOST", host)
+            if port:
+                _esvc.set_runtime("EMAIL_SMTP_PORT", port)
+            if addr:
+                _esvc.set_runtime("EMAIL_ADDRESS", addr)
+            if pwd:
+                _esvc.set_runtime("EMAIL_PASSWORD", pwd)
+            if sslv:
+                _esvc.set_runtime("EMAIL_SMTP_SSL", sslv)
+            if fn:
+                _esvc.set_runtime("EMAIL_FROM_NAME", fn)
+        finally:
+            _db.close()
+    except Exception:
+        pass
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     start_scheduler()
@@ -26,7 +63,7 @@ async def lifespan(app: FastAPI):
     start_learning_loop()  # gera aprendizados periodicos (loop de ensino continuo do NEXUS)
     start_discovery()  # anuncia o backend na LAN via mDNS (auto-descoberta no app)
     init_firebase()    # inicializa Firebase Admin se as env vars estiverem presentes
-    start_telegram_bot()  # bot do Telegram (no-op se sem TELEGRAM_BOT_TOKEN)
+    _load_email_config()  # carrega config de e-mail salva no banco (se houver)
     yield
 
 

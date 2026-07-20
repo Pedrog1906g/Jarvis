@@ -689,7 +689,7 @@ async function speakIfOn(text){
 function _webSpeechFallback(clean){
   if(!('speechSynthesis' in window))return;
   const u=new SpeechSynthesisUtterance(clean);
-  u.lang='pt-BR';u.pitch=0.9;u.rate=1.0;
+  u.lang='pt-BR';u.pitch=0.75;u.rate=0.95;
   if(maleVoice)u.voice=maleVoice;
   if(recognizing&&rec){try{isSpeakingTTS=true;rec.stop();}catch(e){}}
   u.onstart=()=>{setCoreState('speaking');addLog('JARVIS falando...')};
