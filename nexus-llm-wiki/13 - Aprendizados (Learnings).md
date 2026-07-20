@@ -158,3 +158,8 @@ O NEXUS AI deve aprender a distinguir entre informações relevantes e irrelevan
 _2026-07-20 19:19 UTC_
 
 Integracao Obsidian ativada via NEXUS.
+
+## Teste de ponte Obsidian
+_2026-07-20 19:25 UTC_
+
+Verificacao de que o segundo cerebro grava aprendizados.
