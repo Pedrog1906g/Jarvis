@@ -14,6 +14,7 @@
       <feGaussianBlur stdDeviation="4" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
+    <clipPath id="circ"><circle cx="240" cy="200" r="110"/></clipPath>
   </defs>
 
   <rect width="1200" height="400" fill="url(#bg)"/>
@@ -26,42 +27,17 @@
     <circle cx="600" cy="200" r="180" fill="none"/>
   </g>
 
-  <!-- emblema (cérebro cibernético em falha) -->
-  <g transform="translate(150,80) scale(0.8)">
-    <g filter="url(#glow)" fill="none" stroke="url(#neon)">
-      <circle cx="120" cy="120" r="100" stroke-width="2.5" opacity=".55"/>
-      <circle cx="120" cy="120" r="88" stroke-width="1.5" stroke-dasharray="2 8" opacity=".7"/>
-    </g>
-    <g fill="#08283b" stroke="#00e5ff" stroke-width="1.4">
-      <g transform="translate(220,120)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
-      <g transform="translate(190.7,190.7)"><circle r="6"/><line x1="-3" y1="-3" x2="3" y2="3" stroke="#9bf3ff"/></g>
-      <g transform="translate(120,220)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
-      <g transform="translate(49.3,190.7)"><circle r="6"/><line x1="-3" y1="-3" x2="3" y2="3" stroke="#9bf3ff"/></g>
-      <g transform="translate(20,120)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
-      <g transform="translate(49.3,49.3)"><circle r="6"/><line x1="-3" y1="-3" x2="3" y2="3" stroke="#9bf3ff"/></g>
-      <g transform="translate(120,20)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
-      <g transform="translate(190.7,49.3)"><circle r="6"/><line x1="-3" y1="-3" x2="3" y2="3" stroke="#9bf3ff"/></g>
-    </g>
-    <circle cx="120" cy="120" r="66" fill="#04141f" stroke="url(#neon)" stroke-width="3" filter="url(#glow)"/>
-    <g fill="none" stroke="#39d8ff" stroke-width="1.4" opacity=".85" filter="url(#glow)">
-      <path d="M120,66 q-9,20 0,38 q9,18 0,38 q-9,18 0,36"/>
-      <path d="M82,98 q20,-9 40,0"/><path d="M76,118 q22,-7 46,0"/><path d="M82,138 q20,8 40,0"/>
-    </g>
-    <polyline points="88,86 102,104 94,120 112,138 102,156 122,170" fill="none" stroke="#ff3a58" stroke-width="2.6" filter="url(#glow)"/>
-    <polyline points="102,104 109,97 104,92 113,85" fill="none" stroke="#ffe14d" stroke-width="2.2" filter="url(#glow)"/>
-    <path d="M168,52 q14,-12 30,-10" fill="none" stroke="#9bf3ff" stroke-width="1.2" opacity=".8"/>
-    <g transform="translate(200,38)" filter="url(#glow)">
-      <circle r="6" fill="#08283b" stroke="#00e5ff" stroke-width="1.6"/><line x1="-4" y1="-4" x2="4" y2="4" stroke="#9bf3ff"/>
-    </g>
-    <circle cx="125" cy="120" r="66" fill="none" stroke="#ff3a58" stroke-width="1.6" opacity=".22" filter="url(#glow)"/>
-  </g>
+  <!-- imagem de marca do criador (circular) -->
+  <image href="brand.png" x="130" y="90" width="220" height="220" clip-path="url(#circ)" preserveAspectRatio="xMidYMid slice"/>
+  <circle cx="240" cy="200" r="112" fill="none" stroke="url(#neon)" stroke-width="3" filter="url(#glow)"/>
 
   <!-- títulos -->
-  <text x="380" y="180" font-family="'Orbitron','Segoe UI',sans-serif" font-size="92" font-weight="900" letter-spacing="10" fill="url(#neon)" filter="url(#glow)">NEXUS AI</text>
-  <text x="384" y="228" font-family="'Segoe UI',sans-serif" font-size="22" letter-spacing="4" fill="#9bf3ff">ASSISTENTE PESSOAL DE IA · ESTILO J.A.R.V.I.S / F.R.I.D.A.Y</text>
-  <text x="384" y="300" font-family="'Share Tech Mono',monospace" font-size="16" letter-spacing="3" fill="#5d86a3">REATOR ONLINE · LINK SEGURO · SÃO PAULO / BR · SEMPRE CONECTADO À WEB</text>
-  <text x="384" y="350" font-family="'Segoe UI',sans-serif" font-size="18" letter-spacing="2" fill="#00e5ff">Designed &amp; Developed by Pedrog1906g</text>
+  <text x="400" y="180" font-family="'Orbitron','Segoe UI',sans-serif" font-size="92" font-weight="900" letter-spacing="10" fill="url(#neon)" filter="url(#glow)">NEXUS AI</text>
+  <text x="404" y="228" font-family="'Segoe UI',sans-serif" font-size="22" letter-spacing="4" fill="#9bf3ff">ASSISTENTE PESSOAL DE IA · ESTILO J.A.R.V.I.S / F.R.I.D.A.Y</text>
+  <text x="404" y="272" font-family="'Segoe UI',sans-serif" font-size="15" letter-spacing="1" fill="#cfe9ff">🌟 O primeiro de muitos projetos de IA da NEXUS AI e de Pedrog1906g</text>
+  <text x="404" y="316" font-family="'Share Tech Mono',monospace" font-size="15" letter-spacing="2" fill="#5d86a3">REATOR ONLINE · LINK SEGURO · SÃO PAULO / BR · SEMPRE CONECTADO À WEB</text>
+  <text x="404" y="352" font-family="'Segoe UI',sans-serif" font-size="17" letter-spacing="2" fill="#00e5ff">Designed &amp; Developed by Pedrog1906g</text>
 
-  <circle cx="1120" cy="70" r="8" fill="#ff3a58" filter="url(#glow)"/>
-  <text x="1120" y="100" font-family="'Share Tech Mono',monospace" font-size="12" fill="#ff3a58" text-anchor="middle">SYS</text>
+  <circle cx="1130" cy="70" r="8" fill="#ff3a58" filter="url(#glow)"/>
+  <text x="1130" y="100" font-family="'Share Tech Mono',monospace" font-size="12" fill="#ff3a58" text-anchor="middle">SYS</text>
 </svg>
