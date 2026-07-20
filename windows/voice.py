@@ -196,20 +196,30 @@ class WindowsVoice:
             log.warning("speak_via_api falhou: %s", e)
             return False
 
-    # ── Fallback nativo do Windows (sempre disponível) ───────────────────────
+    # ── System.Speech (.NET) via PowerShell — TTS principal no Windows ───────
     def _powershell_speak(self, text: str) -> bool:
-        """Fallback robusto usando System.Speech.Synthesis do .NET (presente em
-        TODOS os Windows). Não depende do pyttsx3/SAPI do Python — garante que o
-        JARVIS fala mesmo quando o pyttsx3 falha dentro do .exe congelado."""
+        """TTS principal e mais confiável no Windows: usa System.Speech.Synthesis
+        do .NET (vem com o Windows, não depende do pyttsx3/SAPI do Python e NÃO
+        falha silenciosamente dentro do .exe congelado). Escolhe a voz em
+        português (Brasil) quando disponível e fala o texto com segurança."""
         try:
-            import subprocess
-            safe = text.replace('"', "'").replace("`", "'")
-            ps = ('Add-Type -AssemblyName System.speech; '
-                  '$s=New-Object System.Speech.Synthesis.SpeechSynthesizer; '
-                  '$s.Rate=1; $s.Speak("%s")' % safe)
+            import subprocess, base64
+            # Texto em base64 (UTF-8) evita qualquer problema de aspas/acentos.
+            b64 = base64.b64encode(text.encode("utf-8")).decode("ascii")
+            # Script PowerShell (será passado como -EncodedCommand, também base64).
+            script = (
+                "Add-Type -AssemblyName System.speech;"
+                "$s=New-Object System.Speech.Synthesis.SpeechSynthesizer;"
+                "$v=$s.GetInstalledVoices()|Where-Object{$_.VoiceInfo.Culture.Name-like'pt-BR*'}|Select-Object -First 1;"
+                "if($v){$s.SelectVoice($v.VoiceInfo.Name)};"
+                "$s.Rate=0;"
+                "$txt=[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('%s'));"
+                "$s.Speak($txt)"
+            ) % b64
+            enc = base64.b64encode(script.encode("utf-16-le")).decode("ascii")
             flags = {"creationflags": 0x08000000} if sys.platform == "win32" else {}
-            subprocess.run(["powershell", "-NoProfile", "-Command", ps],
-                           timeout=90, **flags)
+            subprocess.run(["powershell", "-NoProfile", "-EncodedCommand", enc],
+                           timeout=120, **flags)
             return True
         except Exception as e:
             log.warning("TTS PowerShell falhou: %s", e)
@@ -224,11 +234,13 @@ class WindowsVoice:
         # 1) TTS do servidor (openai/piper), se configurado
         if self.speak_via_api(clean):
             return
-        # 2) SAPI local (pyttsx3) — melhor controle de voz
-        if self._sapi_speak(clean):
+        # 2) System.Speech (.NET) via PowerShell — funciona SEMPRE no Windows,
+        #    inclusive dentro do .exe congelado (o pyttsx3/SAPI costuma falhar
+        #    silenciosamente no exe: sem erro e sem som). Por isso vem antes.
+        if self._powershell_speak(clean):
             return
-        # 3) Fallback nativo do Windows (System.Speech via PowerShell)
-        self._powershell_speak(clean)
+        # 3) SAPI local (pyttsx3) como reserva final
+        self._sapi_speak(clean)
 
     # ── STT ──────────────────────────────────────────────────────────────────
 
