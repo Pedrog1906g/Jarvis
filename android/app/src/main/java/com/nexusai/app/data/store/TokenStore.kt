@@ -45,8 +45,14 @@ class TokenStore(context: Context) {
         settingsPrefs.edit().clear().apply()
     }
 
-    fun getServerUrl(): String =
-        settingsPrefs.getString("server_url", NexusConfig.API_BASE_URL) ?: NexusConfig.API_BASE_URL
+    fun getServerUrl(): String {
+        val saved = settingsPrefs.getString("server_url", null)
+        // Ignora URL antiga do Replit (servidor ja desativado) e usa o padrao atual.
+        if (saved.isNullOrBlank() || saved.contains("replit", ignoreCase = true)) {
+            return NexusConfig.API_BASE_URL
+        }
+        return saved
+    }
 
     fun setServerUrl(url: String) = settingsPrefs.edit().putString("server_url", url).apply()
 

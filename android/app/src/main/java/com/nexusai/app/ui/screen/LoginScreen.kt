@@ -111,7 +111,7 @@ fun LoginScreen(vm: AuthViewModel) {
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            "O servidor JARVIS está na nuvem (Replit) — não precisa mudar nada. " +
+            "O servidor JARVIS está na nuvem — não precisa mudar nada. " +
                 "Na rede local, toque em \"Buscar na rede\" ou digite o IP (ex: http://192.168.0.15:5000).",
             style = MaterialTheme.typography.bodySmall, color = NexusTextDim
         )

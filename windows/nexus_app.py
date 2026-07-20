@@ -32,7 +32,7 @@ from voice import WindowsVoice
 APP_NAME = "JARVIS"
 VERSION = "1.0.0"
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), "jarvis_windows_config.json")
-DEFAULT_SERVER = "https://161dee62-a84c-408c-ba3c-2b669539214a-00-26filiy1lkinq.kirk.replit.dev"
+DEFAULT_SERVER = "https://nexus-api-2o1y.onrender.com"
 LOG_PATH = os.path.join(os.path.expanduser("~"), "jarvis_windows.log")
 
 logging.basicConfig(filename=LOG_PATH, level=logging.INFO,
@@ -44,9 +44,17 @@ log = logging.getLogger("jarvis")
 def load_config():
     try:
         with open(CONFIG_PATH, encoding="utf-8") as f:
-            return json.load(f)
+            cfg = json.load(f)
     except Exception:
-        return {"server": DEFAULT_SERVER, "username": "owner", "passphrase": "nexus"}
+        cfg = {}
+    # Migra URL antiga do Replit (servidor ja desativado) para o backend atual.
+    if "server" not in cfg or "replit" in str(cfg.get("server", "")).lower():
+        cfg["server"] = DEFAULT_SERVER
+    if "username" not in cfg:
+        cfg["username"] = "owner"
+    if "passphrase" not in cfg:
+        cfg["passphrase"] = "nexus"
+    return cfg
 
 
 def save_config(cfg):
