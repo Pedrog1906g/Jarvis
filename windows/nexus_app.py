@@ -544,15 +544,23 @@ class App:
         win.after(15000, lambda: (win.destroy() if win.winfo_exists() else None))
 
     def _refresh_metrics(self):
-        """Atualiza barra de status com CPU/RAM/hora a cada 5 s."""
+        """Atualiza barra de status com CPU/RAM/hora de Brasília a cada 5 s.""" 
         try:
-            import psutil, datetime
+            import psutil
             cpu = psutil.cpu_percent(interval=None)
             mem = psutil.virtual_memory().percent
-            now = datetime.datetime.now().strftime("%H:%M")
+            # Horário de Brasília (São Paulo, UTC-3) — igual ao site JARVIS.
+            now = None
+            try:
+                from datetime import datetime
+                from zoneinfo import ZoneInfo
+                now = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%H:%M")
+            except Exception:
+                from datetime import datetime
+                now = datetime.now().strftime("%H:%M")
             conn = "● ONLINE" if self.backend.token else "○ OFFLINE"
             self.status.configure(
-                text=f"  {conn}   CPU {cpu:.0f}%   RAM {mem:.0f}%   {now}")
+                text=f"  {conn}   CPU {cpu:.0f}%   RAM {mem:.0f}%   🕐 Brasília {now}")
         except Exception:
             pass
         try:
