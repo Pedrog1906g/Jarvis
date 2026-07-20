@@ -90,6 +90,70 @@ def _client(provider: str):
     return None
 
 
+def _is_ratelimit(err) -> bool:
+    """Detecta erros de limite de uso (HTTP 429) da API."""
+    s = str(err).lower()
+    return ("rate limit" in s or "429" in s or "ratelimit" in s
+            or "limit reached" in s or "too many" in s)
+
+
+def _groq_models(preferred=None):
+    """Ordem de tentativa de modelos Groq: o preferido primeiro, depois o modelo
+    menor (llama-3.1-8b-instant) que tem limite de tokens/dia MUITO maior no plano
+    gratuito — usado como reserva quando o principal estrangula."""
+    base = preferred or get_current_model()
+    cands = [base, "llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
+    seen, out = set(), []
+    for m in cands:
+        if m and m not in seen:
+            seen.add(m)
+            out.append(m)
+    return out
+
+
+def _groq_stream(messages, model):
+    client = _client("groq")
+    if not client:
+        return
+    last = None
+    for m in _groq_models(model):
+        try:
+            stream = client.chat.completions.create(
+                model=m, messages=messages, temperature=0.7, stream=True)
+            for chunk in stream:
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    yield delta
+            return
+        except Exception as e:
+            if _is_ratelimit(e):
+                last = e
+                continue
+            raise
+    if last:
+        raise last
+
+
+def _groq_complete(messages, model, temperature):
+    client = _client("groq")
+    if not client:
+        return ""
+    last = None
+    for m in _groq_models(model):
+        try:
+            resp = client.chat.completions.create(
+                model=m, messages=messages, temperature=temperature, stream=False)
+            return resp.choices[0].message.content or ""
+        except Exception as e:
+            if _is_ratelimit(e):
+                last = e
+                continue
+            raise
+    if last:
+        raise last
+    return ""
+
+
 def get_current_model() -> str:
     if LLM_PROVIDER == "groq":
         return GROQ_MODEL
@@ -116,18 +180,8 @@ def stream_chat(messages: List[Dict[str, str]], model: str = None) -> Iterator[s
         return
 
     if LLM_PROVIDER == "groq":
-        client = _client("groq")
-        if client:
-            stream = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=0.7,
-                stream=True,
-            )
-            for chunk in stream:
-                delta = chunk.choices[0].delta.content
-                if delta:
-                    yield delta
+        if _client("groq"):
+            yield from _groq_stream(messages, model)
             return
 
     elif LLM_PROVIDER == "openai" and "openai" in _clients:
@@ -216,15 +270,8 @@ def complete_chat(messages: List[Dict[str, str]], model: str = None, temperature
         return _demo_reply(messages, short=True)
 
     if LLM_PROVIDER == "groq":
-        client = _client("groq")
-        if client:
-            resp = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                stream=False,
-            )
-            return resp.choices[0].message.content or ""
+        if _client("groq"):
+            return _groq_complete(messages, model, temperature)
 
     elif LLM_PROVIDER == "openai" and "openai" in _clients:
         client = _clients["openai"]

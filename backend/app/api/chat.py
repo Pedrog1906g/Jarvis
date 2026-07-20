@@ -35,48 +35,51 @@ def _sync_msg(owner_username: str, conversation_id, role: str, content: str):
 def chat(req: ChatRequest, db: Session = Depends(get_db),
          user: models.User = Depends(get_current_user)):
     """Endpoint não-streaming (útil para testes via curl/Postman)."""
-    try:
-        conv = _get_or_create_conversation(db, user.id, req.conversation_id)
-        db.add(models.Message(conversation_id=conv.id, role="user", content=req.content))
-        db.commit()
-        _sync_msg(user.username, conv.id, "user", req.content)
-        extract_facts(db, user.id, req.content)
+    conv = _get_or_create_conversation(db, user.id, req.conversation_id)
+    db.add(models.Message(conversation_id=conv.id, role="user", content=req.content))
+    db.commit()
+    _sync_msg(user.username, conv.id, "user", req.content)
+    extract_facts(db, user.id, req.content)
 
-        messages = build_messages(db, user.id, conv.id, req.content)
-        _vctx = _obs.chat_context_message()
-        if _vctx:
-            messages.insert(1, _vctx)
-        # Busca na internet (endpoint REST síncrono)
-        if _ws.needs_web_search(req.content):
-            try:
-                query = _ws.extract_query(req.content)
-                results = _ws.search(query)
-                if results:
-                    messages.insert(-1, {"role": "system", "content": _ws.format_for_llm(query, results)})
-            except Exception:
-                pass
-        reply = "".join(stream_chat(messages))
-        db.add(models.Message(conversation_id=conv.id, role="assistant", content=reply))
-        db.commit()
-        _sync_msg(user.username, conv.id, "assistant", reply)
-        _auto_title(db, user.id, conv)
-        # Espelha no Firestore (best-effort) quando o Firebase está ativo.
+    messages = build_messages(db, user.id, conv.id, req.content)
+    _vctx = _obs.chat_context_message()
+    if _vctx:
+        messages.insert(1, _vctx)
+    # Busca na internet (endpoint REST síncrono) — sempre que possível
+    if _ws.needs_web_search(req.content):
         try:
-            mirror_user(user)
-            last_user = db.query(models.Message).filter_by(
-                conversation_id=conv.id, role="user").order_by(models.Message.id.desc()).first()
-            last_asst = db.query(models.Message).filter_by(
-                conversation_id=conv.id, role="assistant").order_by(models.Message.id.desc()).first()
-            if last_user:
-                mirror_message(conv.id, last_user)
-            if last_asst:
-                mirror_message(conv.id, last_asst)
+            query = _ws.extract_query(req.content)
+            results = _ws.search(query)
+            if results:
+                messages.insert(-1, {"role": "system", "content": _ws.format_for_llm(query, results)})
         except Exception:
             pass
-        return {"conversation_id": conv.id, "reply": reply, "demo": not is_available()}
-    except Exception as _e:
-        import traceback as _tb
-        return {"conversation_id": None, "reply": "DEBUG_ERR: " + repr(_e) + " || " + _tb.format_exc()[:2500], "demo": True}
+    try:
+        reply = "".join(stream_chat(messages))
+    except Exception:
+        # Nunca quebra a conversa: se a IA estiver sem cota no momento,
+        # avisa educadamente em vez de retornar erro 500.
+        reply = ("Senhor, no momento estou temporariamente sem acesso ao meu cérebro "
+                 "(limite de uso da IA atingido). Tente novamente em alguns minutos — "
+                 "voltarei logo, senhor.")
+    db.add(models.Message(conversation_id=conv.id, role="assistant", content=reply))
+    db.commit()
+    _sync_msg(user.username, conv.id, "assistant", reply)
+    _auto_title(db, user.id, conv)
+    # Espelha no Firestore (best-effort) quando o Firebase está ativo.
+    try:
+        mirror_user(user)
+        last_user = db.query(models.Message).filter_by(
+            conversation_id=conv.id, role="user").order_by(models.Message.id.desc()).first()
+        last_asst = db.query(models.Message).filter_by(
+            conversation_id=conv.id, role="assistant").order_by(models.Message.id.desc()).first()
+        if last_user:
+            mirror_message(conv.id, last_user)
+        if last_asst:
+            mirror_message(conv.id, last_asst)
+    except Exception:
+        pass
+    return {"conversation_id": conv.id, "reply": reply, "demo": not is_available()}
 
 
 @router.get("/conversations")
