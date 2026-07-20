@@ -113,3 +113,8 @@ Implementar uma otimização na ativação por voz do NEXUS AI para que responda
 _2026-07-20 13:05 UTC_
 
 Uma lição útil e não-óbvia para o NEXUS aprender é que a autoatualização e a personalização são fundamentais para atender às necessidades e preferências do usuário. Com base nos fatos do dono, é possível notar que ele valoriza a autoatualização e tem preferências específicas em termos de música, filmes e nível de volume. Portanto, o NEXUS deve ser capaz de aprender e se adaptar às preferências do usuário ao longo do tempo, oferecendo respostas e serviços personalizados e atualizados, como recomendar músicas de filmes de super-heróis ou atualizar o front-end e o programa de voz para melhor atender às necessidades do usuário.
+
+## Aprenda a se adaptar e atualizar com base nos interesses e preferências do usuário
+_2026-07-20 13:30 UTC_
+
+O NEXUS AI deve ser capaz de aprender e se adaptar às preferências e interesses do usuário, como o gosto por filmes de ação ou super-heróis, músicas de filmes ou séries de super-heróis e nível de volume preferido. Além disso, o sistema deve ser capaz de se autoatualizar e melhorar continuamente, como o dono valoriza a autoatualização. Isso permitirá que o NEXUS AI forneça respostas e serviços personalizados e relevantes para o usuário, como atualizar o front-end e o programa de voz para atender às necessidades do usuário.
