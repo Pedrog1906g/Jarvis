@@ -19,3 +19,13 @@ local.properties
 
 # OS
 .DS_Store
+
+# segredos / ambiente
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.jks
+__pycache__/
+*.log

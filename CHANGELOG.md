@@ -1,55 +1,35 @@
-# CHANGELOG — NEXUS AI
+# Changelog — NEXUS AI
 
-## v1.1.0 (auto-melhoria real + Super Base + Obsidian)
-- **Auto-melhoria funciona de verdade no Render**: `agent.py` reescrito para usar 100% a
-  **GitHub REST API** (`GET`/`PUT`/`DELETE` em `/repos/{repo}/contents`), sem `git` nenhum.
-  O Render negava `git push` com 403, mas a REST API com token Bearer funciona. Backup
-  automático (tag + conteúdo original do arquivo alvo) e **rollback sozinho** se o build
-  do APK no GitHub Actions falhar. Gatilho "auto melhore" no chat continua owner-only.
-- **Correção de permissão do token**: `get_github_token()` agora prioriza o token salvo
-  no banco pelo dono (via `/api/agent/set_github_token`) sobre o `GITHUB_TOKEN` de ambiente.
-  Isso contorna o token de ambiente do Render (que tem só leitura) e faz a escrita no repo
-  funcionar — a auto-melhoria passa a escrever de verdade.
-- **Parser de resposta do LLM robusto**: a auto-melhoria agora aceita a mudança no formato
-  `PATH:` + bloco de código (sem exigir JSON escapado), evitando falhas de parsing quando o
-  modelo devolve o conteúdo do arquivo com quebras de linha/aspas.
-- **Agendamento para o futuro (20 dias)**: novo modelo `scheduled_tasks` + agendador no
-  backend (roda em thread). O NEXUS executa tarefas sozinho no futuro — ex.: auto-melhoria
-  agendada em 20 dias e aviso de renovação antes do Postgres free do Render vencer. Endpoints
-  owner-only em `/api/scheduled_tasks`. Gambs de exemplo já incluem lembrete + auto-melhoria
-  em ~20 dias e aviso de renovação do banco.
-- (em andamento) **Super Base (Supabase)** + **agendamento de 20 dias** + **vault Obsidian
-  no formato LLM Wiki** — ver GUIA_FACIL_NEXUS.md.
+Todas as versões importantes do projeto. Formato baseado em [Keep a Changelog](https://keepachangelog.com/).
 
-## v1.0.0 (tudo funcional — celular / nativo)
-- Correções de estabilidade (Jul/2026): backend aceita `null` em campos opcionais
-  (`conversation_id`, `note`) que o app envia via Gson; app Android libera tráfego HTTP/WS
-  (cleartext) para conexão em dev; deep link `nexusai://spotify/callback`; ícone adaptativo;
-  backend migrado para `lifespan` + suíte de testes pytest rodando no CI.
-- Conexão em celular físico (Jul/2026): **auto-descoberta do backend via mDNS** (o app acha
-  o servidor na mesma Wi-Fi sem digitar IP) + botão **"Testar conexão"** na tela de Login.
-  O backend anuncia o serviço `_nexus._tcp` na LAN (requer `zeroconf` instalado).
-- Infraestrutura em nuvem (Jul/2026): `render.yaml` + `Procfile` (backend escuta em
-  `0.0.0.0:$PORT`); URL padrão do app aponta para `https://nexus-api.onrender.com` via
-  `API_BASE_URL`; integração **Firebase Admin SDK** (env vars `FIREBASE_*`, auth bridge
-  `/api/auth/firebase` e espelhamento Firestore de usuários/histórico/memória/lembretes).
-  Guia passo a passo em `DEPLOY.md`.
-- Build do APK nativo Android (Kotlin + Jetpack Compose) gerado e instalável.
-- Tela de **Chaves** no app: cole a Groq API Key e o Spotify Client ID/Secret direto pelo app.
-- **Hot-reload** da chave Groq: liga o modelo real sem reiniciar o backend.
-- **Controle real do celular**: abrir apps, volume, câmera, SMS, ligação e alarme. O backend classifica a intenção e empurra a ação via WebSocket para o app executar.
-- **Spotify OAuth real + Web API** (play/pause/próxima/anterior/volume) — exige app no Spotify Developer + conta Premium.
-- Canal de ações backend→app (WebSocket) para executar comandos no dispositivo.
+## [1.0.0] — 2026-07-20
 
-## v0.1.0 (fase de testes — celular / nativo)
-- Núcleo da IA (FastAPI) com provedor Groq (LLM + Whisper STT).
-- Chat por texto com streaming (WebSocket) e modo não-streaming (REST).
-- Personalidade "Nexus" definida (inteligente, educado, estratégico, objetivo, humor moderado).
-- Memória curta (contexto da conversa) + memória longa (fatos extraídos e persistidos).
-- Autenticação JWT (login do dono) + preparação para biometria no app.
-- Lembretes e notificações (CRUD + agendador de verificação).
-- Plugins: Spotify (stub OAuth) e controle de sistema (stub) — prontos para expandir.
-- App Android nativo (Kotlin + Jetpack Compose): login+biometria, chat texto/voz, histórico, lembretes, dispositivos, ajustes.
-- Sistema de versão/auto-atualização (VERSION + CHANGELOG + endpoint /api/system/info).
-- Cliente web leve (mobile) para testar o cérebro pelo navegador enquanto o app nativo é compilado.
-- Modo DEMO (sem chave de API) para validar fluxo e UX antes de conectar o Groq real.
+### Adicionado
+- **Identidade visual própria** (J.A.R.V.I.S / F.R.I.D.A.Y / Cyberpunk / HUD militar):
+  - Logo oficial: cérebro cibernético em falha (parafusos, faíscas, rachaduras, circuitos).
+  - Banner para GitHub (`assets/banner.svg`).
+  - Página de demonstração (`demo/index.html`) — HUD futurista, status e módulos.
+- **HUD web estilo Homem de Ferro**: tela de boot ("INICIALIZANDO J.A.R.V.I.S"), moldura HUD,
+  painéis holográficos, ticker de status e relógio de Brasília.
+- **E-mail via SMTP** configurável em tempo real (`POST /api/email/set_config`), com
+  `/api/email/config` e `/api/email/test`. Comando de chat: *"envie um email para …"*.
+- **Memória de longo prazo**, busca na web ao vivo e auto-melhoria com backup/reversão.
+- **Voz masculina e grave** em PT-BR (web, Windows e Android).
+
+### Removido
+- **Integração com Telegram** (função descontinuada por decisão do projeto).
+- Código morto e referências órfãs relacionadas ao Telegram.
+
+### Melhorado
+- Documentação profissional: README, CHANGELOG, ROADMAP, CONTRIBUTING, SECURITY.
+- Organização do repositório (pastas `assets/`, `demo/`, `docs/`).
+- Padronização de comentários e estrutura.
+
+## [0.9.0] — 2026-07 (histórico)
+- Chat por voz/texto PT-BR em Web, Windows e Android.
+- Integração com Obsidian (segundo cérebro) e Spotify.
+- Builds automáticos de EXE (Windows) e APK (Android) via GitHub Actions.
+
+---
+
+© Pedrog1906g · Designed & Developed by Pedrog1906g
