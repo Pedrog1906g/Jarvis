@@ -253,15 +253,27 @@ def _latest_build_run(commit_sha: str):
     token = get_github_token()
     if not token:
         return None
-    r = _gh("GET", f"repos/{REPO}/actions/runs?per_page=20", token=token)
+    r = _gh("GET", f"repos/{REPO}/actions/runs?per_page=50", token=token)
     try:
         data = r.json()
     except Exception:
         return None
+    # FOCA no build do APK (é o que quebra o app do celular). O commit dispara
+    # vários workflows (APK, EXE, backend); se pegássemos o primeiro da lista,
+    # podíamos achar um run de Windows/backend (que passa) e achar que tudo
+    # deu certo — deixando o APK quebrado sem rollback. Por isso filtramos pelo
+    # nome exato do workflow do APK.
+    apk_run = None
+    any_run = None
     for run in data.get("workflow_runs", []):
-        if run.get("head_sha") == commit_sha:
-            return run
-    return None
+        if run.get("head_sha") != commit_sha:
+            continue
+        if any_run is None:
+            any_run = run
+        if run.get("name", "").strip() == "Build NEXUS AI APK":
+            apk_run = run
+            break
+    return apk_run or any_run
 
 
 def _rollback(backup, backup_tag, reason, run_url):

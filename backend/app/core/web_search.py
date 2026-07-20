@@ -77,7 +77,7 @@ def extract_query(text: str) -> str:
 def _search_instant(query: str, max_results: int = 5) -> str:
     """Resposta instantânea do DuckDuckGo (Infobox / definição / resposta direta)."""
     try:
-        with httpx.Client(timeout=7, follow_redirects=True) as client:
+        with httpx.Client(timeout=4, follow_redirects=True) as client:
             r = client.get(
                 "https://api.duckduckgo.com/",
                 params={
@@ -124,7 +124,7 @@ def _search_instant(query: str, max_results: int = 5) -> str:
 def _search_html(query: str, max_results: int = 5) -> str:
     """Fallback: raspa os resultados web (títulos + snippets) do DuckDuckGo HTML."""
     try:
-        with httpx.Client(timeout=8, follow_redirects=True) as client:
+        with httpx.Client(timeout=5, follow_redirects=True) as client:
             r = client.post(
                 "https://html.duckduckgo.com/html/",
                 data={"q": query},

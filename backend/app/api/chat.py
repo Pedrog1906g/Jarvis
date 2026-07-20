@@ -31,6 +31,29 @@ def _sync_msg(owner_username: str, conversation_id, role: str, content: str):
         pass
 
 
+def _bg_extract_facts(owner_id: int, text: str):
+    """Extrai fatos de memória em SEGUNDO PLANO, numa thread própria com sessão
+    própria (a sessão da requisição não é thread-safe). Assim o JARVIS aprende
+    o que o usuário disse SEM atrasar a resposta em nada."""
+    try:
+        import threading
+
+        def _run():
+            try:
+                from app.db.database import SessionLocal
+                db = SessionLocal()
+                try:
+                    extract_facts(db, owner_id, text)
+                finally:
+                    db.close()
+            except Exception:
+                pass
+
+        threading.Thread(target=_run, daemon=True).start()
+    except Exception:
+        pass
+
+
 @router.post("/chat")
 def chat(req: ChatRequest, db: Session = Depends(get_db),
          user: models.User = Depends(get_current_user)):
@@ -39,7 +62,8 @@ def chat(req: ChatRequest, db: Session = Depends(get_db),
     db.add(models.Message(conversation_id=conv.id, role="user", content=req.content))
     db.commit()
     _sync_msg(user.username, conv.id, "user", req.content)
-    extract_facts(db, user.id, req.content)
+    # Memória em segundo plano — não atrasa a resposta do usuário
+    _bg_extract_facts(user.id, req.content)
 
     messages = build_messages(db, user.id, conv.id, req.content)
     _vctx = _obs.chat_context_message()
@@ -196,7 +220,8 @@ async def ws_chat(websocket: WebSocket, token: str = ""):
             db.add(models.Message(conversation_id=conv.id, role="user", content=content))
             db.commit()
             _sync_msg(user.username, conv.id, "user", content)
-            extract_facts(db, user.id, content)
+            # Memória em segundo plano — não atrasa a resposta do usuário
+            _bg_extract_facts(user.id, content)
 
             # Gatilho de auto-melhoria via chat (somente o dono).
             if user.username == "owner":
