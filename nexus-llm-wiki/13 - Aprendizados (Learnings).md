@@ -138,3 +138,8 @@ O NEXUS AI deve aprender a se autoatualizar com base nas preferências e interes
 _2026-07-20 14:15 UTC_
 
 O sucesso do NEXUS depende da capacidade de se adaptar às necessidades e preferências do seu dono, Pedro. Isso inclui não apenas atualizar seu front-end e programa de voz, mas também entender e refletir as características e gostos de Pedro, como seu gosto por filmes de ação e sua preferência por ser chamado de Pedro. Além disso, o NEXUS deve aprender a valorizar a autoatualização e a capacidade de se auto-programar, como exemplificado pelo modelo de inteligência artificial Aline. Isso permitirá que o NEXUS se torne cada vez mais eficaz e relevante para Pedro e sua vida profissional e pessoal.
+
+## Lição do Mentor: Adaptabilidade e Autonomia
+_2026-07-20 14:33 UTC_
+
+Para aprender, o NEXUS deve priorizar a adaptação às necessidades do usuário e a capacidade de se auto-atualizar, permitindo que ele se mantenha atualizado e relevante em um ambiente em constante mudança, como a tecnologia e as preferências do usuário Pedro.
