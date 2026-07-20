@@ -65,6 +65,15 @@ def chat(req: ChatRequest, db: Session = Depends(get_db),
     # Memória em segundo plano — não atrasa a resposta do usuário
     _bg_extract_facts(user.id, req.content)
 
+    # Habilidade: enviar e-mail (comando "envie um email para ...")
+    from app.services import email_skill
+    _email_reply = email_skill.try_email(req.content)
+    if _email_reply is not None:
+        db.add(models.Message(conversation_id=conv.id, role="assistant", content=_email_reply))
+        db.commit()
+        _sync_msg(user.username, conv.id, "assistant", _email_reply)
+        return {"conversation_id": conv.id, "reply": _email_reply, "demo": not is_available()}
+
     messages = build_messages(db, user.id, conv.id, req.content)
     _vctx = _obs.chat_context_message()
     if _vctx:
@@ -222,6 +231,18 @@ async def ws_chat(websocket: WebSocket, token: str = ""):
             _sync_msg(user.username, conv.id, "user", content)
             # Memória em segundo plano — não atrasa a resposta do usuário
             _bg_extract_facts(user.id, content)
+
+            # Habilidade: enviar e-mail (comando "envie um email para ...")
+            from app.services import email_skill
+            _email_reply = email_skill.try_email(content)
+            if _email_reply is not None:
+                db.add(models.Message(conversation_id=conv.id, role="assistant", content=_email_reply))
+                db.commit()
+                _sync_msg(user.username, conv.id, "assistant", _email_reply)
+                await websocket.send_json({"type": "start", "conversation_id": conv.id})
+                await websocket.send_json({"type": "delta", "content": _email_reply})
+                await websocket.send_json({"type": "done", "conversation_id": conv.id})
+                continue
 
             # Gatilho de auto-melhoria via chat (somente o dono).
             if user.username == "owner":

@@ -7,6 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
 from app.db import models  # registra os modelos
 from app.api import auth, chat, voice, reminders, plugins, system, agent, scheduled_tasks, obsidian, metrics, memory
+from app.api import email
+from app.services.telegram_bot import start_telegram_bot
 from app.services.reminder_scheduler import start_scheduler
 from app.services.scheduled_tasks import start_scheduled_tasks
 from app.services.learning_loop import start_learning_loop
@@ -24,6 +26,7 @@ async def lifespan(app: FastAPI):
     start_learning_loop()  # gera aprendizados periodicos (loop de ensino continuo do NEXUS)
     start_discovery()  # anuncia o backend na LAN via mDNS (auto-descoberta no app)
     init_firebase()    # inicializa Firebase Admin se as env vars estiverem presentes
+    start_telegram_bot()  # bot do Telegram (no-op se sem TELEGRAM_BOT_TOKEN)
     yield
 
 
@@ -48,6 +51,7 @@ app.include_router(scheduled_tasks.router)
 app.include_router(obsidian.router)
 app.include_router(metrics.router)
 app.include_router(memory.router)
+app.include_router(email.router)
 
 
 # Diretório do frontend web (HUD do JARVIS para PC).
