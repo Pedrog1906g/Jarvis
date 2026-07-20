@@ -51,6 +51,13 @@ class WindowsVoice:
 
         if self._libs.get("tts"):
             try:
+                # Em exe congelado (pyinstaller) o SAPI/pyttsx3 precisa do COM
+                # inicializado na thread principal para não falhar silenciosamente.
+                try:
+                    import pythoncom
+                    pythoncom.CoInitialize()
+                except Exception:
+                    pass
                 self.engine = self._libs["tts"].init()
                 self._apply_jarvis_voice()
             except Exception:
@@ -107,11 +114,11 @@ class WindowsVoice:
             self.engine = None
         return False
 
-    def _sapi_speak(self, text: str):
+    def _sapi_speak(self, text: str) -> bool:
         if not text.strip():
-            return
+            return False
         if not self.engine and not self.ensure_engine():
-            return
+            return False
         try:
             parts = [p.strip() for p in re.split(r"(?<=[.!?…])\s+", text) if p.strip()]
             if not parts:
@@ -121,14 +128,17 @@ class WindowsVoice:
                 self.engine.runAndWait()
                 if i < len(parts) - 1:
                     time.sleep(0.14)
+            return True
         except Exception:
             try:
                 self.engine = None
                 if self.ensure_engine() and self.engine:
                     self.engine.say(text)
                     self.engine.runAndWait()
+                    return True
             except Exception:
-                log.warning("TTS falhou: %s", traceback.format_exc())
+                log.warning("TTS SAPI falhou: %s", traceback.format_exc())
+            return False
 
     # ── API TTS (servidor) ────────────────────────────────────────────────────
 
@@ -186,16 +196,39 @@ class WindowsVoice:
             log.warning("speak_via_api falhou: %s", e)
             return False
 
+    # ── Fallback nativo do Windows (sempre disponível) ───────────────────────
+    def _powershell_speak(self, text: str) -> bool:
+        """Fallback robusto usando System.Speech.Synthesis do .NET (presente em
+        TODOS os Windows). Não depende do pyttsx3/SAPI do Python — garante que o
+        JARVIS fala mesmo quando o pyttsx3 falha dentro do .exe congelado."""
+        try:
+            import subprocess
+            safe = text.replace('"', "'").replace("`", "'")
+            ps = ('Add-Type -AssemblyName System.speech; '
+                  '$s=New-Object System.Speech.Synthesis.SpeechSynthesizer; '
+                  '$s.Rate=1; $s.Speak("%s")' % safe)
+            flags = {"creationflags": 0x08000000} if sys.platform == "win32" else {}
+            subprocess.run(["powershell", "-NoProfile", "-Command", ps],
+                           timeout=90, **flags)
+            return True
+        except Exception as e:
+            log.warning("TTS PowerShell falhou: %s", e)
+            return False
+
     # ── Falar (método público) ────────────────────────────────────────────────
 
     def speak(self, text: str):
         clean = " ".join(str(text).split())
         if not clean:
             return
-        # Tenta API primeiro se o servidor tiver TTS configurado
+        # 1) TTS do servidor (openai/piper), se configurado
         if self.speak_via_api(clean):
             return
-        self._sapi_speak(clean)
+        # 2) SAPI local (pyttsx3) — melhor controle de voz
+        if self._sapi_speak(clean):
+            return
+        # 3) Fallback nativo do Windows (System.Speech via PowerShell)
+        self._powershell_speak(clean)
 
     # ── STT ──────────────────────────────────────────────────────────────────
 
