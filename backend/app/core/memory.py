@@ -1,4 +1,6 @@
 from typing import List, Dict
+import re
+import unicodedata
 from sqlalchemy.orm import Session
 from app.db import models
 from app.core.llm import complete_chat
@@ -7,6 +9,45 @@ from app.core.personality import JARVIS_SYSTEM_PROMPT
 
 SHORT_TERM_LIMIT = 20   # últimas mensagens do histórico imediato
 SUMMARY_THRESHOLD = 40  # resumir histórico quando passar de N mensagens
+MEMORY_LIMIT = 12       # máx de fatos de longo prazo injetados por mensagem
+
+
+def _norm(s: str) -> str:
+    """Normaliza texto: minúsculas, sem acento, só alfanumérico + espaço."""
+    s = unicodedata.normalize("NFKD", s or "")
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    s = re.sub(r"[^a-z0-9\s]", " ", s.lower())
+    return s
+
+
+def _tokens(s: str) -> List[str]:
+    return [t for t in _norm(s).split() if len(t) >= 2]
+
+
+def _shared_prefix(a: str, b: str) -> int:
+    n = min(len(a), len(b))
+    i = 0
+    while i < n and a[i] == b[i]:
+        i += 1
+    return i
+
+
+def _relevance(q_tokens: List[str], f_tokens: List[str]) -> int:
+    """Pontua quão relacionado um fato é à pergunta do usuário.
+    Usa correspondência exata + prefixo (pega conjugações em PT-BR,
+    ex.: 'moro' casa com 'mora', 'trabalho' com 'trabalha')."""
+    score = 0
+    for qt in q_tokens:
+        for ft in f_tokens:
+            if qt == ft:
+                score += 3
+            else:
+                p = _shared_prefix(qt, ft)
+                if p >= 4:
+                    score += 2
+                elif p >= 3 and len(qt) >= 4 and len(ft) >= 4:
+                    score += 1
+    return score
 
 
 def get_short_term(db: Session, conversation_id: int) -> List[Dict[str, str]]:
@@ -21,19 +62,30 @@ def get_short_term(db: Session, conversation_id: int) -> List[Dict[str, str]]:
     return [{"role": m.role, "content": m.content} for m in msgs]
 
 
-def get_long_term(db: Session, owner_id: int, query: str = "", limit: int = 8) -> List[str]:
-    facts = db.query(models.MemoryFact).filter(models.MemoryFact.owner_id == owner_id).all()
+def get_long_term(db: Session, owner_id: int, query: str = "", limit: int = MEMORY_LIMIT) -> List[str]:
+    facts = (
+        db.query(models.MemoryFact)
+        .filter(models.MemoryFact.owner_id == owner_id)
+        .all()
+    )
     if not facts:
         return []
-    # Recuperação por relevância: combina sobreposição de palavras + importância do fato.
-    q_words = set(query.lower().split())
+    q_tokens = _tokens(query)
     scored = []
     for f in facts:
-        f_words = set(f.fact.lower().split())
-        score = len(q_words & f_words) * 2 + f.importance
-        scored.append((score, f.fact))
+        ft = _tokens(f.fact)
+        rel = _relevance(q_tokens, ft) if q_tokens else 0
+        # relevância tem peso maior que a importância; importância é o desempate
+        scored.append((rel * 4 + f.importance, f.fact))
     scored.sort(key=lambda x: x[0], reverse=True)
-    return [fact for _, fact in scored[:limit]]
+    # remove duplicatas mantendo a ordem de relevância
+    seen, out = set(), []
+    for _, fact in scored:
+        if fact in seen:
+            continue
+        seen.add(fact)
+        out.append(fact)
+    return out[:limit]
 
 
 def get_conversation_summary(db: Session, conversation_id: int) -> str:
@@ -135,10 +187,15 @@ def build_messages(db: Session, owner_id: int, conversation_id: int, user_text: 
         f"Use para saudações e respostas sobre data/hora."
     )
 
-    # Injeta memória de longo prazo (fatos)
+    # Injeta memória de longo prazo (fatos) — instrução FORTE para usar
     if facts:
         facts_block = "\n".join(f"- {f}" for f in facts)
-        system += f"\n\nMEMÓRIA DE LONGO PRAZO (use quando relevante):\n{facts_block}"
+        system += (
+            f"\n\nMEMÓRIA DE LONGO PRAZO DO USUÁRIO (USE OBRIGATORIAMENTE estas "
+            f"informações para responder perguntas sobre o usuário, suas "
+            f"preferências, rotina ou dados pessoais — elas foram aprendidas "
+            f"nas conversas com ele):\n{facts_block}"
+        )
 
     # Injeta resumo da conversa anterior (contexto comprimido)
     if summary:
@@ -161,35 +218,38 @@ def extract_facts(db: Session, owner_id: int, user_text: str):
          "Responda SOMENTE em JSON: {\"facts\": [{\"fact\": \"...\", \"category\": \"...\", \"importance\": 1}]}. "
          "Se não houver fatos, retorne {\"facts\": []}. "
          "Exemplos de fato: 'Prefere café sem açúcar', 'Trabalha como designer gráfico', 'Mora em São Paulo'. "
-         "NÃO extraia fatos triviais ou de curto prazo como 'perguntou que horas são'."},
+         "NÃO extraia fatos triviais ou de curto prazo como 'perguntou que horas são'. "
+         "NÃO extraia reclamações ou problemas técnicos transitórios (ex.: 'assistente não respondeu')."},
         {"role": "user", "content": user_text},
     ]
     try:
         raw = complete_chat(prompt, temperature=0.1)
-        import json, re
+        import json
         m = re.search(r"\{.*\}", raw, re.DOTALL)
         if not m:
             return
         data = json.loads(m.group(0))
+        # deduplica comparando texto normalizado (sem acento/caixa)
         existing = {
-            f.fact
+            _norm(f.fact)
             for f in db.query(models.MemoryFact)
             .filter(models.MemoryFact.owner_id == owner_id).all()
         }
         new_facts = []
         for item in data.get("facts", []):
-            fact = item.get("fact")
-            if fact and fact not in existing and len(fact) > 10:
-                cat = item.get("category", "geral")
-                imp = int(item.get("importance", 1))
-                db.add(models.MemoryFact(
-                    owner_id=owner_id,
-                    fact=fact,
-                    category=cat,
-                    importance=imp,
-                ))
-                existing.add(fact)
-                new_facts.append((fact, cat, imp))
+            fact = (item.get("fact") or "").strip()
+            if not fact or _norm(fact) in existing or len(fact) <= 10:
+                continue
+            cat = item.get("category", "geral")
+            imp = int(item.get("importance", 1))
+            db.add(models.MemoryFact(
+                owner_id=owner_id,
+                fact=fact,
+                category=cat,
+                importance=imp,
+            ))
+            existing.add(_norm(fact))
+            new_facts.append((fact, cat, imp))
         if new_facts:
             db.commit()
             # Sincroniza com Firebase (best-effort)
