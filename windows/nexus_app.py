@@ -159,6 +159,7 @@ class Backend:
 class App:
     def __init__(self):
         self.cfg = load_config()
+        self.speak_enabled = bool(self.cfg.get("speak", False))
         self.voice = WindowsVoice()
         self.backend = Backend()
         self.conv_id = None
@@ -233,6 +234,12 @@ class App:
                   bg="#1a1030", fg="#b388ff", relief="flat",
                   activebackground="#241646",
                   font=("Segoe UI", 10, "bold")).pack(side=tk.LEFT, padx=4)
+        self._speak_btn = tk.Button(bar, text="🔊 Voz: " + ("ON" if self.speak_enabled else "OFF"),
+                  command=self._toggle_speak, width=11,
+                  bg="#0a2a33", fg="#5fe0ff", relief="flat",
+                  activebackground="#103a47",
+                  font=("Segoe UI", 10, "bold"))
+        self._speak_btn.pack(side=tk.LEFT, padx=4)
         tk.Button(bar, text="⚙ Config", command=self._open_settings, width=10,
                   bg="#0a2a33", fg="#5fe0ff", relief="flat",
                   activebackground="#103a47",
@@ -382,7 +389,9 @@ class App:
         self.chat.insert(tk.END, "\n")
         self.chat.configure(state=tk.DISABLED)
         self._bot_open = False
-        self._speak(self._bot_buf)
+        # Só fala se o usuário ligou a voz (economiza e evita falar à toa).
+        if self.speak_enabled:
+            self._speak(self._bot_buf)
 
     # ----- Ações -----
     def _send(self):
@@ -507,10 +516,57 @@ class App:
         res = self.voice.heard_wakeword(text)
         if res is None:
             return
-        if res.strip():
-            self.root.after(0, self._send_phrase, res.strip())
+        cmd = (res or "").strip()
+        low = cmd.lower()
+        # ── Comandos de voz (ligar/desligar a fala) ──
+        if any(k in low for k in ("ligue a voz", "liga a voz", "quer ouvir",
+                                  "quero ouvir", "fale", "falar", "ativar voz",
+                                  "voz liga", "liga voz")):
+            self._set_speak(True)
+            if self._bot_buf.strip():
+                self._speak(self._bot_buf)  # lê a última resposta
+            else:
+                self._bot_chunk("Voz ligada. Pergunte e eu falo.")
+                self._bot_finish()
+            return
+        if any(k in low for k in ("desliga a voz", "desligue a voz", "cale",
+                                  "cale-se", "para de falar", "voz desliga",
+                                  "desativar voz", "desliga voz")):
+            self._set_speak(False)
+            self._bot_chunk("Voz desligada. Só falo se você pedir.")
+            self._bot_finish()
+            return
+        if any(k in low for k in ("leia", "ler", "repense", "diga em voz alta",
+                                  "fale isso", "fale isto")):
+            if self._bot_buf.strip():
+                self._speak(self._bot_buf)
+            return
+        # ── Comando normal de chat ──
+        if cmd:
+            self.root.after(0, self._send_phrase, cmd)
         else:
             self.root.after(0, self._ack)
+
+    def _set_speak(self, on: bool):
+        self.speak_enabled = on
+        try:
+            self.cfg["speak"] = on
+            save_config(self.cfg)
+        except Exception:
+            pass
+        try:
+            if getattr(self, "_speak_btn", None):
+                self._speak_btn.configure(text="🔊 Voz: " + ("ON" if on else "OFF"))
+        except Exception:
+            pass
+
+    def _toggle_speak(self):
+        self._set_speak(not self.speak_enabled)
+        if self.speak_enabled:
+            self._bot_chunk("Voz ligada. Vou falar as respostas.")
+        else:
+            self._bot_chunk("Voz desligada. Só falo se você pedir.")
+        self._bot_finish()
 
     def _send_phrase(self, cmd):
         self.input.delete(0, tk.END)
@@ -526,7 +582,8 @@ class App:
         title = m.get("title", "Lembrete")
         note = m.get("note", "")
         self.root.after(0, self._show_reminder_popup, title, note)
-        self._speak("Lembrete: " + title + (". " + note if note else "."))
+        if self.speak_enabled:
+            self._speak("Lembrete: " + title + (". " + note if note else "."))
 
     def _show_reminder_popup(self, title, note):
         win = tk.Toplevel(self.root)

@@ -200,19 +200,24 @@ class WindowsVoice:
     def _powershell_speak(self, text: str) -> bool:
         """TTS principal e mais confiável no Windows: usa System.Speech.Synthesis
         do .NET (vem com o Windows, não depende do pyttsx3/SAPI do Python e NÃO
-        falha silenciosamente dentro do .exe congelado). Escolhe a voz em
-        português (Brasil) quando disponível e fala o texto com segurança."""
+        falha silenciosamente dentro do .exe congelado).
+
+        Voz: procura uma voz MASCULINA e PROFUNDA (pt-BR se houver, senão qualquer
+        masculina disponível — ex.: Microsoft David/Mark, timbre grave). Ritmo um
+        pouco mais lento para soar mais natural/humano."""
         try:
             import subprocess, base64
-            # Texto em base64 (UTF-8) evita qualquer problema de aspas/acentos.
             b64 = base64.b64encode(text.encode("utf-8")).decode("ascii")
-            # Script PowerShell (será passado como -EncodedCommand, também base64).
             script = (
                 "Add-Type -AssemblyName System.speech;"
                 "$s=New-Object System.Speech.Synthesis.SpeechSynthesizer;"
-                "$v=$s.GetInstalledVoices()|Where-Object{$_.VoiceInfo.Culture.Name-like'pt-BR*'}|Select-Object -First 1;"
-                "if($v){$s.SelectVoice($v.VoiceInfo.Name)};"
-                "$s.Rate=0;"
+                "$vs=$s.GetInstalledVoices();$best=$null;"
+                "foreach($v in $vs){$n=$v.VoiceInfo.Name.ToLower();$c=$v.VoiceInfo.Culture.Name;"
+                "if($c-like'pt-BR*' -and ($n -match 'david|mark|daniel|ricardo|antonio|francisco|thiago|male|homem|bruce|george|felipe')){$best=$v;break}};"
+                "if(-not $best){foreach($v in $vs){$n=$v.VoiceInfo.Name.ToLower();if($n -match 'david|mark|daniel|ricardo|antonio|francisco|thiago|male|homem|bruce|george|felipe'){$best=$v;break}};}"
+                "if(-not $best){foreach($v in $vs){if($v.VoiceInfo.Culture.Name -like 'pt-BR*'){$best=$v;break}};}"
+                "if($best){$s.SelectVoice($best.VoiceInfo.Name)};"
+                "$s.Rate=-1;"
                 "$txt=[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('%s'));"
                 "$s.Speak($txt)"
             ) % b64
@@ -227,8 +232,26 @@ class WindowsVoice:
 
     # ── Falar (método público) ────────────────────────────────────────────────
 
+    def _clean_for_speech(self, text: str) -> str:
+        """Remove marcações de markdown, emojis e links para a leitura soar
+        natural (sem o JARVIS 'ler' asteriscos e caracteres estranhos)."""
+        import re
+        t = text or ""
+        t = re.sub(r"\*\*(.+?)\*\*", r"\1", t)
+        t = re.sub(r"\*(.+?)\*", r"\1", t)
+        t = re.sub(r"`(.+?)`", r"\1", t)
+        t = re.sub(r"#+\s*", "", t)
+        t = re.sub(r"https?://\S+", "link", t)
+        t = re.sub(r"[*_~`#>|]", " ", t)
+        t = "".join(ch for ch in t
+                    if not (0x1F000 <= ord(ch) <= 0x1FAFF
+                            or 0x2600 <= ord(ch) <= 0x27BF
+                            or 0xFE00 <= ord(ch) <= 0xFE0F))
+        t = re.sub(r"\s+", " ", t).strip()
+        return t
+
     def speak(self, text: str):
-        clean = " ".join(str(text).split())
+        clean = self._clean_for_speech(" ".join(str(text).split()))
         if not clean:
             return
         # 1) TTS do servidor (openai/piper), se configurado
