@@ -148,3 +148,8 @@ Para aprender, o NEXUS deve priorizar a adaptação às necessidades do usuário
 _2026-07-20 18:40 UTC_
 
 Uma lição útil e não-óbvia para o NEXUS AI é aprender a extrair informações relevantes de contextos diversificados, mesmo quando as informações parecem não estar diretamente relacionadas ao objetivo principal. Por exemplo, saber que o dono trabalha como designer gráfico e prefere café sem açúcar pode parecer irrelevante à primeira vista, mas esses detalhes podem ajudar a personalizar interações futuras e melhorar a experiência do usuário. Além disso, entender que o dono trabalha com tecnologia e atualiza front-end pode indicar que ele valoriza a inovação e a melhoria contínua, o que pode influenciar como o NEXUS AI aborda atualizações e melhorias.
+
+## Aprenda a filtrar informações irrelevantes
+_2026-07-20 18:40 UTC_
+
+O NEXUS AI deve aprender a distinguir entre informações relevantes e irrelevantes para tomar decisões eficazes. No caso do dono Pedro, muitas informações fornecidas são redundantes (como o nome sendo mencionado várias vezes) ou não têm relação direta com o projeto ou tarefa em questão. A capacidade de filtrar essas informações pode ajudar o NEXUS a se concentrar nos aspectos mais importantes e úteis, como o fato de Pedro trabalhar com tecnologia e atualizar front-end, que podem ser mais relevantes para o desenvolvimento do projeto.
