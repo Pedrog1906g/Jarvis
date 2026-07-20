@@ -32,7 +32,9 @@ def _db_key(name: str) -> str:
 
 
 def _effective(env_val: str, db_name: str) -> str:
-    return env_val or _db_key(db_name)
+    # Banco tem prioridade: chave configurada pelo dono no app sobrepõe o ambiente
+    # (ex.: quando a chave do ambiente no Render está inválida/expirada).
+    return _db_key(db_name) or env_val
 
 
 def _build_groq():
