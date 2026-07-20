@@ -30,28 +30,28 @@
     background:repeating-linear-gradient(0deg,#000 0 1px,transparent 1px 3px)}
   .wrap{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:28px 20px 60px}
 
-  /* HERO */
-  .hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 0 10px}
-  .logo{width:150px;height:150px;filter:drop-shadow(0 0 22px rgba(0,229,255,.45));animation:float 6s ease-in-out infinite}
+  .hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:18px 0 6px}
+  .brandimg{width:180px;height:180px;border-radius:50%;object-fit:cover;
+    border:2px solid var(--cyan);box-shadow:0 0 28px rgba(0,229,255,.5),inset 0 0 16px rgba(0,229,255,.25);
+    animation:float 6s ease-in-out infinite;background:#02060c}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
   .title{font-family:"Orbitron","Segoe UI",sans-serif;font-weight:900;font-size:clamp(38px,7vw,72px);
-    letter-spacing:12px;margin-top:10px;
+    letter-spacing:12px;margin-top:14px;
     background:linear-gradient(90deg,#7df9ff,#00e5ff,#0a7cff);-webkit-background-clip:text;background-clip:text;color:transparent;
     text-shadow:0 0 30px rgba(0,229,255,.25)}
   .sub{color:var(--dim);letter-spacing:3px;font-size:13px;margin-top:6px}
-  .sig{margin-top:10px;color:var(--cyan);letter-spacing:2px;font-size:13px}
+  .first{margin-top:10px;color:var(--cyan);letter-spacing:1px;font-size:13px;max-width:620px}
+  .sig{margin-top:8px;color:var(--cyan);letter-spacing:2px;font-size:13px}
 
-  /* STATUS */
-  .status{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:26px 0}
+  .status{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:24px 0}
   .stat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;
     backdrop-filter:blur(10px);box-shadow:inset 0 0 18px rgba(0,229,255,.06)}
   .stat .lbl{font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase}
   .stat .val{display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:700;font-size:15px}
   .dot{width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);animation:pulse 1.8s infinite}
-  .dot.warn{background:var(--gold);box-shadow:0 0 10px var(--gold)}
+  .dot.warn{background:var(--gold);box-shadow:0 0 10px var(--gold);animation:none}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
-  /* CARDS */
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:10px}
   .card{position:relative;background:var(--panel);border:1px solid var(--border);border-radius:14px;
     padding:20px;backdrop-filter:blur(12px);overflow:hidden;transition:.25s;opacity:0;transform:translateY(18px)}
@@ -63,7 +63,6 @@
   .card h3{font-family:"Orbitron",sans-serif;font-size:16px;letter-spacing:2px;color:var(--cyan);margin:8px 0 6px}
   .card p{font-size:13.5px;color:#cfe9ff}
 
-  /* BOTÕES */
   .actions{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin:34px 0}
   .btn{display:inline-flex;align-items:center;gap:10px;padding:13px 24px;border-radius:30px;
     font-weight:700;letter-spacing:1px;text-decoration:none;color:#02101a;border:0;cursor:pointer;
@@ -84,39 +83,10 @@
 
 <div class="wrap">
   <section class="hero">
-    <!-- Logo inline (cérebro cibernético em falha) -->
-    <svg class="logo" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-label="NEXUS AI">
-      <defs>
-        <linearGradient id="n" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#a8f6ff"/><stop offset="55%" stop-color="#00e5ff"/><stop offset="100%" stop-color="#0a7cff"/>
-        </linearGradient>
-        <filter id="g"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-      <g filter="url(#g)" fill="none" stroke="url(#n)">
-        <circle cx="120" cy="120" r="100" stroke-width="2.5" opacity=".55"/>
-        <circle cx="120" cy="120" r="88" stroke-width="1.5" stroke-dasharray="2 8" opacity=".7"/>
-      </g>
-      <g fill="#08283b" stroke="#00e5ff" stroke-width="1.4">
-        <g transform="translate(220,120)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
-        <g transform="translate(120,220)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
-        <g transform="translate(20,120)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
-        <g transform="translate(120,20)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
-      </g>
-      <circle cx="120" cy="120" r="66" fill="#04141f" stroke="url(#n)" stroke-width="3" filter="url(#g)"/>
-      <g fill="none" stroke="#39d8ff" stroke-width="1.4" opacity=".85" filter="url(#g)">
-        <path d="M120,66 q-9,20 0,38 q9,18 0,38 q-9,18 0,36"/>
-        <path d="M82,98 q20,-9 40,0"/><path d="M76,118 q22,-7 46,0"/><path d="M82,138 q20,8 40,0"/>
-      </g>
-      <polyline points="88,86 102,104 94,120 112,138 102,156 122,170" fill="none" stroke="#ff3a58" stroke-width="2.6" filter="url(#g)"/>
-      <polyline points="102,104 109,97 104,92 113,85" fill="none" stroke="#ffe14d" stroke-width="2.2" filter="url(#g)"/>
-      <path d="M168,52 q14,-12 30,-10" fill="none" stroke="#9bf3ff" stroke-width="1.2" opacity=".8"/>
-      <g transform="translate(200,38)" filter="url(#g)">
-        <circle r="6" fill="#08283b" stroke="#00e5ff" stroke-width="1.6"/><line x1="-4" y1="-4" x2="4" y2="4" stroke="#9bf3ff"/>
-      </g>
-      <circle cx="125" cy="120" r="66" fill="none" stroke="#ff3a58" stroke-width="1.6" opacity=".22" filter="url(#g)"/>
-    </svg>
+    <img class="brandimg" src="../assets/brand.png" alt="NEXUS AI" />
     <div class="title">NEXUS AI</div>
     <div class="sub">ASSISTENTE PESSOAL DE IA · ESTILO J.A.R.V.I.S / F.R.I.D.A.Y</div>
+    <div class="first">🌟 O <b>primeiro de muitos projetos de IA</b> que virão da NEXUS AI e de seu criador, <b>Pedrog1906g</b>.</div>
     <div class="sig">Designed &amp; Developed by Pedrog1906g</div>
   </section>
 
@@ -142,30 +112,39 @@
   <div class="footer">
     <div class="typed" id="typed"></div>
     <p style="margin-top:10px">© Pedrog1906g · Creator: Pedrog1906g · Designed &amp; Developed by Pedrog1906g</p>
-    <p style="margin-top:6px;opacity:.7">NEXUS AI · Reator Online · Link Seguro · São Paulo / BR</p>
+    <p style="margin-top:6px">NEXUS AI · O primeiro de muitos projetos de IA da NEXUS AI e de Pedrog1906g</p>
+    <p style="margin-top:6px;opacity:.7">Reator Online · Link Seguro · São Paulo / BR</p>
   </div>
 </div>
 
 <script>
-  // status simulado (apenas visual)
+  const API="https://nexus-api-2o1y.onrender.com";
   const stats=[["REATOR","online"],["API","online"],["ANDROID","online"],["WINDOWS","online"],["BANCO","online"],["IA / GROQ","online"]];
   const sEl=document.getElementById('status');
   stats.forEach(([l,v])=>{
     const d=document.createElement('div');d.className='stat';
-    d.innerHTML=`<div class="lbl">${l}</div><div class="val"><span class="dot"></span>${v.toUpperCase()}</div>`;
+    d.innerHTML=`<div class="lbl">${l}</div><div class="val"><span class="dot"></span><span class="st">${v.toUpperCase()}</span></div>`;
     sEl.appendChild(d);
   });
+  // status REAL da API (后端 ao vivo)
+  function setAPI(ok){
+    document.querySelectorAll('.stat').forEach(s=>{
+      if(s.textContent.includes('API')){
+        const dot=s.querySelector('.dot'); const st=s.querySelector('.st');
+        dot.className='dot'+(ok?'':' warn'); st.textContent=(ok?'ONLINE':'OFFLINE');
+      }
+    });
+  }
+  fetch(API+"/api/system/health",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject())
+    .then(()=>setAPI(true)).catch(()=>setAPI(false));
 
-  // reveal cards
   const io=new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('show')}),{threshold:.2});
   document.querySelectorAll('.card').forEach(c=>io.observe(c));
 
-  // typed line
   const txt="SISTEMA NEXUS INICIALIZADO // TODOS OS MÓDULOS OPERACIONAIS";
   const tEl=document.getElementById('typed');let i=0;
   (function tick(){ if(i<=txt.length){ tEl.textContent=txt.slice(0,i); i++; setTimeout(tick,45);} })();
 
-  // partículas no canvas (fundo)
   const cv=document.getElementById('bg'),cx=cv.getContext('2d');
   let W,H,ps=[];
   function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;
