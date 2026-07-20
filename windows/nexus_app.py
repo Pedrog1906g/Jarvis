@@ -308,14 +308,24 @@ class App:
                                 outline=cyan, width=2, style="arc")
                     c.create_arc(cx - r * 0.78, cy - r * 0.78, cx + r * 0.78, cy + r * 0.78,
                                 start=-a * 1.3, extent=50, outline=violet, width=1, style="arc")
-                    # íris central + núcleo brilhante
-                    c.create_oval(cx - 22, cy - 22, cx + 22, cy + 22, outline=cyan, width=1)
-                    c.create_oval(cx - 13, cy - 13, cx + 13, cy + 13, outline=violet, width=1)
+                    # ── NÚCLEO ARC REACTOR (estilo Homem de Ferro / JARVIS) ──
+                    # hexágono interno (carcaça do traje)
+                    hexr = 30
+                    pts = []
+                    for i in range(6):
+                        ha = math.radians(60 * i - 90)
+                        pts.append(cx + hexr * math.cos(ha))
+                        pts.append(cy + hexr * math.sin(ha))
+                    c.create_polygon(*pts, outline=cyan, width=1, fill="")
+                    # anéis duplos
+                    c.create_oval(cx - 26, cy - 26, cx + 26, cy + 26, outline=cyan, width=1)
+                    c.create_oval(cx - 17, cy - 17, cx + 17, cy + 17, outline=violet, width=1)
+                    # núcleo brilhante (glow radial simulado: do escuro ao branco)
                     core = violet if listening else cyan
-                    for rr, wdt in [(8, 3), (5, 5), (2, 8)]:
+                    for rr, col in [(16, "#04222b"), (11, "#073845"),
+                                    (7, "#0c5a6e"), (4, core), (2, "#ffffff")]:
                         c.create_oval(cx - rr, cy - rr, cx + rr, cy + rr,
-                                      outline=core, width=wdt)
-                    c.create_oval(cx - 3, cy - 3, cx + 3, cy + 3, fill=core, outline="")
+                                      outline="", fill=col)
                     # linha de varredura
                     ang = math.radians(a)
                     c.create_line(cx, cy, cx + r * math.cos(ang), cy + r * math.sin(ang),
@@ -654,6 +664,8 @@ class App:
             self._setup_obsidian_bridge()  # liga o "segundo cérebro" (Obsidian local)
             self._bot_chunk("JARVIS online. Diga 'Jarvis' para falar comigo, ou escreva abaixo.")
             self._bot_finish()
+            self._bot_chunk("Sou o primeiro de muitos projetos de IA da NEXUS AI — criado por Pedrog1906g.")
+            self._bot_finish()
             self.root.after(1500, self.check_for_update)
         else:
             self._set_status(False)
@@ -754,6 +766,14 @@ class App:
             win.destroy()
 
         tk.Button(win, text="Salvar e conectar", command=save).pack(pady=10)
+
+        # ── Créditos / assinatura ──
+        tk.Label(win, text="Designed & Developed by Pedrog1906g",
+                 bg="#02040a", fg="#5fe0ff",
+                 font=("Segoe UI", 9, "bold")).pack(pady=(10, 0))
+        tk.Label(win, text="© Pedrog1906g  •  NEXUS AI",
+                 bg="#02040a", fg="#7c4dff",
+                 font=("Segoe UI", 8)).pack(pady=(0, 6))
 
     # ----- Bandeja -----
     def _make_icon(self):

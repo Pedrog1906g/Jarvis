@@ -156,5 +156,12 @@ fun LoginScreen(vm: AuthViewModel) {
                 Text("Desbloquear com biometria")
             }
         }
+
+        Spacer(Modifier.height(18.dp))
+        Text(
+            "© Pedrog1906g · NEXUS AI",
+            style = MaterialTheme.typography.bodySmall,
+            color = NexusTextDim
+        )
     }
 }

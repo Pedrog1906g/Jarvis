@@ -135,6 +135,18 @@ fun SettingsScreen(authVm: AuthViewModel) {
         }
         if (vm.error.value != null) Text(vm.error.value ?: "", color = NexusDanger)
 
+        Spacer(Modifier.height(16.dp))
+        Divider(color = NexusSurface)
+        Spacer(Modifier.height(12.dp))
+        Text("NEXUS AI", color = NexusPrimary, style = MaterialTheme.typography.titleMedium)
+        Text(
+            "O primeiro de muitos projetos de IA da NEXUS AI e de seu criador.",
+            color = NexusTextDim, style = MaterialTheme.typography.bodySmall
+        )
+        Spacer(Modifier.height(6.dp))
+        Text("Designed & Developed by Pedrog1906g", color = NexusText, style = MaterialTheme.typography.bodySmall)
+        Text("© Pedrog1906g", color = NexusAccent, style = MaterialTheme.typography.bodySmall)
+
         Spacer(Modifier.weight(1f))
         Button(
             onClick = { authVm.logout() },
