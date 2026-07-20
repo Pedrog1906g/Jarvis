@@ -36,18 +36,34 @@ _STRIP_RE = re.compile(
 )
 
 
+_TIME_DATE_RE = re.compile(
+    r'\b(que\s+horas|horas?\s+(agora|certas?)|hora\s+atual|'
+    r'que\s+dia|dia\s+(de\s+)?hoje|dia\s+atual|data\s+(de\s+)?hoje|data\s+atual|'
+    r'qual\s+(o|a)\s+(dia|mes|ano|data)|dia\s+da\s+semana|'
+    r'relogio|relógio|'
+    r'what\s+time|what\s+day|today\'?s\s+date|current\s+(time|date)|time\s+now)\b',
+    re.IGNORECASE
+)
+
+
 def needs_web_search(text: str) -> bool:
     """Verifica se a mensagem deve disparar busca na internet.
 
     Por padrão, DISPARA para quase toda mensagem substantiva (o dono pediu
     verificação sempre que possível). Apenas saudações/cortesias muito curtas
-    são ignoradas para não atrasar respostas triviais.
+    são ignoradas para não atrasar respostas triviais. Perguntas de DATA/HORA
+    NÃO disparam busca — o backend já injeta o horário exato de Brasília.
     """
     t = (text or "").strip()
     if not t:
         return False
     words = t.split()
     if len(words) <= 3 and _GREETING_RE.match(t):
+        return False
+    # Perguntas de DATA/HORA: o backend já injeta o horário exato de Brasília
+    # no contexto (CONTEXTO TEMPORAL). Buscar na web traz horário cacheado/
+    # errado, então ignoramos a busca e usamos o contexto interno.
+    if _TIME_DATE_RE.search(t):
         return False
     return True
 

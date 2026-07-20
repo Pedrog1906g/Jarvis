@@ -174,19 +174,25 @@ def build_messages(db: Session, owner_id: int, conversation_id: int, user_text: 
 
     system = JARVIS_SYSTEM_PROMPT
 
-    # Contexto temporal — JARVIS sabe o dia/hora/fuso atual
+    # Contexto temporal — JARVIS sabe o dia/hora/fuso atual (Brasília/São Paulo)
     import datetime
-    # Horário de Brasília (São Paulo, UTC-3 — Brasil sem horário de verão desde 2019)
-    _tz_sp = datetime.timezone(datetime.timedelta(hours=-3))
+    try:
+        from zoneinfo import ZoneInfo
+        _tz_sp = ZoneInfo("America/Sao_Paulo")
+    except Exception:
+        # Fallback: Brasil sem horário de verão desde 2019 → UTC-3 fixo
+        _tz_sp = datetime.timezone(datetime.timedelta(hours=-3))
     _now = datetime.datetime.now(_tz_sp)
     _weekdays_pt = ["segunda-feira", "terça-feira", "quarta-feira",
                     "quinta-feira", "sexta-feira", "sábado", "domingo"]
     _weekday = _weekdays_pt[_now.weekday()]
     system += (
-        f"\n\nCONTEXTO TEMPORAL (horário de Brasília, atualizado a cada mensagem):\n"
+        f"\n\nCONTEXTO TEMPORAL (horário de Brasília/São Paulo, atualizado a cada mensagem):\n"
         f"Data: {_now.strftime('%d/%m/%Y')} ({_weekday}) | "
         f"Hora: {_now.strftime('%H:%M')} (Brasília, UTC-3) | "
-        f"Use para saudações e respostas sobre data/hora, considerando São Paulo/Brasil."
+        f"IMPORTANTE: para perguntas de data/hora, USE SEMPRE este horário exato e "
+        f"NUNCA a busca na web (que pode trazer horário antigo/cacheado). "
+        f"Considere sempre São Paulo/Brasil."
     )
 
     # Injeta memória de longo prazo (fatos) — instrução FORTE para usar
