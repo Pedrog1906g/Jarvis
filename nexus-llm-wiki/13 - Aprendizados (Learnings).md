@@ -118,3 +118,8 @@ Uma lição útil e não-óbvia para o NEXUS aprender é que a autoatualização
 _2026-07-20 13:30 UTC_
 
 O NEXUS AI deve ser capaz de aprender e se adaptar às preferências e interesses do usuário, como o gosto por filmes de ação ou super-heróis, músicas de filmes ou séries de super-heróis e nível de volume preferido. Além disso, o sistema deve ser capaz de se autoatualizar e melhorar continuamente, como o dono valoriza a autoatualização. Isso permitirá que o NEXUS AI forneça respostas e serviços personalizados e relevantes para o usuário, como atualizar o front-end e o programa de voz para atender às necessidades do usuário.
+
+## Aprendizado Contínuo e Adaptação
+_2026-07-20 13:39 UTC_
+
+Para o NEXUS AI, uma lição útil e não óbvia é a importância de se adaptar e aprender continuamente com base nas preferências e necessidades do usuário, como Pedro. Isso inclui atualizar habilidades, como front-end e programas de voz, e se manter informado sobre tecnologias emergentes, além de entender e se adaptar a interesses pessoais, como filmes de ação e heróis da Marvel, para oferecer respostas mais personalizadas e relevantes.
