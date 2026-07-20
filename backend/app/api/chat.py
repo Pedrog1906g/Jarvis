@@ -252,30 +252,3 @@ async def ws_chat(websocket: WebSocket, token: str = ""):
     finally:
         manager.disconnect(user.id, websocket)
         db.close()
-
-
-@router.post("/chat_debug")
-def chat_debug(req: ChatRequest, db: Session = Depends(get_db),
-               user: models.User = Depends(get_current_user)):
-    import traceback
-    try:
-        conv = _get_or_create_conversation(db, user.id, req.conversation_id)
-    except Exception as e:
-        return {"stage": "conversation", "error": repr(e), "tb": traceback.format_exc()}
-    try:
-        extract_facts(db, user.id, req.content)
-    except Exception as e:
-        return {"stage": "extract_facts", "error": repr(e), "tb": traceback.format_exc()}
-    try:
-        messages = build_messages(db, user.id, conv.id, req.content)
-    except Exception as e:
-        return {"stage": "build_messages", "error": repr(e), "tb": traceback.format_exc()}
-    try:
-        _vctx = _obs.chat_context_message()
-    except Exception as e:
-        return {"stage": "vctx", "error": repr(e), "tb": traceback.format_exc()}
-    try:
-        reply = "".join(stream_chat(messages))
-        return {"stage": "ok", "reply": reply[:200]}
-    except Exception as e:
-        return {"stage": "stream_chat", "error": repr(e), "tb": traceback.format_exc()}

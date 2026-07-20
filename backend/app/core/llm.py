@@ -10,16 +10,52 @@ from app.config import (
 )
 from app.core.personality import DEMO_PERSONA_LINE
 
-# Initialize clients based on provider
+# Clients são construídos sob demanda (lazy) para que chaves configuradas pelo dono
+# (via API/banco, criptografadas) tenham prioridade sobre o ambiente e não exijam reinício.
 _clients = {}
 
-# Groq / OpenAI compatible
-if GROQ_API_KEY or OPENAI_API_KEY:
+
+def _db_key(name: str) -> str:
+    """Lê uma chave criptografada do banco (Setting). Retorna '' se ausente."""
+    try:
+        from app.db.database import SessionLocal
+        from app.db import models
+        from app.core.crypto import decrypt
+        db = SessionLocal()
+        try:
+            row = db.query(models.Setting).filter_by(key=name).first()
+            return decrypt(row.value) if row and row.value else ""
+        finally:
+            db.close()
+    except Exception:
+        return ""
+
+
+def _effective(env_val: str, db_name: str) -> str:
+    return env_val or _db_key(db_name)
+
+
+def _build_groq():
     from openai import OpenAI
-    if GROQ_API_KEY:
-        _clients["groq"] = OpenAI(api_key=GROQ_API_KEY, base_url=GROQ_BASE_URL)
-    if OPENAI_API_KEY:
-        _clients["openai"] = OpenAI(api_key=OPENAI_API_KEY)
+    k = _effective(GROQ_API_KEY, "groq_api_key")
+    if k:
+        _clients["groq"] = OpenAI(api_key=k, base_url=GROQ_BASE_URL)
+    return _clients.get("groq")
+
+
+def _build_openai():
+    from openai import OpenAI
+    k = _effective(OPENAI_API_KEY, "openai_api_key")
+    if k:
+        _clients["openai"] = OpenAI(api_key=k)
+    return _clients.get("openai")
+
+
+# Pré-constroi a partir do ambiente (se houver).
+if GROQ_API_KEY:
+    _build_groq()
+if OPENAI_API_KEY:
+    _build_openai()
 
 # Ollama
 try:
@@ -28,22 +64,34 @@ try:
 except ImportError:
     pass
 
-# Anthropic
-if ANTHROPIC_API_KEY:
+# Anthropic (ambiente ou banco)
+if ANTHROPIC_API_KEY or _db_key("anthropic_api_key"):
     try:
         import anthropic
-        _clients["anthropic"] = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        _clients["anthropic"] = anthropic.Anthropic(
+            api_key=_effective(ANTHROPIC_API_KEY, "anthropic_api_key"))
     except ImportError:
         pass
 
-# Google Gemini
-if GOOGLE_API_KEY:
+# Google Gemini (ambiente ou banco)
+if GOOGLE_API_KEY or _db_key("google_api_key"):
     try:
         import google.generativeai as genai
-        genai.configure(api_key=GOOGLE_API_KEY)
+        genai.configure(api_key=_effective(GOOGLE_API_KEY, "google_api_key"))
         _clients["google"] = genai
     except ImportError:
         pass
+
+
+def _client(provider: str):
+    """Devolve o cliente sob demanda, construindo-o se necessário (incl. chave do banco)."""
+    if provider in _clients:
+        return _clients[provider]
+    if provider == "groq":
+        return _build_groq()
+    if provider == "openai":
+        return _build_openai()
+    return None
 
 
 def get_current_model() -> str:
@@ -71,19 +119,20 @@ def stream_chat(messages: List[Dict[str, str]], model: str = None) -> Iterator[s
             yield chunk
         return
 
-    if LLM_PROVIDER == "groq" and "groq" in _clients:
-        client = _clients["groq"]
-        stream = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=0.7,
-            stream=True,
-        )
-        for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                yield delta
-        return
+    if LLM_PROVIDER == "groq":
+        client = _client("groq")
+        if client:
+            stream = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.7,
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    yield delta
+            return
 
     elif LLM_PROVIDER == "openai" and "openai" in _clients:
         client = _clients["openai"]
@@ -170,15 +219,16 @@ def complete_chat(messages: List[Dict[str, str]], model: str = None, temperature
     if DEMO_MODE:
         return _demo_reply(messages, short=True)
 
-    if LLM_PROVIDER == "groq" and "groq" in _clients:
-        client = _clients["groq"]
-        resp = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            stream=False,
-        )
-        return resp.choices[0].message.content or ""
+    if LLM_PROVIDER == "groq":
+        client = _client("groq")
+        if client:
+            resp = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                stream=False,
+            )
+            return resp.choices[0].message.content or ""
 
     elif LLM_PROVIDER == "openai" and "openai" in _clients:
         client = _clients["openai"]
@@ -265,4 +315,10 @@ def _demo_reply(messages: List[Dict[str, str]], short: bool = False) -> str:
 
 
 def is_available() -> bool:
-    return not DEMO_MODE and LLM_PROVIDER in _clients
+    if DEMO_MODE:
+        return False
+    if LLM_PROVIDER == "groq":
+        return bool(_client("groq"))
+    if LLM_PROVIDER == "openai":
+        return bool(_client("openai"))
+    return LLM_PROVIDER in _clients

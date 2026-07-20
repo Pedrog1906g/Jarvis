@@ -491,7 +491,47 @@ def set_github_token(body: GithubTokenRequest, user: models.User = Depends(get_c
     return {"status": "ok", "message": "Token do GitHub salvo com segurança (criptografado no banco)."}
 
 
+class LlmKeyRequest(BaseModel):
+    provider: str = "groq"
+    key: str = ""
+
+
+@router.post("/set_llm_key")
+def set_llm_key(body: LlmKeyRequest, user: models.User = Depends(get_current_user)):
+    if user.username != "owner":
+        return {"status": "error", "message": "apenas o dono pode salvar chaves"}
+    provider = (body.provider or "groq").strip().lower()
+    if provider not in ("groq", "openai", "anthropic", "google", "ollama"):
+        return {"status": "error", "message": "provedor invalido"}
+    key = (body.key or "").strip()
+    setting_key = f"{provider}_api_key"
+    try:
+        from app.db.database import SessionLocal
+        from app.core.crypto import encrypt
+        db = SessionLocal()
+        try:
+            if key:
+                row = db.query(models.Setting).filter_by(key=setting_key).first()
+                enc = encrypt(key)
+                if row:
+                    row.value = enc
+                else:
+                    row = models.Setting(key=setting_key, value=enc)
+                    db.add(row)
+            else:
+                row = db.query(models.Setting).filter_by(key=setting_key).first()
+                if row:
+                    db.delete(row)
+            db.commit()
+        finally:
+            db.close()
+    except Exception as e:
+        return {"status": "error", "message": f"erro ao salvar: {e}"}
+    return {"status": "ok", "message": f"Chave do {provider} salva com seguranca (criptografada)."}
+
+
 @router.get("/github_token_status")
 def github_token_status(user: models.User = Depends(get_current_user)):
     tok = get_github_token()
     return {"configured": bool(tok), "source": _token_source()}
+
