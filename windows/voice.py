@@ -87,7 +87,7 @@ class WindowsVoice:
             if picked:
                 self.engine.setProperty("voice", picked.id)
                 self._voice_name = picked.name
-            self.engine.setProperty("rate", 150)
+            self.engine.setProperty("rate", 140)  # um pouco mais lento = tom mais grave/serio
             self.engine.setProperty("volume", 1.0)
         except Exception:
             self._voice_name = None

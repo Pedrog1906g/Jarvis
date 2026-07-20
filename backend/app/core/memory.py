@@ -176,15 +176,17 @@ def build_messages(db: Session, owner_id: int, conversation_id: int, user_text: 
 
     # Contexto temporal — JARVIS sabe o dia/hora/fuso atual
     import datetime
-    _now = datetime.datetime.now()
+    # Horário de Brasília (São Paulo, UTC-3 — Brasil sem horário de verão desde 2019)
+    _tz_sp = datetime.timezone(datetime.timedelta(hours=-3))
+    _now = datetime.datetime.now(_tz_sp)
     _weekdays_pt = ["segunda-feira", "terça-feira", "quarta-feira",
                     "quinta-feira", "sexta-feira", "sábado", "domingo"]
     _weekday = _weekdays_pt[_now.weekday()]
     system += (
-        f"\n\nCONTEXTO TEMPORAL (atualizado a cada mensagem):\n"
+        f"\n\nCONTEXTO TEMPORAL (horário de Brasília, atualizado a cada mensagem):\n"
         f"Data: {_now.strftime('%d/%m/%Y')} ({_weekday}) | "
-        f"Hora: {_now.strftime('%H:%M')} (UTC) | "
-        f"Use para saudações e respostas sobre data/hora."
+        f"Hora: {_now.strftime('%H:%M')} (Brasília, UTC-3) | "
+        f"Use para saudações e respostas sobre data/hora, considerando São Paulo/Brasil."
     )
 
     # Injeta memória de longo prazo (fatos) — instrução FORTE para usar

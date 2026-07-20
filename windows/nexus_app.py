@@ -29,6 +29,9 @@ from commands import (classify_command, open_program, organize_folder,
                       take_screenshot, get_weather, web_search, lock_screen, get_clipboard)
 from voice import WindowsVoice
 
+import sys as _sys
+_sys.setrecursionlimit(20000)  # folga de pilha para respostas/cálculos grandes
+
 APP_NAME = "JARVIS"
 VERSION = "1.0.0"
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), "jarvis_windows_config.json")

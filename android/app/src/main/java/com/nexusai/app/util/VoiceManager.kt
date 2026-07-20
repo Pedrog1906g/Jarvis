@@ -25,13 +25,13 @@ class VoiceManager(private val context: Context) {
 
     // Ajustes de voz persistidos (compartilhados entre as instâncias).
     private val prefs = context.getSharedPreferences("jarvis_voice", Context.MODE_PRIVATE)
-    var pitch: Float = prefs.getFloat("pitch", 0.82f)
+    var pitch: Float = prefs.getFloat("pitch", 0.72f)
         set(value) {
             field = value.coerceIn(0.5f, 1.5f)
             prefs.edit().putFloat("pitch", field).apply()
             tts?.setPitch(field)
         }
-    var rate: Float = prefs.getFloat("rate", 0.95f)
+    var rate: Float = prefs.getFloat("rate", 0.90f)
         set(value) {
             field = value.coerceIn(0.5f, 2.0f)
             prefs.edit().putFloat("rate", field).apply()
@@ -75,7 +75,11 @@ class VoiceManager(private val context: Context) {
                 if (v.locale.language == "pt" && v.locale.country == "BR") s += 70
                 else if (v.locale.language == "pt") s += 30
                 if (v.name.contains("Male", true) || v.name.contains("Masculino", true)
-                        || v.name.contains("Ricardo", true)) s += 40
+                        || v.name.contains("Ricardo", true) || v.name.contains("João", true)
+                        || v.name.contains("Eduardo", true) || v.name.contains("Daniel", true)
+                        || v.name.contains("Antonio", true) || v.name.contains("Antônio", true)
+                        || v.name.contains("Felipe", true) || v.name.contains("Bruno", true)
+                        || v.name.contains("Lucas", true) || v.name.contains("Gustavo", true)) s += 60
                 if (v.features.contains("network")) s += 20 // vozes online/neurais soam mais naturais
                 return s
             }
