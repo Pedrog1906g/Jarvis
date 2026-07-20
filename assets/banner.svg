@@ -27,17 +27,33 @@
   </g>
 
   <!-- emblema (cérebro cibernético em falha) -->
-  <g transform="translate(150,80) scale(0.83)">
-    <circle cx="120" cy="120" r="98" fill="none" stroke="url(#neon)" stroke-width="2" opacity=".5" filter="url(#glow)"/>
-    <circle cx="120" cy="120" r="86" fill="none" stroke="#00e5ff" stroke-width="2" stroke-dasharray="3 7" opacity=".6" filter="url(#glow)"/>
-    <g fill="#0a2233" stroke="#00e5ff" stroke-width="1.5" filter="url(#glow)">
-      <path d="M120 70 C92 66 70 84 72 108 C58 116 60 140 78 148 C74 168 96 178 120 172 Z" stroke="url(#neon)"/>
-      <path d="M120 70 C148 66 170 84 168 108 C182 116 180 140 162 148 C166 168 144 178 120 172 Z" stroke="url(#neon)"/>
+  <g transform="translate(150,80) scale(0.8)">
+    <g filter="url(#glow)" fill="none" stroke="url(#neon)">
+      <circle cx="120" cy="120" r="100" stroke-width="2.5" opacity=".55"/>
+      <circle cx="120" cy="120" r="88" stroke-width="1.5" stroke-dasharray="2 8" opacity=".7"/>
     </g>
-    <path d="M120 72 V170" stroke="#9bf3ff" stroke-width="1.6" opacity=".8"/>
-    <polyline points="86,104 100,118 92,132 108,146 98,160" fill="none" stroke="#ff3a58" stroke-width="2.2" filter="url(#glow)"/>
-    <polyline points="100,118 106,112 102,108 110,102" fill="none" stroke="#ffe14d" stroke-width="2" filter="url(#glow)"/>
-    <polyline points="158,100 146,116 156,130 142,146" fill="none" stroke="#ff3a58" stroke-width="2" opacity=".9" filter="url(#glow)"/>
+    <g fill="#08283b" stroke="#00e5ff" stroke-width="1.4">
+      <g transform="translate(220,120)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
+      <g transform="translate(190.7,190.7)"><circle r="6"/><line x1="-3" y1="-3" x2="3" y2="3" stroke="#9bf3ff"/></g>
+      <g transform="translate(120,220)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
+      <g transform="translate(49.3,190.7)"><circle r="6"/><line x1="-3" y1="-3" x2="3" y2="3" stroke="#9bf3ff"/></g>
+      <g transform="translate(20,120)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
+      <g transform="translate(49.3,49.3)"><circle r="6"/><line x1="-3" y1="-3" x2="3" y2="3" stroke="#9bf3ff"/></g>
+      <g transform="translate(120,20)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
+      <g transform="translate(190.7,49.3)"><circle r="6"/><line x1="-3" y1="-3" x2="3" y2="3" stroke="#9bf3ff"/></g>
+    </g>
+    <circle cx="120" cy="120" r="66" fill="#04141f" stroke="url(#neon)" stroke-width="3" filter="url(#glow)"/>
+    <g fill="none" stroke="#39d8ff" stroke-width="1.4" opacity=".85" filter="url(#glow)">
+      <path d="M120,66 q-9,20 0,38 q9,18 0,38 q-9,18 0,36"/>
+      <path d="M82,98 q20,-9 40,0"/><path d="M76,118 q22,-7 46,0"/><path d="M82,138 q20,8 40,0"/>
+    </g>
+    <polyline points="88,86 102,104 94,120 112,138 102,156 122,170" fill="none" stroke="#ff3a58" stroke-width="2.6" filter="url(#glow)"/>
+    <polyline points="102,104 109,97 104,92 113,85" fill="none" stroke="#ffe14d" stroke-width="2.2" filter="url(#glow)"/>
+    <path d="M168,52 q14,-12 30,-10" fill="none" stroke="#9bf3ff" stroke-width="1.2" opacity=".8"/>
+    <g transform="translate(200,38)" filter="url(#glow)">
+      <circle r="6" fill="#08283b" stroke="#00e5ff" stroke-width="1.6"/><line x1="-4" y1="-4" x2="4" y2="4" stroke="#9bf3ff"/>
+    </g>
+    <circle cx="125" cy="120" r="66" fill="none" stroke="#ff3a58" stroke-width="1.6" opacity=".22" filter="url(#glow)"/>
   </g>
 
   <!-- títulos -->
@@ -46,7 +62,6 @@
   <text x="384" y="300" font-family="'Share Tech Mono',monospace" font-size="16" letter-spacing="3" fill="#5d86a3">REATOR ONLINE · LINK SEGURO · SÃO PAULO / BR · SEMPRE CONECTADO À WEB</text>
   <text x="384" y="350" font-family="'Segoe UI',sans-serif" font-size="18" letter-spacing="2" fill="#00e5ff">Designed &amp; Developed by Pedrog1906g</text>
 
-  <!-- marca de alerta (vermelho neon) -->
   <circle cx="1120" cy="70" r="8" fill="#ff3a58" filter="url(#glow)"/>
   <text x="1120" y="100" font-family="'Share Tech Mono',monospace" font-size="12" fill="#ff3a58" text-anchor="middle">SYS</text>
 </svg>

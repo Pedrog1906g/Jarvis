@@ -88,19 +88,32 @@
     <svg class="logo" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-label="NEXUS AI">
       <defs>
         <linearGradient id="n" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#7df9ff"/><stop offset="55%" stop-color="#00e5ff"/><stop offset="100%" stop-color="#0a7cff"/>
+          <stop offset="0%" stop-color="#a8f6ff"/><stop offset="55%" stop-color="#00e5ff"/><stop offset="100%" stop-color="#0a7cff"/>
         </linearGradient>
-        <filter id="g"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="g"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
-      <circle cx="120" cy="120" r="98" fill="none" stroke="url(#n)" stroke-width="2" opacity=".5" filter="url(#g)"/>
-      <circle cx="120" cy="120" r="86" fill="none" stroke="#00e5ff" stroke-width="2" stroke-dasharray="3 7" opacity=".6" filter="url(#g)"/>
-      <g fill="#0a2233" stroke="url(#n)" stroke-width="2.4" filter="url(#g)">
-        <path d="M120 70 C92 66 70 84 72 108 C58 116 60 140 78 148 C74 168 96 178 120 172 Z"/>
-        <path d="M120 70 C148 66 170 84 168 108 C182 116 180 140 162 148 C166 168 144 178 120 172 Z"/>
+      <g filter="url(#g)" fill="none" stroke="url(#n)">
+        <circle cx="120" cy="120" r="100" stroke-width="2.5" opacity=".55"/>
+        <circle cx="120" cy="120" r="88" stroke-width="1.5" stroke-dasharray="2 8" opacity=".7"/>
       </g>
-      <path d="M120 72 V170" stroke="#9bf3ff" stroke-width="1.6" opacity=".8"/>
-      <polyline points="86,104 100,118 92,132 108,146 98,160" fill="none" stroke="#ff3a58" stroke-width="2.2" filter="url(#g)"/>
-      <polyline points="100,118 106,112 102,108 110,102" fill="none" stroke="#ffe14d" stroke-width="2" filter="url(#g)"/>
+      <g fill="#08283b" stroke="#00e5ff" stroke-width="1.4">
+        <g transform="translate(220,120)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
+        <g transform="translate(120,220)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
+        <g transform="translate(20,120)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
+        <g transform="translate(120,20)"><circle r="6"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
+      </g>
+      <circle cx="120" cy="120" r="66" fill="#04141f" stroke="url(#n)" stroke-width="3" filter="url(#g)"/>
+      <g fill="none" stroke="#39d8ff" stroke-width="1.4" opacity=".85" filter="url(#g)">
+        <path d="M120,66 q-9,20 0,38 q9,18 0,38 q-9,18 0,36"/>
+        <path d="M82,98 q20,-9 40,0"/><path d="M76,118 q22,-7 46,0"/><path d="M82,138 q20,8 40,0"/>
+      </g>
+      <polyline points="88,86 102,104 94,120 112,138 102,156 122,170" fill="none" stroke="#ff3a58" stroke-width="2.6" filter="url(#g)"/>
+      <polyline points="102,104 109,97 104,92 113,85" fill="none" stroke="#ffe14d" stroke-width="2.2" filter="url(#g)"/>
+      <path d="M168,52 q14,-12 30,-10" fill="none" stroke="#9bf3ff" stroke-width="1.2" opacity=".8"/>
+      <g transform="translate(200,38)" filter="url(#g)">
+        <circle r="6" fill="#08283b" stroke="#00e5ff" stroke-width="1.6"/><line x1="-4" y1="-4" x2="4" y2="4" stroke="#9bf3ff"/>
+      </g>
+      <circle cx="125" cy="120" r="66" fill="none" stroke="#ff3a58" stroke-width="1.6" opacity=".22" filter="url(#g)"/>
     </svg>
     <div class="title">NEXUS AI</div>
     <div class="sub">ASSISTENTE PESSOAL DE IA · ESTILO J.A.R.V.I.S / F.R.I.D.A.Y</div>
