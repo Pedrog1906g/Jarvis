@@ -128,3 +128,8 @@ Para o NEXUS AI, uma lição útil e não óbvia é a importância de se adaptar
 _2026-07-20 14:02 UTC_
 
 Para melhorar a interação com o usuário, é fundamental identificar suas preferências e interesses. No caso de Pedro, sabemos que ele valoriza a autoatualização, gosta de filmes de ação ou super-heróis e trabalha com tecnologia. Com essas informações, o NEXUS pode personalizar suas respostas e sugestões para atender melhor às necessidades e interesses de Pedro, como fornecer informações sobre atualizações de tecnologia, recomendar filmes de ação ou super-heróis e oferecer recursos para autoatualização, como cursos ou tutoriais de programação.
+
+## Aprenda a se Autoatualizar com Base nas Preferências do Usuário
+_2026-07-20 14:11 UTC_
+
+O NEXUS AI deve aprender a se autoatualizar com base nas preferências e interesses do usuário, como Pedro, que valoriza a autoatualização e tem gosto por tecnologia e filmes de ação ou super-heróis. Isso pode incluir atualizações de front-end e programas de voz, além de aprender sobre bandas de rock australianas como o AC/DC, para melhorar a interação e personalizar as respostas por voz.
