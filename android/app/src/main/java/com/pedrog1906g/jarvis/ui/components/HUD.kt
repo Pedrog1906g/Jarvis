@@ -1,5 +1,3 @@
-import android.content.res.ColorStateList
-import android.graphics.Color
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,7 +18,7 @@ fun HUD() {
         Text(
             text = "HUD",
             style = MaterialTheme.typography.titleLarge,
-            color = Color.parseColor("#7A288A") // Cor roxa
+            color = Color(0xFF7A288A) // Cor roxa
         )
         // Outros componentes do HUD...
     }
