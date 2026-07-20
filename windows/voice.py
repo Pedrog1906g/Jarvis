@@ -250,9 +250,17 @@ class WindowsVoice:
             return ""
         try:
             recognizer = sr.Recognizer()
+            # Rápido E preciso: corta a escuta logo após o fim da fala
+            # (pause_threshold menor) e ajusta o ruído só por um instante.
+            recognizer.pause_threshold = 0.5
+            recognizer.phrase_time_limit = 10
+            recognizer.operation_timeout = 8
             with sr.Microphone() as mic:
-                recognizer.adjust_for_ambient_noise(mic, duration=0.4)
-                audio = recognizer.listen(mic, timeout=timeout, phrase_time_limit=12)
+                try:
+                    recognizer.adjust_for_ambient_noise(mic, duration=0.2)
+                except Exception:
+                    pass
+                audio = recognizer.listen(mic, timeout=timeout, phrase_time_limit=10)
             return recognizer.recognize_google(audio, language="pt-BR")
         except Exception:
             return ""
@@ -264,24 +272,62 @@ class WindowsVoice:
             return threading.Event()
         stop = threading.Event()
         self._stop = stop
+        recognizer = sr.Recognizer()
+        # Para ser rápido: para de escutar logo após o fim da fala e limita a frase.
+        recognizer.pause_threshold = 0.5
+        recognizer.phrase_time_limit = 8
+        recognizer.operation_timeout = 8
+        # Ajusta o ruído do ambiente UMA vez (não a cada loop) — menos espera.
+        mic = sr.Microphone()
+        try:
+            with mic as m:
+                recognizer.adjust_for_ambient_noise(m, duration=0.5)
+        except Exception:
+            pass
 
         def _loop():
-            recognizer = sr.Recognizer()
             while not stop.is_set():
                 try:
-                    with sr.Microphone() as mic:
-                        recognizer.adjust_for_ambient_noise(mic, duration=0.3)
-                        audio = recognizer.listen(mic, timeout=4, phrase_time_limit=14)
+                    with mic as m:
+                        audio = recognizer.listen(m, timeout=3, phrase_time_limit=8)
                     text = recognizer.recognize_google(audio, language="pt-BR")
                     if text:
                         on_phrase(text)
                 except sr.WaitTimeoutError:
                     continue
                 except Exception:
-                    time.sleep(0.5)
+                    time.sleep(0.3)
 
         threading.Thread(target=_loop, daemon=True).start()
         return stop
+
+    # ── Wake word (detecção de "Jarvis"/"Nexus") ─────────────────────────────
+    @staticmethod
+    def heard_wakeword(text: str):
+        """Verifica se a frase contém a wake word, com tolerância a sotaque e a
+        pequenas variações de pronúncia. Retorna:
+          None -> não ouviu a wake word (ignora)
+          ''   -> ouviu só a wake word (ex.: "Jarvis")
+          str  -> comando após a wake word (ex.: "que horas são")
+        """
+        import unicodedata
+
+        def norm(s: str) -> str:
+            return unicodedata.normalize("NFKD", s or "").encode(
+                "ascii", "ignore").decode("ascii").lower()
+
+        t = norm(text)
+        wake = None
+        for kw in ("jarvis", "jarv", "nexus", "nex", "xarvis", "charvis",
+                   "iarvis", "iarv", "jarvls"):
+            if kw in t:
+                wake = kw
+                break
+        if not wake:
+            return None
+        idx = t.find(wake)
+        cmd = t[idx + len(wake):].strip(" ,.-:;!?")
+        return cmd
 
     def stop_continuous(self):
         if self._stop:

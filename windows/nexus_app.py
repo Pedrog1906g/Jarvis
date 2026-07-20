@@ -498,15 +498,19 @@ class App:
             self.toggle_continuous()
 
     def _on_phrase(self, text):
-        t = (text or "").lower()
+        if not text:
+            return
         log.info("frase reconhecida: %s", text)
         self._set_statusbar("🎙 Ouvi: " + (text or "")[:60])
-        if "jarvis" in t or "nexus" in t:
-            cmd = re.sub(r"\b(jarvis|nexus)\b", "", t, flags=re.I).strip()
-            if cmd:
-                self.root.after(0, self._send_phrase, cmd)
-            else:
-                self.root.after(0, self._ack)
+        # Só responde se ouviu a wake word ("Jarvis"/"Nexus"), com tolerância a
+        # sotaque/pronúncia. Ignora conversa solta perto do microfone.
+        res = self.voice.heard_wakeword(text)
+        if res is None:
+            return
+        if res.strip():
+            self.root.after(0, self._send_phrase, res.strip())
+        else:
+            self.root.after(0, self._ack)
 
     def _send_phrase(self, cmd):
         self.input.delete(0, tk.END)
