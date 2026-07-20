@@ -143,3 +143,8 @@ O sucesso do NEXUS depende da capacidade de se adaptar às necessidades e prefer
 _2026-07-20 14:33 UTC_
 
 Para aprender, o NEXUS deve priorizar a adaptação às necessidades do usuário e a capacidade de se auto-atualizar, permitindo que ele se mantenha atualizado e relevante em um ambiente em constante mudança, como a tecnologia e as preferências do usuário Pedro.
+
+## Aprender com Contextos Diversos
+_2026-07-20 18:40 UTC_
+
+Uma lição útil e não-óbvia para o NEXUS AI é aprender a extrair informações relevantes de contextos diversificados, mesmo quando as informações parecem não estar diretamente relacionadas ao objetivo principal. Por exemplo, saber que o dono trabalha como designer gráfico e prefere café sem açúcar pode parecer irrelevante à primeira vista, mas esses detalhes podem ajudar a personalizar interações futuras e melhorar a experiência do usuário. Além disso, entender que o dono trabalha com tecnologia e atualiza front-end pode indicar que ele valoriza a inovação e a melhoria contínua, o que pode influenciar como o NEXUS AI aborda atualizações e melhorias.
