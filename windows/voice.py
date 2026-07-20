@@ -202,9 +202,13 @@ class WindowsVoice:
         do .NET (vem com o Windows, não depende do pyttsx3/SAPI do Python e NÃO
         falha silenciosamente dentro do .exe congelado).
 
-        Voz: procura uma voz MASCULINA e PROFUNDA (pt-BR se houver, senão qualquer
-        masculina disponível — ex.: Microsoft David/Mark, timbre grave). Ritmo um
-        pouco mais lento para soar mais natural/humano."""
+        REGRA DE VOZ (evita misturar inglês com português):
+          1) voz PT-BR MASCULINA se houver (ex.: Francisco Natural que o dono
+             pode instalar de graça no Windows);
+          2) qualquer voz PT-BR (ex.: Maria) — garante português correto;
+          3) só como ÚLTIMO recurso, se não houver NENHUMA voz pt-BR, usa uma
+             voz masculina de outro idioma. Assim o JARVIS NUNCA fala português
+             com sotaque/pronúncia de inglês."""
         try:
             import subprocess, base64
             b64 = base64.b64encode(text.encode("utf-8")).decode("ascii")
@@ -214,8 +218,8 @@ class WindowsVoice:
                 "$vs=$s.GetInstalledVoices();$best=$null;"
                 "foreach($v in $vs){$n=$v.VoiceInfo.Name.ToLower();$c=$v.VoiceInfo.Culture.Name;"
                 "if($c-like'pt-BR*' -and ($n -match 'david|mark|daniel|ricardo|antonio|francisco|thiago|male|homem|bruce|george|felipe')){$best=$v;break}};"
-                "if(-not $best){foreach($v in $vs){$n=$v.VoiceInfo.Name.ToLower();if($n -match 'david|mark|daniel|ricardo|antonio|francisco|thiago|male|homem|bruce|george|felipe'){$best=$v;break}};}"
                 "if(-not $best){foreach($v in $vs){if($v.VoiceInfo.Culture.Name -like 'pt-BR*'){$best=$v;break}};}"
+                "if(-not $best){foreach($v in $vs){$n=$v.VoiceInfo.Name.ToLower();if($n -match 'david|mark|daniel|ricardo|antonio|francisco|thiago|male|homem|bruce|george|felipe'){$best=$v;break}};}"
                 "if($best){$s.SelectVoice($best.VoiceInfo.Name)};"
                 "$s.Rate=-1;"
                 "$txt=[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('%s'));"
