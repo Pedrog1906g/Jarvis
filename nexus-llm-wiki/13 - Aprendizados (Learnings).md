@@ -168,3 +168,8 @@ Verificacao de que o segundo cerebro grava aprendizados.
 _2026-07-20 20:41 UTC_
 
 A utilização de ferramentas como o Obsidian para organizar dados e informações do projeto é fundamental para manter a produtividade e a eficiência, especialmente quando se trabalha com múltiplas tarefas e projetos, como no caso de um designer gráfico que também lida com tecnologia e atualizações de front-end.
+
+## Integração de Ferramentas
+_2026-07-20 21:33 UTC_
+
+Uma lição útil para o NEXUS é a importância da integração de ferramentas e tecnologias para aumentar a produtividade. Por exemplo, o uso do Obsidian para organizar dados e informações pode ser integrado ao trabalho de designer gráfico e desenvolvimento de front-end, permitindo que Pedro tenha uma visão mais holística do projeto e gere resultados mais eficazes.
