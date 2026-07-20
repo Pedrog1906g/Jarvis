@@ -52,6 +52,20 @@ jobs:
             --collect-all pycaw `
             nexus_app.py
 
+      - name: Assinar EXE (opcional — remove o aviso de "virus"/SmartScreen)
+        shell: bash
+        env:
+          CODESIGN_PFX: ${{ secrets.CODESIGN_PFX }}
+          CODESIGN_PASSWORD: ${{ secrets.CODESIGN_PASSWORD }}
+        run: |
+          if [ -z "$CODESIGN_PFX" ]; then
+            echo "Sem certificado (CODESIGN_PFX): publicando sem assinatura."
+            exit 0
+          fi
+          echo "$CODESIGN_PFX" | base64 -d > windows/cert.pfx
+          powershell -NoProfile -Command "Set-AuthenticodeSignature -FilePath windows/dist/JARVIS.exe -Certificate (New-Object System.Security.Cryptography.X509Certificates.X509Certificate2('windows/cert.pfx','$CODESIGN_PASSWORD'))"
+          echo "EXE assinado com Authenticode."
+
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
