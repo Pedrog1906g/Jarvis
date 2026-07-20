@@ -53,12 +53,6 @@ def _build_openai():
     return _clients.get("openai")
 
 
-# Pré-constroi a partir do ambiente (se houver).
-if GROQ_API_KEY:
-    _build_groq()
-if OPENAI_API_KEY:
-    _build_openai()
-
 # Ollama
 try:
     import ollama
