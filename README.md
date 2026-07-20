@@ -50,6 +50,13 @@ Funciona integrado entre **Android**, **Navegador Web (PC)**, **Windows**, **Git
 > sendo lançados, peças metálicas voando, rachaduras, faíscas elétricas e circuitos aparentes —
 > representando a "mente" da IA em constante processamento.
 
+## 🌟 O primeiro de muitos
+
+O **NEXUS AI** é o **primeiro de muitos projetos de Inteligência Artificial** que virão da
+**NEXUS AI** e de seu criador, **Pedrog1906g**. Esta fundação abre caminho para uma família de
+assistentes e agentes inteligentes — sempre com a mesma identidade: J.A.R.V.I.S. / F.R.I.D.A.Y,
+HUD futurista e voz em português do Brasil.
+
 ## Demonstração
 
 Veja a apresentação completa do projeto (HUD interativa, status do sistema e módulos):
