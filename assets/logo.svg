@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="NEXUS AI - Cérebro cibernético em falha">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="62%">
+      <stop offset="0%" stop-color="#04121f"/>
+      <stop offset="100%" stop-color="#01060c"/>
+    </radialGradient>
+    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7df9ff"/>
+      <stop offset="55%" stop-color="#00e5ff"/>
+      <stop offset="100%" stop-color="#0a7cff"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="240" height="240" rx="36" fill="url(#bg)"/>
+
+  <!-- anel externo -->
+  <g filter="url(#glow)" fill="none" stroke="url(#neon)" stroke-width="2">
+    <circle cx="120" cy="120" r="98" opacity=".5"/>
+    <circle cx="120" cy="120" r="86" stroke-dasharray="3 7" opacity=".7"/>
+  </g>
+
+  <!-- parafusos fixos no anel -->
+  <g fill="#0a2233" stroke="#00e5ff" stroke-width="1.5">
+    <g transform="translate(120,22)"><circle r="7"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
+    <g transform="translate(218,120)"><circle r="7"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
+    <g transform="translate(120,218)"><circle r="7"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
+    <g transform="translate(22,120)"><circle r="7"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9bf3ff"/></g>
+  </g>
+
+  <!-- parafuso VOANDO (com rastro) -->
+  <path d="M150 36 q14 -10 30 -8" fill="none" stroke="#9bf3ff" stroke-width="1" opacity=".8"/>
+  <g transform="translate(182,26)" filter="url(#glow)">
+    <circle r="6" fill="#0a2233" stroke="#00e5ff" stroke-width="1.5"/>
+    <line x1="-4" y1="-4" x2="4" y2="4" stroke="#9bf3ff"/>
+  </g>
+
+  <!-- traços de circuito -->
+  <g stroke="#00e5ff" stroke-width="1.4" fill="none" opacity=".75" filter="url(#glow)">
+    <path d="M120 60 V40"/><path d="M120 180 V200"/>
+    <path d="M70 90 L48 78"/><path d="M170 90 L192 78"/>
+    <path d="M70 150 L48 162"/><path d="M170 150 L192 162"/>
+    <rect x="44" y="74" width="8" height="8" fill="#00e5ff" stroke="none"/>
+    <rect x="188" y="74" width="8" height="8" fill="#00e5ff" stroke="none"/>
+    <rect x="44" y="158" width="8" height="8" fill="#00e5ff" stroke="none"/>
+    <rect x="188" y="158" width="8" height="8" fill="#00e5ff" stroke="none"/>
+  </g>
+
+  <!-- CÉREBRO (duas hemisférios) -->
+  <g filter="url(#glow)" fill="#031420" stroke="url(#neon)" stroke-width="2.4" stroke-linejoin="round">
+    <path d="M120 70 C92 66 70 84 72 108 C58 116 60 140 78 148 C74 168 96 178 120 172 Z"/>
+    <path d="M120 70 C148 66 170 84 168 108 C182 116 180 140 162 148 C166 168 144 178 120 172 Z"/>
+  </g>
+  <path d="M120 72 V170" stroke="#9bf3ff" stroke-width="1.6" opacity=".8" filter="url(#glow)"/>
+
+  <!-- dobras/circuitos internos -->
+  <g stroke="#27d6ff" stroke-width="1" fill="none" opacity=".7">
+    <path d="M96 92 q10 -8 20 0"/><path d="M100 110 q12 -6 22 2"/><path d="M98 130 q10 6 22 -2"/>
+    <path d="M144 92 q-10 -8 -20 0"/><path d="M140 110 q-12 -6 -22 2"/><path d="M142 130 q-10 6 -22 -2"/>
+  </g>
+
+  <!-- RACHA (falha) vermelho neon -->
+  <polyline points="86,104 100,118 92,132 108,146 98,160" fill="none" stroke="#ff3a58" stroke-width="2.2" filter="url(#glow)"/>
+  <polyline points="158,100 146,116 156,130 142,146" fill="none" stroke="#ff3a58" stroke-width="2" opacity=".9" filter="url(#glow)"/>
+
+  <!-- FAIXAS (spark) elétrica -->
+  <polyline points="100,118 106,112 102,108 110,102" fill="none" stroke="#ffe14d" stroke-width="2" filter="url(#glow)"/>
+  <polyline points="146,116 140,110 145,106 138,100" fill="none" stroke="#ffe14d" stroke-width="1.8" filter="url(#glow)"/>
+
+  <!-- peças metálicas voando -->
+  <g fill="#0a2233" stroke="#00e5ff" stroke-width="1.2">
+    <rect x="150" y="150" width="9" height="9" transform="rotate(20 154 154)"/>
+    <circle cx="64" cy="64" r="4"/><circle cx="176" cy="170" r="3.5"/>
+  </g>
+
+  <!-- efeito glitch (deslocamento vermelho) -->
+  <g opacity=".25" transform="translate(4,0)" fill="none" stroke="#ff3a58" stroke-width="1.4">
+    <path d="M120 70 C92 66 70 84 72 108 C58 116 60 140 78 148 C74 168 96 178 120 172 Z"/>
+    <path d="M120 70 C148 66 170 84 168 108 C182 116 180 140 162 148 C166 168 144 178 120 172 Z"/>
+  </g>
+</svg>

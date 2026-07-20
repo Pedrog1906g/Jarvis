@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" role="img" aria-label="NEXUS AI - Banner">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#02060d"/>
+      <stop offset="55%" stop-color="#04111f"/>
+      <stop offset="100%" stop-color="#01040a"/>
+    </linearGradient>
+    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7df9ff"/>
+      <stop offset="60%" stop-color="#00e5ff"/>
+      <stop offset="100%" stop-color="#0a7cff"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="400" fill="url(#bg)"/>
+
+  <!-- linhas HUD de fundo -->
+  <g stroke="#0bd3ff" stroke-width="1" opacity=".12">
+    <path d="M0 300 H1200"/><path d="M0 320 H1200"/><path d="M0 340 H1200"/>
+    <path d="M120 0 V400"/><path d="M1080 0 V400"/>
+    <circle cx="600" cy="200" r="260" fill="none"/>
+    <circle cx="600" cy="200" r="180" fill="none"/>
+  </g>
+
+  <!-- emblema (cérebro cibernético em falha) -->
+  <g transform="translate(150,80) scale(0.83)">
+    <circle cx="120" cy="120" r="98" fill="none" stroke="url(#neon)" stroke-width="2" opacity=".5" filter="url(#glow)"/>
+    <circle cx="120" cy="120" r="86" fill="none" stroke="#00e5ff" stroke-width="2" stroke-dasharray="3 7" opacity=".6" filter="url(#glow)"/>
+    <g fill="#0a2233" stroke="#00e5ff" stroke-width="1.5" filter="url(#glow)">
+      <path d="M120 70 C92 66 70 84 72 108 C58 116 60 140 78 148 C74 168 96 178 120 172 Z" stroke="url(#neon)"/>
+      <path d="M120 70 C148 66 170 84 168 108 C182 116 180 140 162 148 C166 168 144 178 120 172 Z" stroke="url(#neon)"/>
+    </g>
+    <path d="M120 72 V170" stroke="#9bf3ff" stroke-width="1.6" opacity=".8"/>
+    <polyline points="86,104 100,118 92,132 108,146 98,160" fill="none" stroke="#ff3a58" stroke-width="2.2" filter="url(#glow)"/>
+    <polyline points="100,118 106,112 102,108 110,102" fill="none" stroke="#ffe14d" stroke-width="2" filter="url(#glow)"/>
+    <polyline points="158,100 146,116 156,130 142,146" fill="none" stroke="#ff3a58" stroke-width="2" opacity=".9" filter="url(#glow)"/>
+  </g>
+
+  <!-- títulos -->
+  <text x="380" y="180" font-family="'Orbitron','Segoe UI',sans-serif" font-size="92" font-weight="900" letter-spacing="10" fill="url(#neon)" filter="url(#glow)">NEXUS AI</text>
+  <text x="384" y="228" font-family="'Segoe UI',sans-serif" font-size="22" letter-spacing="4" fill="#9bf3ff">ASSISTENTE PESSOAL DE IA · ESTILO J.A.R.V.I.S / F.R.I.D.A.Y</text>
+  <text x="384" y="300" font-family="'Share Tech Mono',monospace" font-size="16" letter-spacing="3" fill="#5d86a3">REATOR ONLINE · LINK SEGURO · SÃO PAULO / BR · SEMPRE CONECTADO À WEB</text>
+  <text x="384" y="350" font-family="'Segoe UI',sans-serif" font-size="18" letter-spacing="2" fill="#00e5ff">Designed &amp; Developed by Pedrog1906g</text>
+
+  <!-- marca de alerta (vermelho neon) -->
+  <circle cx="1120" cy="70" r="8" fill="#ff3a58" filter="url(#glow)"/>
+  <text x="1120" y="100" font-family="'Share Tech Mono',monospace" font-size="12" fill="#ff3a58" text-anchor="middle">SYS</text>
+</svg>
