@@ -123,3 +123,8 @@ O NEXUS AI deve ser capaz de aprender e se adaptar às preferências e interesse
 _2026-07-20 13:39 UTC_
 
 Para o NEXUS AI, uma lição útil e não óbvia é a importância de se adaptar e aprender continuamente com base nas preferências e necessidades do usuário, como Pedro. Isso inclui atualizar habilidades, como front-end e programas de voz, e se manter informado sobre tecnologias emergentes, além de entender e se adaptar a interesses pessoais, como filmes de ação e heróis da Marvel, para oferecer respostas mais personalizadas e relevantes.
+
+## Aprenda a Identificar Preferências e Interesses do Usuário
+_2026-07-20 14:02 UTC_
+
+Para melhorar a interação com o usuário, é fundamental identificar suas preferências e interesses. No caso de Pedro, sabemos que ele valoriza a autoatualização, gosta de filmes de ação ou super-heróis e trabalha com tecnologia. Com essas informações, o NEXUS pode personalizar suas respostas e sugestões para atender melhor às necessidades e interesses de Pedro, como fornecer informações sobre atualizações de tecnologia, recomendar filmes de ação ou super-heróis e oferecer recursos para autoatualização, como cursos ou tutoriais de programação.
