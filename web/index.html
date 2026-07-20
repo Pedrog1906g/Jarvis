@@ -256,8 +256,94 @@
     .update-badge{right:10px}
   }
 </style>
+
+<!-- ===== CAMADA EXTRA: JARVIS estilo Homem de Ferro ===== -->
+<style>
+  :root{ --jarvis-cyan:#00e5ff; --jarvis-amber:#ff8a1e; }
+
+  /* chão de grade em perspectiva mais vivo */
+  .gridbg::before{ animation: gridFlow 6s linear infinite; opacity:.95 }
+  @keyframes gridFlow{ from{background-position:0 0} to{background-position:0 54px} }
+
+  /* scanlines + leve flicker de tela */
+  body::after{
+    content:"";position:fixed;inset:0;z-index:2;pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(0,229,255,.05) 0 1px, transparent 1px 3px);
+    mix-blend-mode:screen;opacity:.5;animation:flick 4s infinite}
+  @keyframes flick{0%,100%{opacity:.42}50%{opacity:.6}}
+
+  /* vinheta mais cinematográfica */
+  .vignette{ background:radial-gradient(ellipse at 50% 46%, transparent 30%, rgba(0,0,0,.92) 100%) }
+
+  /* cantos HUD estilo mira */
+  .corner{ width:60px;height:60px }
+  .corner::before,.corner::after{ box-shadow:0 0 14px var(--cyan),0 0 4px var(--cyan);opacity:1 }
+  .corner::after{ width:34px;height:2px }
+  .corner::before{ width:2px;height:34px }
+  .corner.br{ animation: cornerSweep 3s ease-in-out infinite }
+  @keyframes cornerSweep{0%,100%{opacity:.6}50%{opacity:1}}
+
+  /* painéis holográficos */
+  .panel-left,.panel-right,.memory-panel,.spotify-widget{
+    border:1px solid rgba(0,229,255,.35)!important;
+    box-shadow:0 0 60px rgba(0,0,0,.6), inset 0 0 24px rgba(0,229,255,.08), 0 0 18px rgba(0,229,255,.12)!important;
+  }
+  .panel-left::before,.panel-right::before{
+    content:"";position:absolute;top:-1px;left:14px;width:46px;height:3px;
+    background:linear-gradient(90deg,var(--cyan),transparent);box-shadow:0 0 10px var(--cyan);opacity:.9}
+
+  /* bolhas de chat holográficas */
+  .msg-row.bot .bubble{ background:linear-gradient(180deg, rgba(0,40,70,.55), rgba(0,20,40,.65))!important;
+    border:1px solid rgba(0,229,255,.35)!important;
+    box-shadow:0 0 16px rgba(0,229,255,.12), inset 0 0 12px rgba(0,229,255,.06)!important;
+    text-shadow:0 0 6px rgba(0,229,255,.25) }
+  .msg-row.user .bubble{ border:1px solid rgba(0,229,255,.45)!important; box-shadow:0 0 16px rgba(0,229,255,.15)!important }
+
+  /* reator: brilho extra */
+  .reactor-svg{ filter:drop-shadow(0 0 22px rgba(0,229,255,.4)) }
+  .core-glow{ filter:url(#glowStrong) }
+
+  /* anel de áudio (visualizador) */
+  #soundRing circle{ stroke:var(--cyan)!important }
+
+  /* barra de status (ticker) */
+  .hud-ticker{ position:fixed;left:50%;bottom:86px;transform:translateX(-50%);z-index:8;
+    font-family:"Share Tech Mono",monospace;font-size:9px;letter-spacing:3px;color:rgba(0,229,255,.6);
+    text-shadow:0 0 8px rgba(0,229,255,.4);white-space:nowrap;pointer-events:none }
+  .hud-ticker b{ color:var(--green) }
+  @media(max-width:620px){ .hud-ticker{ display:none } }
+
+  /* BOOT (sequência estilo Homem de Ferro) */
+  .boot{ position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 50%, #021018 0%, #000 70%);transition:opacity .6s }
+  .boot-core{ width:120px;height:120px;border-radius:50%;border:3px solid rgba(0,229,255,.25);
+    border-top-color:var(--cyan);border-right-color:var(--cyan);
+    box-shadow:0 0 30px rgba(0,229,255,.5),inset 0 0 20px rgba(0,229,255,.3);
+    animation:bootSpin 1.1s linear infinite;position:relative }
+  .boot-core::after{ content:"";position:absolute;inset:26px;border-radius:50%;
+    background:radial-gradient(circle,#eafdff,#00b8d4 60%,#013a47);box-shadow:0 0 24px var(--cyan) }
+  @keyframes bootSpin{to{transform:rotate(360deg)}}
+  .boot-title{ font-family:"Orbitron",sans-serif;font-weight:900;font-size:40px;letter-spacing:14px;color:var(--cyan);
+    text-shadow:0 0 26px var(--cyan-glow);margin-top:26px }
+  .boot-sub{ font-size:10px;letter-spacing:5px;color:var(--violet);margin-top:6px }
+  .boot-bar{ width:280px;height:4px;background:rgba(0,229,255,.15);border-radius:3px;margin-top:22px;overflow:hidden }
+  .boot-bar-fill{ height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--cyan));box-shadow:0 0 10px var(--cyan);transition:width .2s }
+  .boot-status{ font-family:"Share Tech Mono",monospace;font-size:10px;letter-spacing:3px;color:rgba(0,229,255,.7);margin-top:10px }
+</style>
 </head>
 <body>
+  <!-- BOOT (estilo Homem de Ferro) -->
+  <div class="boot" id="boot">
+    <div class="boot-core"></div>
+    <div class="boot-title">J.A.R.V.I.S</div>
+    <div class="boot-sub">NEXUS AI · INICIALIZANDO</div>
+    <div class="boot-bar"><div class="boot-bar-fill"></div></div>
+    <div class="boot-status">INICIALIZANDO NÚCLEO</div>
+  </div>
+
+  <!-- Ticker de status -->
+  <div class="hud-ticker" id="hudTicker">SISTEMAS <b>ONLINE</b> · LINK <b>SEGURO</b> · LOCAL SÃO PAULO/BR · NÚCLEO ESTÁVEL · SEMPRE BUSCANDO NA WEB</div>
+
   <!-- Fundo -->
   <div class="gridbg"></div>
   <div class="vignette"></div>
@@ -496,6 +582,21 @@ function tickClock(){
 }
 tickClock();
 
+// ── Boot (sequência estilo Homem de Ferro) ──
+function startBoot(){
+  const b=document.getElementById('boot'); if(!b) return;
+  b.style.display='flex'; b.style.opacity='1';
+  let p=0; const fill=b.querySelector('.boot-bar-fill'), st=b.querySelector('.boot-status');
+  const steps=['INICIALIZANDO NÚCLEO','CALIBRANDO SENSORES','ESTABELECENDO LINK SEGURO','CARREGANDO MEMÓRIA','SISTEMAS ONLINE'];
+  const iv=setInterval(()=>{
+    p=Math.min(100,p+Math.random()*16+7);
+    if(fill)fill.style.width=p+'%';
+    const i=Math.min(steps.length-1,Math.floor(p/100*steps.length));
+    if(st)st.textContent=steps[i];
+    if(p>=100){clearInterval(iv);setTimeout(()=>{b.style.opacity='0';setTimeout(()=>b.style.display='none',650);},550);}
+  },200);
+}
+
 // ── Ticks do reator ──
 (function buildTicks(){
   const g=document.getElementById('ticksOuter'); if(!g) return;
@@ -578,6 +679,7 @@ async function doLogin(){
     if(!r.ok){errEl.textContent=d.detail||'Falha no login';if(btn){btn.disabled=false;btn.textContent='INICIALIZAR SISTEMA';}return;}
     token=d.access_token;
     document.getElementById('loginScreen').style.display='none';
+    startBoot();
     document.getElementById('chatPanel').style.display='flex';
     document.getElementById('bar').style.display='flex';
     document.getElementById('ttsBtn').style.display='block';
