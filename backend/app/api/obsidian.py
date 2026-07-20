@@ -83,3 +83,39 @@ def set_key(req: ObsidianKeyRequest, user: models.User = Depends(get_current_use
 @router.get("/status")
 def status(user: models.User = Depends(get_current_user)):
     return _obs.obsidian_status()
+
+
+@router.get("/key")
+def get_key(user: models.User = Depends(get_current_user)):
+    """Retorna a chave do Obsidian (descriptografada) para o EXE usar na ponte
+    local. Apenas o dono. A chave fica só na memória do EXE (não é salva em arquivo)."""
+    if user.username != "owner":
+        return {"status": "error", "message": "apenas o dono pode obter a chave"}
+    key = ""
+    try:
+        from app.db.database import SessionLocal
+        from app.core.crypto import decrypt
+        db = SessionLocal()
+        try:
+            row = db.query(models.Setting).filter_by(key="obsidian_api_key").first()
+            key = decrypt(row.value) if row and row.value else ""
+        finally:
+            db.close()
+    except Exception:
+        key = ""
+    return {"key": key, "configured": bool(key)}
+
+
+@router.get("/backfill")
+def backfill(user: models.User = Depends(get_current_user)):
+    """Conteúdo das notas do cofre para o EXE espelhar no Obsidian local do dono
+    (caso o EXE estivesse fechado quando foram criadas)."""
+    out = {}
+    for local, vault in [
+        ("NEXUS Aprendizados.md", f"{_obs.VAULT}/13 - Aprendizados (Learnings).md"),
+        ("NEXUS Registro de Sessoes.md", f"{_obs.VAULT}/12 - Registro de Sessoes.md"),
+    ]:
+        content = _obs.read_note(vault)
+        if content:
+            out[local] = content
+    return out

@@ -28,6 +28,7 @@ from commands import (classify_command, open_program, organize_folder,
                       system_stats, set_volume, change_volume, play_music,
                       take_screenshot, get_weather, web_search, lock_screen, get_clipboard)
 from voice import WindowsVoice
+from obsidian_bridge import ObsidianLocal  # ponte local com o Obsidian do dono
 
 import sys as _sys
 _sys.setrecursionlimit(20000)  # folga de pilha para respostas/cálculos grandes
@@ -78,6 +79,7 @@ class Backend:
         self.on_done = None
         self.on_status = None
         self.on_reminder = None
+        self.on_obsidian = None
 
     def login(self, server, username, passphrase):
         self.server = server.rstrip("/")
@@ -127,6 +129,8 @@ class Backend:
             self.on_done()
         elif t == "reminder" and self.on_reminder:
             self.on_reminder(m)  # {"type":"reminder","title":...,"note":...}
+        elif t == "obsidian_sync" and self.on_obsidian:
+            self.on_obsidian(m)  # {"type":"obsidian_sync","note":...,"block":...}
         elif t == "error" and self.on_text:
             self.on_text("[ERRO] " + m.get("message", ""))
 
@@ -164,11 +168,13 @@ class App:
         self._listening = False
         self._main_thread = threading.main_thread()
         self._tts_queue = queue.Queue()
+        self.obs_local = None  # ponte local com o Obsidian (preenchida após login)
         self._build_ui()
         self.backend.on_text = self._bot_chunk
         self.backend.on_done = self._bot_finish
         self.backend.on_status = self._set_status
         self.backend.on_reminder = self._on_reminder
+        self.backend.on_obsidian = self._on_obsidian_sync
         log.info("voz selecionada: %s", self.voice.voice_name())
         self._auto_connect()
 
@@ -584,6 +590,7 @@ class App:
                               self.cfg.get("passphrase", "nexus")):
             self.backend.connect_ws()
             self._set_status(True)
+            self._setup_obsidian_bridge()  # liga o "segundo cérebro" (Obsidian local)
             self._bot_chunk("JARVIS online. Diga 'Jarvis' para falar comigo, ou escreva abaixo.")
             self._bot_finish()
             self.root.after(1500, self.check_for_update)
@@ -592,7 +599,66 @@ class App:
             self._bot_chunk("Sem conexão. Abra ⚙ Config e ajuste servidor/login.")
             self._bot_finish()
         # Métricas de sistema — refresh a cada 5 s
-        self.root.after(2000, self._refresh_metrics)
+            self.root.after(2000, self._refresh_metrics)
+
+    # ----- Obsidian (segundo cérebro) -----
+    def _setup_obsidian_bridge(self):
+        """Busca a chave do Obsidian no backend e prepara a ponte local.
+
+        O backend (nuvem) não alcança o Obsidian do dono, então o EXE — que
+        roda no mesmo PC — recebe os aprendizados via WebSocket e os grava no
+        vault REAL (plugin Local REST API, porta 27123)."""
+        try:
+            if not self.backend.token:
+                return
+            r = requests.get(self.backend.server + "/api/obsidian/key",
+                             headers={"Authorization": "Bearer " + self.backend.token},
+                             timeout=15)
+            if r.status_code == 200 and (r.json().get("key") or "").strip():
+                self.obs_local = ObsidianLocal(r.json()["key"].strip())
+                if self.obs_local.ping():
+                    log.info("Obsidian local: disponível — segundo cérebro ativo")
+                    self._bot_chunk("🧠 Obsidian conectado: seu segundo cérebro está ativo.")
+                    self._obsidian_backfill()
+                else:
+                    log.info("Obsidian local: fechado ou plugin desligado")
+                    self._bot_chunk("🧠 Obsidian configurado, mas o app está fechado. Abra o Obsidian para sincronizar.")
+                self._bot_finish()
+            else:
+                log.info("Obsidian key não configurada no backend")
+        except Exception as e:
+            log.warning("bridge obsidian erro: %s", e)
+
+    def _obsidian_backfill(self):
+        """Espelha as notas principais do cofre para o Obsidian local (caso o
+        EXE estivesse fechado quando foram criadas)."""
+        if not self.obs_local:
+            return
+        try:
+            r = requests.get(self.backend.server + "/api/obsidian/backfill",
+                             headers={"Authorization": "Bearer " + self.backend.token},
+                             timeout=20)
+            if r.status_code == 200:
+                data = r.json() or {}
+                for local, content in data.items():
+                    if content and content.strip():
+                        self.obs_local.write(local, content)
+                log.info("Obsidian backfill: %d nota(s) espelhada(s)", len(data))
+        except Exception as e:
+            log.warning("obsidian backfill erro: %s", e)
+
+    def _on_obsidian_sync(self, m):
+        """Recebe um bloco do cérebro (nuvem) e grava no Obsidian REAL."""
+        if not self.obs_local:
+            return
+        try:
+            note = (m.get("note") or "NEXUS Aprendizados.md").strip()
+            block = m.get("block") or ""
+            if block.strip():
+                if self.obs_local.append(note, block):
+                    log.info("Obsidian: bloco salvo em %s", note)
+        except Exception as e:
+            log.warning("obsidian sync erro: %s", e)
 
     def _open_settings(self):
         win = tk.Toplevel(self.root)

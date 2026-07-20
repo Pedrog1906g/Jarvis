@@ -47,6 +47,7 @@ jobs:
             --hidden-import=spotify_auth `
             --hidden-import=commands `
             --hidden-import=voice `
+            --hidden-import=obsidian_bridge `
             --collect-all pyaudio `
             --collect-all pycaw `
             nexus_app.py

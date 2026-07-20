@@ -18,6 +18,7 @@ import httpx
 
 from app.services import github_fs
 from app.db import models
+from app.core.ws_manager import manager  # avisa o EXE (Obsidian local do dono)
 
 VAULT = "nexus-llm-wiki"
 CONTEXT_NOTES = [
@@ -239,9 +240,21 @@ def _append(note: str, block: str) -> bool:
     return _write(note, new, f"obsidian: atualiza {note}", sha)
 
 
+def _broadcast_learning(note: str, block: str):
+    """Avisa o EXE (que roda no PC do dono, junto do Obsidian) para gravar o
+    bloco no vault REAL. O backend na nuvem não alcança o Obsidian local, então
+    o EXE faz a ponte. Best-effort: ignora se ninguém estiver conectado."""
+    try:
+        manager.broadcast_sync({"type": "obsidian_sync", "note": note, "block": block})
+    except Exception:
+        pass
+
+
 def add_learning(title: str, content: str) -> bool:
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     block = f"## {title}\n_{ts}_\n\n{content}\n"
+    # Avisa o EXE para espelhar no Obsidian real (segundo cérebro).
+    _broadcast_learning("NEXUS Aprendizados.md", block)
     # Prefere o Obsidian real quando configurado.
     if get_obsidian_key() and _obsidian_append("NEXUS Aprendizados.md", block):
         _CACHE["text"] = None
@@ -254,6 +267,7 @@ def add_learning(title: str, content: str) -> bool:
 def log_session(summary: str) -> bool:
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     block = f"- **{ts}**: {summary}"
+    _broadcast_learning("NEXUS Registro de Sessoes.md", block)
     if get_obsidian_key() and _obsidian_append("NEXUS Registro de Sessoes.md", block):
         return True
     return _append(f"{VAULT}/12 - Registro de Sessoes.md", block)
